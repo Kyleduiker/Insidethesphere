@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools - Inside the Sphere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 20px 50px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-align: center;
+            position: absolute;
+            left: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #00d4ff;
+        }
+
+        .nav-links a.active {
+            color: #00d4ff;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00d4ff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: rgba(0, 0, 0, 0.95);
+            min-width: 200px;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            z-index: 1000;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .dropdown-content a {
+            color: #fff;
+            padding: 15px 20px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 5px;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+            opacity: 1;
+        }
+
+        .dropdown::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: -20px;
+            right: -20px;
+            height: 10px;
+            background: transparent;
+        }
+
+        /* Page Header */
+        .page-header {
+            padding: 120px 50px 80px;
+            background: url('https://i.imgur.com/FTUM2IF.png') center/cover;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .page-header h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        /* Tools Section */
+        .tools-section {
+            padding: 100px 50px;
+            background: #111;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #0084c7);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .tool-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #00d4ff, #0084c7);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-right: 20px;
+            color: #000;
+        }
+
+        .tool-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .tool-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .status-live {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+        }
+
+        .status-coming-soon {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+        }
+
+        .tool-description {
+            color: #bbb;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .tool-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .tool-features li {
+            color: #aaa;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tool-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .tool-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00d4ff, #0084c7);
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .tool-button:hover {
+            background: linear-gradient(135deg, #fff, #f0f0f0);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .tool-button.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .tool-button.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .page-header {
+                padding: 100px 20px 60px;
+            }
+
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .tools-section {
+                padding: 60px 20px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">INSIDE THE SPHERE</div>
+            <ul class="nav-links">
+                <li><a href="index.html">HOME</a></li>
+                <li class="dropdown">
+                    <a href="tools.html" class="active">TOOLS</a>
+                    <div class="dropdown-content">
+                        <a href="https://insidethesphere.com/newsletter/" target="_blank">Newsletter Builder</a>
+                    </div>
+                </li>
+                <li><a href="videos.html">VIDEOS</a></li>
+                <li><a href="about.html">ABOUT</a></li>
+                <li><a href="contact.html">CONTACT</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1>TOOLS</h1>
+            <p>Professional-grade tools designed to streamline your workflow and enhance productivity</p>
+        </div>
+    </section>
+
+    <section class="tools-section">
+        <div class="tools-grid">
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">💻</div>
+                    <div class="tool-info">
+                        <h3>Newsletter Builder</h3>
+                        <span class="tool-status status-live">LIVE</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Create stunning, custom newsletters designed for seamless integration with RLP Sphere and all major CRM platforms and email providers. Build engaging content that connects with your audience across any system.
+                </p>
+                <ul class="tool-features">
+                    <li>Drag & drop email builder</li>
+                    <li>CRM integration ready</li>
+                    <li>Mobile-responsive templates</li>
+                    <li>Analytics tracking</li>
+                    <li>A/B testing capabilities</li>
+                </ul>
+                <a href="https://insidethesphere.com/newsletter/" class="tool-button" target="_blank">Launch Tool</a>
+            </div>
+
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-info">
+                        <h3>Analytics Dashboard</h3>
+                        <span class="tool-status status-coming-soon">COMING SOON</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Comprehensive analytics and insights to track your performance, understand your audience, and make data-driven decisions that drive growth and engagement.
+                </p>
+                <ul class="tool-features">
+                    <li>Real-time performance metrics</li>
+                    <li>Audience behavior analysis</li>
+                    <li>Custom reporting tools</li>
+                    <li>Data visualization</li>
+                    <li>Export capabilities</li>
+                </ul>
+                <a href="#" class="tool-button disabled">Coming Soon</a>
+            </div>
+
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">🎯</div>
+                    <div class="tool-info">
+                        <h3>Campaign Manager</h3>
+                        <span class="tool-status status-coming-soon">COMING SOON</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Plan, execute, and optimize your marketing campaigns from a single unified platform. Manage multiple channels and track ROI across all your marketing efforts.
+                </p>
+                <ul class="tool-features">
+                    <li>Multi-channel campaign management</li>
+                    <li>Automated workflows</li>
+                    <li>ROI tracking</li>
+                    <li>Lead scoring</li>
+                    <li>Integration hub</li>
+                </ul>
+                <a href="#" class="tool-button disabled">Coming Soon</a>
+            </div>
+
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">🤖</div>
+                    <div class="tool-info">
+                        <h3>AI Content Assistant</h3>
+                        <span class="tool-status status-coming-soon">COMING SOON</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Leverage artificial intelligence to create compelling content, generate ideas, and optimize your messaging for maximum impact and engagement.
+                </p>
+                <ul class="tool-features">
+                    <li>AI-powered content generation</li>
+                    <li>SEO optimization</li>
+                    <li>Brand voice consistency</li>
+                    <li>Content scheduling</li>
+                    <li>Performance predictions</li>
+                </ul>
+                <a href="#" class="tool-button disabled">Coming Soon</a>
+            </div>
+
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">💰</div>
+                    <div class="tool-info">
+                        <h3>Revenue Optimizer</h3>
+                        <span class="tool-status status-coming-soon">COMING SOON</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Advanced tools and strategies to maximize your revenue potential, optimize conversion rates, and create sustainable growth for your business.
+                </p>
+                <ul class="tool-features">
+                    <li>Conversion rate optimization</li>
+                    <li>Revenue forecasting</li>
+                    <li>Customer lifetime value analysis</li>
+                    <li>Pricing optimization</li>
+                    <li>Growth strategy recommendations</li>
+                </ul>
+                <a href="#" class="tool-button disabled">Coming Soon</a>
+            </div>
+
+            <div class="tool-card fade-in">
+                <div class="tool-header">
+                    <div class="tool-icon">🔗</div>
+                    <div class="tool-info">
+                        <h3>Integration Hub</h3>
+                        <span class="tool-status status-coming-soon">COMING SOON</span>
+                    </div>
+                </div>
+                <p class="tool-description">
+                    Connect all your favorite tools and platforms in one centralized hub. Streamline workflows and eliminate data silos with our comprehensive integration suite.
+                </p>
+                <ul class="tool-features">
+                    <li>300+ platform integrations</li>
+                    <li>Real-time data sync</li>
+                    <li>Custom API connections</li>
+                    <li>Workflow automation</li>
+                    <li>Data mapping tools</li>
+                </ul>
+                <a href="#" class="tool-button disabled">Coming Soon</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Header background on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(0, 0, 0, 0.98)';
+            } else {
+                header.style.background = 'rgba(0, 0, 0, 0.95)';
+            }
+        });
+
+        // Animate tool cards on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.8s ease forwards';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.tool-card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
