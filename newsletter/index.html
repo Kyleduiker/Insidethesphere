@@ -683,6 +683,16 @@
     </style>
 </head>
 <body>
+    <!-- Dynamic Header Include -->
+    <div id="header"></div>
+    <script>
+      fetch('/header.html')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+
     <!-- Page Header Section -->
     <section class="page-header">
         <div class="page-header-content">
