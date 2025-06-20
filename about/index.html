@@ -350,6 +350,15 @@
     </style>
 </head>
 <body>
+    <div id="header"></div>
+    <script>
+      fetch('/header.html')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+
     <section class="page-header">
         <div class="page-header-content">
             <h1>ABOUT</h1>
