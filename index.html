@@ -297,6 +297,15 @@
     </style>
 </head>
 <body>
+    <div id="header"></div>
+    <script>
+      fetch('/header.html')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+
     <section class="hero">
         <div class="hero-bg" id="heroBg"></div>
         <div class="hero-content">
