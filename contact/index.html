@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - Inside the Sphere</title>
+    <title>Contact - Inside the Sphere</title>
     <style>
         * {
             margin: 0;
@@ -57,26 +57,26 @@
             animation: fadeInUp 1s ease 0.2s both;
         }
 
-        /* About Section */
-        .about-section {
+        /* Contact Section */
+        .contact-section {
             padding: 100px 50px;
             background: #111;
         }
 
-        .about-content {
+        .contact-container {
             max-width: 1200px;
             margin: 0 auto;
-        }
-
-        .story-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 80px;
-            align-items: center;
-            margin-bottom: 100px;
+            align-items: start;
         }
 
-        .story-text h2 {
+        .contact-info {
+            padding: 40px;
+        }
+
+        .contact-info h2 {
             font-size: 2.5rem;
             font-weight: 300;
             letter-spacing: 2px;
@@ -84,222 +84,185 @@
             color: #00d4ff;
         }
 
-        .story-text p {
+        .contact-info p {
             font-size: 1.1rem;
             line-height: 1.8;
             color: #ccc;
-            margin-bottom: 25px;
+            margin-bottom: 40px;
         }
 
-        .story-visual {
-            position: relative;
-            height: 400px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            border-radius: 20px;
+        .contact-methods {
+            margin-bottom: 50px;
+        }
+
+        .contact-method {
             display: flex;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .story-visual::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 20px;
-        }
-
-        .visual-icon {
-            font-size: 5rem;
-            color: #00d4ff;
-            z-index: 10;
-            position: relative;
-        }
-
-        /* Values Section */
-        .values-section {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 80px 0;
-            margin: 100px 0;
-            border-radius: 20px;
-        }
-
-        .values-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .values-header h2 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            color: #00d4ff;
-        }
-
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            padding: 0 40px;
-        }
-
-        .value-card {
-            text-align: center;
-            padding: 40px 30px;
-            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
 
-        .value-card:hover {
-            transform: translateY(-5px);
+        .contact-method:hover {
+            background: rgba(255, 255, 255, 0.08);
             border-color: #00d4ff;
-            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
         }
 
-        .value-icon {
-            width: 80px;
-            height: 80px;
+        .method-icon {
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, #00d4ff, #0084c7);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 25px;
-            font-size: 2rem;
+            margin-right: 20px;
+            font-size: 1.2rem;
             color: #000;
         }
 
-        .value-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
+        .method-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
             color: #fff;
         }
 
-        .value-card p {
+        .method-info p {
             color: #aaa;
-            line-height: 1.6;
-        }
-
-        /* Team Section */
-        .team-section {
-            margin-bottom: 100px;
-        }
-
-        .team-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .team-header h2 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            color: #00d4ff;
-        }
-
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .team-card {
-            text-align: center;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .team-card:hover {
-            transform: translateY(-8px);
-            border-color: #00d4ff;
-            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
-        }
-
-        .team-avatar {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, #00d4ff, #0084c7);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: #000;
-        }
-
-        .team-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-
-        .team-role {
-            color: #00d4ff;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-
-        .team-card p {
-            color: #aaa;
-            line-height: 1.5;
+            margin: 0;
             font-size: 0.95rem;
         }
 
-        /* CTA Section */
-        .cta-section {
-            text-align: center;
-            background: rgba(0, 212, 255, 0.1);
-            padding: 60px 40px;
+        .social-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .social-link {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #00d4ff;
+            color: #000;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Contact Form */
+        .contact-form {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
             border-radius: 20px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .cta-section h2 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #00d4ff;
+        .form-group {
+            margin-bottom: 25px;
         }
 
-        .cta-section p {
-            font-size: 1.1rem;
-            color: #ccc;
-            margin-bottom: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
-        .cta-button {
-            display: inline-block;
-            padding: 15px 40px;
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #666;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
             background: linear-gradient(135deg, #00d4ff, #0084c7);
             color: #000;
-            text-decoration: none;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
             font-weight: bold;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
             letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .cta-button:hover {
+        .submit-btn:hover {
             background: linear-gradient(135deg, #fff, #f0f0f0);
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Response Times */
+        .response-info {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .response-info h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .response-info p {
+            color: #ccc;
+            margin: 0;
         }
 
         /* Mobile Responsive */
@@ -312,23 +275,21 @@
                 font-size: 2.5rem;
             }
 
-            .about-section {
+            .contact-section {
                 padding: 60px 20px;
             }
 
-            .story-section {
+            .contact-container {
                 grid-template-columns: 1fr;
                 gap: 40px;
-                text-align: center;
             }
 
-            .values-grid {
+            .form-row {
                 grid-template-columns: 1fr;
-                padding: 0 20px;
             }
 
-            .team-grid {
-                grid-template-columns: 1fr;
+            .social-links {
+                justify-content: center;
             }
         }
 
@@ -350,87 +311,115 @@
     </style>
 </head>
 <body>
+    <div id="header"></div>
+    <script>
+      fetch('/header.html')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+
     <section class="page-header">
         <div class="page-header-content">
-            <h1>ABOUT</h1>
-            <p>Discover our mission, values, and the passionate team behind Inside the Sphere</p>
+            <h1>CONTACT</h1>
+            <p>Get in touch with our team - we're here to help you succeed</p>
         </div>
     </section>
 
-    <section class="about-section">
-        <div class="about-content">
-            <div class="story-section fade-in">
-                <div class="story-text">
-                    <h2>Our Story</h2>
-                    <p>Inside the Sphere was born from a simple yet powerful vision: to democratize access to professional-grade marketing and communication tools. We recognized that businesses of all sizes needed sophisticated solutions without the complexity and cost barriers traditionally associated with enterprise software.</p>
-                    <p>Our journey began with the development of our flagship Newsletter Builder, designed specifically for seamless integration with RLP Sphere and major CRM platforms. What started as a single tool has evolved into a comprehensive suite of solutions that empower businesses to connect, engage, and grow.</p>
-                    <p>Today, we continue to innovate at the intersection of technology and human connection, building tools that don't just work—they inspire.</p>
+    <section class="contact-section">
+        <div class="contact-container">
+            <div class="contact-info fade-in">
+                <h2>Let's Connect</h2>
+                <p>Whether you have questions about our tools, need technical support, or want to explore partnership opportunities, our team is ready to help. Reach out using any of the methods below, and we'll get back to you promptly.</p>
+
+                <div class="contact-methods">
+                    <div class="contact-method">
+                        <div class="method-icon">📧</div>
+                        <div class="method-info">
+                            <h3>Email Support</h3>
+                            <p>hello@insidethesphere.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="method-icon">📞</div>
+                        <div class="method-info">
+                            <h3>Phone Support</h3>
+                            <p>+1 (555) 123-SPHERE</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="method-icon">💬</div>
+                        <div class="method-info">
+                            <h3>Live Chat</h3>
+                            <p>Available 9 AM - 6 PM EST</p>
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <div class="method-icon">🏢</div>
+                        <div class="method-info">
+                            <h3>Office Address</h3>
+                            <p>123 Innovation Drive, Suite 456<br>Tech City, TC 12345</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="story-visual">
-                    <div class="visual-icon">🚀</div>
+
+                <div class="social-links">
+                    <a href="#" class="social-link">📘</a>
+                    <a href="#" class="social-link">🐦</a>
+                    <a href="#" class="social-link">💼</a>
+                    <a href="#" class="social-link">📷</a>
+                </div>
+
+                <div class="response-info">
+                    <h3>Response Times</h3>
+                    <p>Email: Within 4 hours<br>Phone: Immediate during business hours<br>Live Chat: Under 2 minutes</p>
                 </div>
             </div>
 
-            <div class="values-section fade-in">
-                <div class="values-header">
-                    <h2>Our Values</h2>
-                    <p>The principles that guide everything we do</p>
-                </div>
-                <div class="values-grid">
-                    <div class="value-card">
-                        <div class="value-icon">💡</div>
-                        <h3>Innovation</h3>
-                        <p>We constantly push boundaries and explore new possibilities to deliver cutting-edge solutions that stay ahead of industry trends.</p>
+            <div class="contact-form fade-in">
+                <form id="contactForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" name="firstName" required placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" name="lastName" required placeholder="Doe">
+                        </div>
                     </div>
-                    <div class="value-card">
-                        <div class="value-icon">🤝</div>
-                        <h3>Partnership</h3>
-                        <p>We believe in building lasting relationships with our users, understanding their needs, and growing together as trusted partners.</p>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">⚡</div>
-                        <h3>Simplicity</h3>
-                        <p>Complex problems deserve elegant solutions. We make powerful tools that are intuitive, accessible, and easy to master.</p>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">🎯</div>
-                        <h3>Excellence</h3>
-                        <p>We're committed to delivering exceptional quality in everything we create, from user experience to customer support.</p>
-                    </div>
-                </div>
-            </div>
 
-            <div class="team-section fade-in">
-                <div class="team-header">
-                    <h2>Meet the Team</h2>
-                    <p>The innovators and visionaries driving our mission forward</p>
-                </div>
-                <div class="team-grid">
-                    <div class="team-card">
-                        <div class="team-avatar">👨‍💻</div>
-                        <h3>Alex Chen</h3>
-                        <div class="team-role">Founder & CEO</div>
-                        <p>Visionary leader with 15+ years in tech, passionate about democratizing powerful tools for businesses worldwide.</p>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="john@example.com">
                     </div>
-                    <div class="team-card">
-                        <div class="team-avatar">👩‍🎨</div>
-                        <h3>Sarah Johnson</h3>
-                        <div class="team-role">Head of Design</div>
-                        <p>Creative force behind our intuitive interfaces, dedicated to crafting experiences that users love.</p>
-                    </div>
-                    <div class="team-card">
-                        <div class="team-avatar">👨‍🔧</div>
-                        <h3>Michael Rodriguez</h3>
-                        <div class="team-role">CTO</div>
-                        <p>Technical architect ensuring our platform scales beautifully while maintaining peak performance and reliability.</p>
-                    </div>
-                </div>
-            </div>
 
-            <div class="cta-section fade-in">
-                <h2>Ready to Join Our Journey?</h2>
-                <p>Discover how Inside the Sphere can transform your business communications and drive meaningful growth. Start exploring our tools today and become part of our community of innovators.</p>
-                <a href="https://insidethesphere.com/tools" class="cta-button">Explore Tools</a>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company" placeholder="Your Company Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject *</label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Please select a topic</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="support">Technical Support</option>
+                            <option value="sales">Sales & Pricing</option>
+                            <option value="partnership">Partnership Opportunity</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="bug">Bug Report</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message *</label>
+                        <textarea id="message" name="message" required placeholder="Tell us how we can help you..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
             </div>
         </div>
     </section>
@@ -452,6 +441,47 @@
 
         document.querySelectorAll('.fade-in').forEach(element => {
             observer.observe(element);
+        });
+
+        // Form submission handling
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Simulate form submission
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Thank you for your message! We\'ll get back to you within 4 hours.');
+                this.reset();
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 1500);
+        });
+
+        // Form validation enhancements
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.style.borderColor = '#ff6b6b';
+                } else {
+                    this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.style.borderColor === 'rgb(255, 107, 107)') {
+                    this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                }
+            });
         });
     </script>
 </body>
