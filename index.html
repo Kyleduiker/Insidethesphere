@@ -274,14 +274,6 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            header {
-                padding: 15px 20px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
             .services {
                 padding: 50px 20px;
             }
@@ -305,24 +297,6 @@
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">INSIDE THE SPHERE</div>
-            <ul class="nav-links">
-                <li><a href="https://insidethesphere.com/" class="active">HOME</a></li>
-                <li class="dropdown">
-                    <a href="https://insidethesphere.com/tools">TOOLS</a>
-                    <div class="dropdown-content">
-                        <a href="https://insidethesphere.com/newsletter/" target="_blank">Newsletter Builder</a>
-                    </div>
-                </li>
-                <li><a href="https://insidethesphere.com/videos">VIDEOS</a></li>
-                <li><a href="https://insidethesphere.com/about">ABOUT</a></li>
-                <li><a href="https://insidethesphere.com/contact">CONTACT</a></li>
-            </ul>
-        </nav>
-    </header>
-
     <section class="hero">
         <div class="hero-bg" id="heroBg"></div>
         <div class="hero-content">
@@ -364,16 +338,6 @@
             });
         });
 
-        // Header background on scroll
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(0, 0, 0, 0.95)';
-            } else {
-                header.style.background = 'rgba(0, 0, 0, 0.9)';
-            }
-        });
-
         // Animate service cards on scroll
         const observerOptions = {
             threshold: 0.1,
@@ -390,14 +354,6 @@
 
         document.querySelectorAll('.service-card').forEach(card => {
             observer.observe(card);
-        });
-
-        // Add hover effects to navigation links
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-            });
         });
     </script>
 </body>
