@@ -18,129 +18,9 @@
             overflow-x: hidden;
         }
 
-        /* Header Styles */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            padding: 20px 50px;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-align: center;
-            position: absolute;
-            left: 0;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 40px;
-        }
-
-        .nav-links a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 14px;
-            letter-spacing: 1px;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: #00d4ff;
-        }
-
-        .nav-links a.active {
-            color: #00d4ff;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: #00d4ff;
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after,
-        .nav-links a.active::after {
-            width: 100%;
-        }
-
-        /* Dropdown Menu */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background: rgba(0, 0, 0, 0.95);
-            min-width: 200px;
-            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 10px;
-            z-index: 1000;
-            top: calc(100% + 5px);
-            left: 50%;
-            transform: translateX(-50%);
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .dropdown-content a {
-            color: #fff;
-            padding: 15px 20px;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            margin: 5px;
-        }
-
-        .dropdown-content a:hover {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00d4ff;
-        }
-
-        .dropdown:hover .dropdown-content {
-            display: block;
-            opacity: 1;
-        }
-
-        .dropdown::before {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: -20px;
-            right: -20px;
-            height: 10px;
-            background: transparent;
-        }
-
         /* Page Header */
         .page-header {
-            padding: 120px 50px 80px;
+            padding: 80px 50px 80px;
             background: url('https://i.imgur.com/FTUM2IF.png') center/cover;
             text-align: center;
             position: relative;
@@ -323,16 +203,8 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            header {
-                padding: 15px 20px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
             .page-header {
-                padding: 100px 20px 60px;
+                padding: 60px 20px 60px;
             }
 
             .page-header h1 {
@@ -366,24 +238,6 @@
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">INSIDE THE SPHERE</div>
-            <ul class="nav-links">
-                <li><a href="https://insidethesphere.com/">HOME</a></li>
-                <li class="dropdown">
-                    <a href="https://insidethesphere.com/tools" class="active">TOOLS</a>
-                    <div class="dropdown-content">
-                        <a href="https://insidethesphere.com/newsletter/" target="_blank">Newsletter Builder</a>
-                    </div>
-                </li>
-                <li><a href="https://insidethesphere.com/videos">VIDEOS</a></li>
-                <li><a href="https://insidethesphere.com/about">ABOUT</a></li>
-                <li><a href="https://insidethesphere.com/contact">CONTACT</a></li>
-            </ul>
-        </nav>
-    </header>
-
     <section class="page-header">
         <div class="page-header-content">
             <h1>TOOLS</h1>
@@ -522,16 +376,6 @@
     </section>
 
     <script>
-        // Header background on scroll
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(0, 0, 0, 0.98)';
-            } else {
-                header.style.background = 'rgba(0, 0, 0, 0.95)';
-            }
-        });
-
         // Animate tool cards on scroll
         const observerOptions = {
             threshold: 0.1,
