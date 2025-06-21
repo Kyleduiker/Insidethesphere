@@ -1,16 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<div id="header"></div>
-<script>
-  fetch('/header.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('header').innerHTML = data;
-    })
-    .catch(error => console.error('Error loading header:', error));
-</script>
-
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inside the Sphere</title>
@@ -230,12 +220,45 @@
             background: #111;
         }
 
+        /* Section Header */
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: #aaa;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 50px;
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .services-grid-centered {
+            display: flex;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .services-grid-centered .service-card {
+            max-width: 400px;
+            width: 100%;
         }
 
         .service-card {
@@ -319,27 +342,20 @@
     <section class="hero">
         <div class="hero-bg" id="heroBg"></div>
         <div class="hero-content">
-            <a href="https://insidethesphere.com/tools" class="cta-btn">EXPLORE TOOLS</a>
         </div>
     </section>
 
     <section class="services" id="services">
-        <div class="services-grid">
+        <div class="section-header">
+            <h2>New Featured Tools</h2>
+            <p>Discover our latest innovative solutions designed to streamline your workflow</p>
+        </div>
+        <div class="services-grid-centered">
             <a href="https://insidethesphere.com/newsletter/" class="service-card fade-in" style="text-decoration: none; color: inherit; display: block;">
                 <div class="service-icon">💻</div>
                 <h3>Newsletter Builder</h3>
                 <p>Create stunning, custom newsletters designed for seamless integration with RLP Sphere and all major CRM platforms and email providers. Build engaging content that connects with your audience across any system.</p>
             </a>
-            <div class="service-card fade-in">
-                <div class="service-icon">📈</div>
-                <h3>Analytics Dashboard</h3>
-                <p>Comprehensive analytics and insights to track your performance, understand your audience, and make data-driven decisions that drive growth and engagement.</p>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">💰</div>
-                <h3>Revenue Optimization</h3>
-                <p>Advanced tools and strategies to maximize your revenue potential, optimize conversion rates, and create sustainable growth for your business.</p>
-            </div>
         </div>
     </section>
 
@@ -371,7 +387,7 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.service-card').forEach(card => {
+        document.querySelectorAll('.service-card, .section-header').forEach(card => {
             observer.observe(card);
         });
     </script>
