@@ -1,356 +1,292 @@
-<style>
-/* Header Styles */
-.main-header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    padding: 15px 50px;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Banner - Inside the Sphere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-}
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+        }
 
-/* Logo */
-.header-logo {
-    font-size: 20px;
-    font-weight: bold;
-    letter-spacing: 1.5px;
-    color: #fff;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
+        /* Simple Banner */
+        .simple-banner {
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                        url('https://i.imgur.com/FTUM2IF.png') center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-.header-logo:hover {
-    color: #00d4ff;
-}
+        .banner-container {
+            max-width: 1400px;
+            width: 100%;
+            padding: 0 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* Navigation */
-.header-nav {
-    display: flex;
-    list-style: none;
-    gap: 35px;
-    margin: 0;
-    padding: 0;
-}
+        /* Logo */
+        .banner-logo {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 6px;
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
 
-.nav-item {
-    position: relative;
-}
+        .banner-logo:hover {
+            color: #00d4ff;
+        }
 
-.nav-link {
-    color: #fff;
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    padding: 10px 0;
-    transition: all 0.3s ease;
-    position: relative;
-}
+        /* Navigation */
+        .banner-nav {
+            display: flex;
+            list-style: none;
+            gap: 50px;
+            margin: 0;
+            padding: 0;
+        }
 
-.nav-link:hover {
-    color: #00d4ff;
-}
+        .banner-nav-item {
+            position: relative;
+        }
 
-.nav-link.active {
-    color: #00d4ff;
-}
+        .banner-nav-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 10px 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
 
-.nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: #00d4ff;
-    transition: width 0.3s ease;
-}
+        .banner-nav-link:hover {
+            color: #00d4ff;
+        }
 
-.nav-link:hover::after,
-.nav-link.active::after {
-    width: 100%;
-}
+        .banner-nav-link.active {
+            color: #00d4ff;
+        }
 
-/* Dropdown */
-.dropdown {
-    position: relative;
-}
+        .banner-nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00d4ff;
+            transition: width 0.3s ease;
+        }
 
-.dropdown-arrow {
-    margin-left: 6px;
-    font-size: 12px;
-    transition: transform 0.3s ease;
-    color: #ccc;
-}
+        .banner-nav-link:hover::after,
+        .banner-nav-link.active::after {
+            width: 100%;
+        }
 
-.dropdown:hover .dropdown-arrow {
-    transform: rotate(180deg);
-    color: #00d4ff;
-}
+        /* Dropdown for Tools */
+        .dropdown {
+            position: relative;
+        }
 
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.98);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 12px;
-    padding: 10px 0;
-    min-width: 200px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-50%) translateY(-10px);
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
+        .dropdown-arrow {
+            margin-left: 8px;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+            color: #ccc;
+        }
 
-.dropdown:hover .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
-}
+        .dropdown:hover .dropdown-arrow {
+            transform: rotate(180deg);
+            color: #00d4ff;
+        }
 
-/* Add hover bridge to prevent flickering */
-.dropdown::before {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: -10px;
-    right: -10px;
-    height: 15px;
-    background: transparent;
-    z-index: 1001;
-}
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px 0;
+            min-width: 220px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
 
-.dropdown-item {
-    display: block;
-    color: #ccc;
-    text-decoration: none;
-    padding: 12px 20px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    margin: 0 8px;
-}
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
 
-.dropdown-item:hover {
-    background: rgba(0, 212, 255, 0.2);
-    color: #00d4ff;
-}
+        .dropdown::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: -15px;
+            right: -15px;
+            height: 20px;
+            background: transparent;
+            z-index: 1001;
+        }
 
-/* Header Actions */
-.header-actions {
-    display: flex;
-    align-items: center;
-}
+        .dropdown-item {
+            display: block;
+            color: #ccc;
+            text-decoration: none;
+            padding: 12px 25px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 0 10px;
+            letter-spacing: 1px;
+        }
 
-/* Mobile Menu Toggle */
-.mobile-toggle {
-    display: none;
-    flex-direction: column;
-    cursor: pointer;
-    padding: 5px;
-}
+        .dropdown-item:hover {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
 
-.mobile-toggle span {
-    width: 25px;
-    height: 3px;
-    background: #fff;
-    margin: 3px 0;
-    transition: 0.3s;
-    border-radius: 2px;
-}
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .banner-container {
+                padding: 0 20px;
+                flex-direction: column;
+                gap: 30px;
+                text-align: center;
+            }
 
-.mobile-toggle:hover span {
-    background: #00d4ff;
-}
+            .banner-logo {
+                font-size: 20px;
+                letter-spacing: 4px;
+            }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .main-header {
-        padding: 15px 20px;
-    }
-    
-    .header-nav {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: rgba(0, 0, 0, 0.98);
-        backdrop-filter: blur(15px);
-        flex-direction: column;
-        padding: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        gap: 0;
-    }
-    
-    .header-nav.active {
-        display: flex;
-    }
-    
-    .nav-item {
-        width: 100%;
-        text-align: center;
-        padding: 10px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .nav-item:last-child {
-        border-bottom: none;
-    }
-    
-    .dropdown-menu {
-        position: static;
-        transform: none;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        margin: 10px 0;
-        box-shadow: none;
-    }
-    
-    .header-actions {
-        gap: 0;
-    }
-    
-    .mobile-toggle {
-        display: flex;
-    }
-}
+            .banner-nav {
+                flex-direction: column;
+                gap: 25px;
+            }
 
-/* Scroll effect */
-.main-header.scrolled {
-    background: rgba(0, 0, 0, 0.98);
-    padding: 12px 50px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
+            .banner-nav-link {
+                font-size: 14px;
+                letter-spacing: 1px;
+            }
 
-@media (max-width: 768px) {
-    .main-header.scrolled {
-        padding: 12px 20px;
-    }
-}
-</style>
+            .dropdown-menu {
+                position: static;
+                transform: none;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                margin: 15px 0;
+                box-shadow: none;
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+        }
 
-<header class="main-header">
-    <div class="header-container">
-        <!-- Logo -->
-        <a href="https://insidethesphere.com/" class="header-logo">
-            INSIDE THE SPHERE
-        </a>
+        /* Subtle animation */
+        .banner-container {
+            animation: fadeIn 1.5s ease;
+        }
 
-        <!-- Navigation -->
-        <nav>
-            <ul class="header-nav" id="headerNav">
-                <li class="nav-item">
-                    <a href="https://insidethesphere.com/" class="nav-link">HOME</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a href="https://insidethesphere.com/tools" class="nav-link">
-                        TOOLS
-                        <span class="dropdown-arrow">▼</span>
-                    </a>
-                    <div class="dropdown-menu">
-                        <a href="https://insidethesphere.com/newsletter/" class="dropdown-item" target="_blank">Newsletter Builder</a>
-                        <a href="https://insidethesphere.com/tools" class="dropdown-item">All Tools</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a href="https://insidethesphere.com/videos" class="nav-link">VIDEOS</a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://insidethesphere.com/about" class="nav-link">ABOUT</a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://insidethesphere.com/contact" class="nav-link">CONTACT</a>
-                </li>
-            </ul>
-        </nav>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Simple Clean Banner -->
+    <section class="simple-banner">
+        <div class="banner-container">
+            <!-- Logo -->
+            <a href="https://insidethesphere.com/" class="banner-logo">
+                INSIDE THE SPHERE
+            </a>
 
-        <!-- Header Actions -->
-        <div class="header-actions">
-            <!-- Mobile Menu Toggle -->
-            <div class="mobile-toggle" id="mobileToggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+            <!-- Navigation -->
+            <nav>
+                <ul class="banner-nav">
+                    <li class="banner-nav-item">
+                        <a href="https://insidethesphere.com/" class="banner-nav-link">HOME</a>
+                    </li>
+                    <li class="banner-nav-item dropdown">
+                        <a href="https://insidethesphere.com/tools" class="banner-nav-link">
+                            TOOLS
+                            <span class="dropdown-arrow">▼</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="https://insidethesphere.com/newsletter/" class="dropdown-item">Newsletter Builder</a>
+                            <a href="https://insidethesphere.com/tools" class="dropdown-item">All Tools</a>
+                        </div>
+                    </li>
+                    <li class="banner-nav-item">
+                        <a href="https://insidethesphere.com/videos" class="banner-nav-link">VIDEOS</a>
+                    </li>
+                    <li class="banner-nav-item">
+                        <a href="https://insidethesphere.com/about" class="banner-nav-link">ABOUT</a>
+                    </li>
+                    <li class="banner-nav-item">
+                        <a href="https://insidethesphere.com/contact" class="banner-nav-link">CONTACT</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
-    </div>
-</header>
+    </section>
 
-<script>
-// Header scroll effect
-window.addEventListener('scroll', () => {
-    const header = document.querySelector('.main-header');
-    if (window.scrollY > 50) {
-        header.classList.add('scrolled');
-    } else {
-        header.classList.remove('scrolled');
-    }
-});
+    <script>
+        // Set active navigation link based on current page
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.banner-nav-link');
 
-// Mobile menu toggle
-const mobileToggle = document.getElementById('mobileToggle');
-const headerNav = document.getElementById('headerNav');
-
-if (mobileToggle && headerNav) {
-    mobileToggle.addEventListener('click', () => {
-        headerNav.classList.toggle('active');
-        mobileToggle.classList.toggle('active');
-    });
-}
-
-// Set active navigation link based on current page
-const currentPath = window.location.pathname;
-const navLinks = document.querySelectorAll('.nav-link');
-
-navLinks.forEach(link => {
-    const linkPath = new URL(link.href).pathname;
-    
-    // Remove active class from all links
-    link.classList.remove('active');
-    
-    // Add active class to current page
-    if (currentPath === linkPath || 
-        (currentPath === '/' && linkPath === '/') ||
-        (currentPath.includes('/tools') && linkPath.includes('/tools')) ||
-        (currentPath.includes('/videos') && linkPath.includes('/videos')) ||
-        (currentPath.includes('/about') && linkPath.includes('/about')) ||
-        (currentPath.includes('/contact') && linkPath.includes('/contact'))) {
-        link.classList.add('active');
-    }
-});
-
-// Close mobile menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.main-header')) {
-        headerNav.classList.remove('active');
-        mobileToggle.classList.remove('active');
-    }
-});
-
-// Close mobile menu when clicking on a link
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        headerNav.classList.remove('active');
-        mobileToggle.classList.remove('active');
-    });
-});
-</script>
+        navLinks.forEach(link => {
+            const linkPath = new URL(link.href).pathname;
+            
+            // Remove active class from all links
+            link.classList.remove('active');
+            
+            // Add active class to current page
+            if (currentPath === linkPath || 
+                (currentPath === '/' && linkPath === '/') ||
+                (currentPath.includes('/tools') && linkPath.includes('/tools')) ||
+                (currentPath.includes('/videos') && linkPath.includes('/videos')) ||
+                (currentPath.includes('/about') && linkPath.includes('/about')) ||
+                (currentPath.includes('/contact') && linkPath.includes('/contact'))) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
