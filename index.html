@@ -220,45 +220,12 @@
             background: #111;
         }
 
-        /* Section Header */
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            color: #00d4ff;
-        }
-
-        .section-header p {
-            font-size: 1.1rem;
-            color: #aaa;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 50px;
             max-width: 1200px;
             margin: 0 auto;
-        }
-
-        .services-grid-centered {
-            display: flex;
-            justify-content: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .services-grid-centered .service-card {
-            max-width: 400px;
-            width: 100%;
         }
 
         .service-card {
@@ -307,6 +274,14 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
             .services {
                 padding: 50px 20px;
             }
@@ -330,32 +305,48 @@
     </style>
 </head>
 <body>
-    <div id="header"></div>
-    <script>
-      fetch('/header.html')
-        .then(res => res.text())
-        .then(data => {
-          document.getElementById('header').innerHTML = data;
-        });
-    </script>
+    <header>
+        <nav>
+            <div class="logo">INSIDE THE SPHERE</div>
+            <ul class="nav-links">
+                <li><a href="https://insidethesphere.com/" class="active">HOME</a></li>
+                <li class="dropdown">
+                    <a href="https://insidethesphere.com/tools">TOOLS</a>
+                    <div class="dropdown-content">
+                        <a href="https://insidethesphere.com/newsletter/" target="_blank">Newsletter Builder</a>
+                    </div>
+                </li>
+                <li><a href="https://insidethesphere.com/videos">VIDEOS</a></li>
+                <li><a href="https://insidethesphere.com/about">ABOUT</a></li>
+                <li><a href="https://insidethesphere.com/contact">CONTACT</a></li>
+            </ul>
+        </nav>
+    </header>
 
     <section class="hero">
         <div class="hero-bg" id="heroBg"></div>
         <div class="hero-content">
+            <a href="https://insidethesphere.com/tools" class="cta-btn">EXPLORE TOOLS</a>
         </div>
     </section>
 
     <section class="services" id="services">
-        <div class="section-header">
-            <h2>New Featured Tools</h2>
-            <p>Discover our latest innovative solutions designed to streamline your workflow</p>
-        </div>
-        <div class="services-grid-centered">
+        <div class="services-grid">
             <a href="https://insidethesphere.com/newsletter/" class="service-card fade-in" style="text-decoration: none; color: inherit; display: block;">
                 <div class="service-icon">💻</div>
                 <h3>Newsletter Builder</h3>
                 <p>Create stunning, custom newsletters designed for seamless integration with RLP Sphere and all major CRM platforms and email providers. Build engaging content that connects with your audience across any system.</p>
             </a>
+            <div class="service-card fade-in">
+                <div class="service-icon">📈</div>
+                <h3>Analytics Dashboard</h3>
+                <p>Comprehensive analytics and insights to track your performance, understand your audience, and make data-driven decisions that drive growth and engagement.</p>
+            </div>
+            <div class="service-card fade-in">
+                <div class="service-icon">💰</div>
+                <h3>Revenue Optimization</h3>
+                <p>Advanced tools and strategies to maximize your revenue potential, optimize conversion rates, and create sustainable growth for your business.</p>
+            </div>
         </div>
     </section>
 
@@ -373,6 +364,16 @@
             });
         });
 
+        // Header background on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(0, 0, 0, 0.95)';
+            } else {
+                header.style.background = 'rgba(0, 0, 0, 0.9)';
+            }
+        });
+
         // Animate service cards on scroll
         const observerOptions = {
             threshold: 0.1,
@@ -387,9 +388,18 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.service-card, .section-header').forEach(card => {
+        document.querySelectorAll('.service-card').forEach(card => {
             observer.observe(card);
+        });
+
+        // Add hover effects to navigation links
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
         });
     </script>
 </body>
 </html>
+
