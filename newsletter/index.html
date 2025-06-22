@@ -2012,8 +2012,156 @@
                         </div>
                     </div>
                     
+                    ${(stats.detachedPrice || stats.semiPrice || stats.rowPrice || stats.apartmentPrice) ? generatePropertyTypeBreakdown(stats, headerFont) : ''}
+                    
+                    <!-- Market Stats Disclaimer -->
+                    <div style="background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #0c5460; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Disclaimer</div>
+                        <p style="font-size: 12px; line-height: 1.4; color: #0c5460; margin: 0; font-family: Arial, sans-serif;">
+                            <strong>Disclaimer:</strong> The statistics and market data presented in this report have been provided by the Calgary Real Estate Board (CREB®). While every effort has been made to ensure accuracy, the information is subject to change and should not be considered as financial or investment advice.
+                        </p>
+                    </div>
+                    
                     <div style="text-align: center; margin-top: 30px;">
                         <a href="${newsletterData.content.marketButtonUrl || '#'}" style="display: inline-block; background: ${newsletterData.design.buttonColors.marketReport}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;" target="_blank">${newsletterData.content.marketButtonText || 'View Full Market Report'}</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Property type breakdown for preview
+        function generatePropertyTypeBreakdown(stats, headerFont) {
+            return `
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                    <h3 style="font-family: ${headerFont}; font-size: 18px; font-weight: 500; text-align: center; margin-bottom: 25px; color: #333;">Property Type Market Analysis</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        ${stats.detachedPrice ? `
+                        <div style="background: white; padding: 20px; border-radius: 12px; border-left: 4px solid #EA102A; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏠 Detached Homes</div>
+                            <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.detachedPrice}</div>
+                            <div style="font-size: 13px; color: ${stats.detachedChange && stats.detachedChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.detachedChange || 'N/A'} Y/Y</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.detachedSales || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                    ${stats.detachedSalesChange ? `<div style="font-size: 10px; color: ${stats.detachedSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.detachedSalesChange}</div>` : ''}
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.detachedListings || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                    ${stats.detachedListingsChange ? `<div style="font-size: 10px; color: ${stats.detachedListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.detachedListingsChange}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.detachedInventory || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.detachedSupply || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${stats.semiPrice ? `
+                        <div style="background: white; padding: 20px; border-radius: 12px; border-left: 4px solid #2563eb; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏘️ Semi-Detached</div>
+                            <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.semiPrice}</div>
+                            <div style="font-size: 13px; color: ${stats.semiChange && stats.semiChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.semiChange || 'N/A'} Y/Y</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.semiSales || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                    ${stats.semiSalesChange ? `<div style="font-size: 10px; color: ${stats.semiSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.semiSalesChange}</div>` : ''}
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.semiListings || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                    ${stats.semiListingsChange ? `<div style="font-size: 10px; color: ${stats.semiListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.semiListingsChange}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.semiInventory || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.semiSupply || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${stats.rowPrice ? `
+                        <div style="background: white; padding: 20px; border-radius: 12px; border-left: 4px solid #28a745; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏘️ Row/Townhome</div>
+                            <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.rowPrice}</div>
+                            <div style="font-size: 13px; color: ${stats.rowChange && stats.rowChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.rowChange || 'N/A'} Y/Y</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.rowSales || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                    ${stats.rowSalesChange ? `<div style="font-size: 10px; color: ${stats.rowSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.rowSalesChange}</div>` : ''}
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.rowListings || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                    ${stats.rowListingsChange ? `<div style="font-size: 10px; color: ${stats.rowListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.rowListingsChange}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.rowInventory || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.rowSupply || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${stats.apartmentPrice ? `
+                        <div style="background: white; padding: 20px; border-radius: 12px; border-left: 4px solid #ff9800; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏢 Apartment/Condo</div>
+                            <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.apartmentPrice}</div>
+                            <div style="font-size: 13px; color: ${stats.apartmentChange && stats.apartmentChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.apartmentChange || 'N/A'} Y/Y</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.apartmentSales || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                    ${stats.apartmentSalesChange ? `<div style="font-size: 10px; color: ${stats.apartmentSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.apartmentSalesChange}</div>` : ''}
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.apartmentListings || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                    ${stats.apartmentListingsChange ? `<div style="font-size: 10px; color: ${stats.apartmentListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.apartmentListingsChange}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.apartmentInventory || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.apartmentSupply || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
