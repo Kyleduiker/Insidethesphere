@@ -116,6 +116,8 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            background-size: cover;
+            background-position: center;
         }
 
         .video-thumbnail::before {
@@ -226,7 +228,100 @@
             box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
         }
 
-        /* Mobile Responsive */
+        /* Modal Styles */
+        .video-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .video-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            background: #111;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            color: #00d4ff;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Mobile Modal Adjustments */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 20px;
+            }
+            
+            .modal-header {
+                padding: 15px;
+            }
+            
+            .modal-title {
+                font-size: 1rem;
+            }
+        }
         @media (max-width: 768px) {
             .page-header {
                 padding: 60px 20px 60px;
@@ -290,86 +385,16 @@
         </div>
 
         <div class="videos-grid">
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
+            <div class="video-card fade-in" data-video-id="VfNtGfe1ERc" data-loading="true">
+                <div class="video-thumbnail" style="background-image: url('https://img.youtube.com/vi/VfNtGfe1ERc/maxresdefault.jpg')">
                     <div class="play-button">▶</div>
                 </div>
                 <div class="video-content">
-                    <h3 class="video-title">Getting Started with Newsletter Builder</h3>
-                    <p class="video-description">Learn how to create your first newsletter using our intuitive drag-and-drop builder. Perfect for beginners!</p>
+                    <h3 class="video-title">Loading...</h3>
+                    <p class="video-description">Fetching video details from YouTube...</p>
                     <div class="video-meta">
-                        <span>Tutorial</span>
-                        <span class="video-duration">12:34</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
-                    <div class="play-button">▶</div>
-                </div>
-                <div class="video-content">
-                    <h3 class="video-title">Advanced Email Marketing Strategies</h3>
-                    <p class="video-description">Discover proven techniques to increase open rates, click-through rates, and conversions in your email campaigns.</p>
-                    <div class="video-meta">
-                        <span>Masterclass</span>
-                        <span class="video-duration">28:15</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
-                    <div class="play-button">▶</div>
-                </div>
-                <div class="video-content">
-                    <h3 class="video-title">CRM Integration Best Practices</h3>
-                    <p class="video-description">Step-by-step guide to seamlessly integrate your newsletters with popular CRM platforms for maximum efficiency.</p>
-                    <div class="video-meta">
-                        <span>Technical Guide</span>
-                        <span class="video-duration">18:42</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
-                    <div class="play-button">▶</div>
-                </div>
-                <div class="video-content">
-                    <h3 class="video-title">Design Principles for Email Success</h3>
-                    <p class="video-description">Master the art of email design with professional tips on layout, typography, and visual hierarchy.</p>
-                    <div class="video-meta">
-                        <span>Design Tutorial</span>
-                        <span class="video-duration">22:08</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
-                    <div class="play-button">▶</div>
-                </div>
-                <div class="video-content">
-                    <h3 class="video-title">Analytics Deep Dive</h3>
-                    <p class="video-description">Understand your email performance with comprehensive analytics tracking and reporting strategies.</p>
-                    <div class="video-meta">
-                        <span>Analytics</span>
-                        <span class="video-duration">16:55</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="video-card fade-in">
-                <div class="video-thumbnail">
-                    <div class="play-button">▶</div>
-                </div>
-                <div class="video-content">
-                    <h3 class="video-title">Mobile-First Email Design</h3>
-                    <p class="video-description">Create newsletters that look perfect on every device with our mobile-first design approach and responsive techniques.</p>
-                    <div class="video-meta">
-                        <span>Mobile Design</span>
-                        <span class="video-duration">14:27</span>
+                        <span>YouTube</span>
+                        <span class="video-duration">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -384,7 +409,119 @@
         </div>
     </section>
 
+    <!-- Video Modal -->
+    <div id="video-modal" class="video-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">Video Player</div>
+                <button class="close-button" id="close-modal">&times;</button>
+            </div>
+            <div class="video-container">
+                <iframe id="youtube-player" src="" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Fetch YouTube video details
+        async function fetchYouTubeVideoDetails(videoId) {
+            try {
+                // Method 1: Try oEmbed endpoint
+                const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+                const response = await fetch(oEmbedUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        title: data.title,
+                        description: data.title, // oEmbed doesn't provide description
+                        author: data.author_name,
+                        duration: 'YouTube'
+                    };
+                }
+            } catch (error) {
+                console.log('oEmbed failed, using fallback');
+            }
+
+            // Fallback: Manual data for known videos
+            const knownVideos = {
+                'VfNtGfe1ERc': {
+                    title: 'Your Video Title Here',
+                    description: 'Add a custom description for this video content.',
+                    author: 'Your Channel',
+                    duration: 'YouTube'
+                }
+            };
+
+            return knownVideos[videoId] || {
+                title: 'YouTube Video',
+                description: 'Click to watch this video.',
+                author: 'YouTube',
+                duration: 'YouTube'
+            };
+        }
+
+        // Update video card with fetched details
+        async function updateVideoCard(videoCard) {
+            const videoId = videoCard.getAttribute('data-video-id');
+            const titleElement = videoCard.querySelector('.video-title');
+            const descriptionElement = videoCard.querySelector('.video-description');
+            const metaElement = videoCard.querySelector('.video-meta span:first-child');
+
+            try {
+                const details = await fetchYouTubeVideoDetails(videoId);
+                
+                titleElement.textContent = details.title;
+                descriptionElement.textContent = details.description;
+                metaElement.textContent = details.author;
+                
+                videoCard.setAttribute('data-loading', 'false');
+            } catch (error) {
+                console.error('Error fetching video details:', error);
+                titleElement.textContent = 'YouTube Video';
+                descriptionElement.textContent = 'Unable to load video details.';
+            }
+        }
+
+        // Modal elements
+        const modal = document.getElementById('video-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const youtubePlayer = document.getElementById('youtube-player');
+        const closeModal = document.getElementById('close-modal');
+
+        // Open video modal
+        function openVideoModal(videoId, title) {
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            youtubePlayer.src = embedUrl;
+            modalTitle.textContent = title;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        // Close video modal
+        function closeVideoModal() {
+            modal.classList.remove('active');
+            youtubePlayer.src = ''; // Stop video playback
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Event listeners
+        closeModal.addEventListener('click', closeVideoModal);
+        
+        // Close modal when clicking outside content
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeVideoModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeVideoModal();
+            }
+        });
+
         // Animate elements on scroll
         const observerOptions = {
             threshold: 0.1,
@@ -399,15 +536,23 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.fade-in').forEach(element => {
-            observer.observe(element);
-        });
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch video details for all video cards
+            document.querySelectorAll('.video-card[data-loading="true"]').forEach(updateVideoCard);
+            
+            // Observe fade-in elements
+            document.querySelectorAll('.fade-in').forEach(element => {
+                observer.observe(element);
+            });
 
-        // Video card click handling (placeholder)
-        document.querySelectorAll('.video-card').forEach(card => {
-            card.addEventListener('click', () => {
-                // Placeholder for video modal or redirect
-                console.log('Video clicked:', card.querySelector('.video-title').textContent);
+            // Add click handlers for video cards
+            document.querySelectorAll('.video-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const videoId = card.getAttribute('data-video-id');
+                    const title = card.querySelector('.video-title').textContent;
+                    openVideoModal(videoId, title);
+                });
             });
         });
     </script>
