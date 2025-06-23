@@ -16,7 +16,8 @@
             background: #000;
             color: #fff;
             overflow-x: hidden;
-            min-height: 100vh;
+            min-height: 200vh;
+            padding-top: 80px;
         }
 
         /* Header Styles */
@@ -165,6 +166,12 @@
             padding-left: 25px;
         }
 
+        .dropdown-content a[style*="cursor: default"]:hover {
+            background: transparent;
+            color: #666;
+            padding-left: 20px;
+        }
+
         .dropdown:hover .dropdown-content {
             display: block;
             opacity: 1;
@@ -183,31 +190,7 @@
             background: transparent;
         }
 
-        .social-icons {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
 
-        .social-icons a {
-            color: #fff;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            padding: 8px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .social-icons a:hover {
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.2);
-            transform: translateY(-2px) scale(1.1);
-        }
 
         /* Mobile Menu Button */
         .mobile-menu-btn {
@@ -280,33 +263,7 @@
             color: #00d4ff;
         }
 
-        /* Demo Content */
-        .demo-content {
-            margin-top: 100px;
-            padding: 50px 20px;
-            text-align: center;
-            min-height: 80vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
 
-        .demo-content h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #00d4ff, #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .demo-content p {
-            font-size: 1.2rem;
-            opacity: 0.7;
-            max-width: 600px;
-            line-height: 1.6;
-        }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -318,8 +275,7 @@
                 padding: 12px 20px;
             }
 
-            .nav-center,
-            .social-icons {
+            .nav-center {
                 display: none;
             }
 
@@ -327,13 +283,7 @@
                 display: flex;
             }
 
-            .demo-content h1 {
-                font-size: 2rem;
-            }
 
-            .demo-content p {
-                font-size: 1rem;
-            }
         }
 
         /* Animations */
@@ -376,20 +326,13 @@
                         <a href="https://insidethesphere.com/tools">TOOLS</a>
                         <div class="dropdown-content">
                             <a href="https://insidethesphere.com/newsletter/" target="_blank">Newsletter Builder</a>
-                            <a href="#" target="_blank">Analytics Dashboard</a>
-                            <a href="#" target="_blank">Revenue Optimizer</a>
+                            <a href="#" style="opacity: 0.6; cursor: default;">Coming Soon</a>
                         </div>
                     </li>
                     <li><a href="https://insidethesphere.com/videos">VIDEOS</a></li>
                     <li><a href="https://insidethesphere.com/about">ABOUT</a></li>
                     <li><a href="https://insidethesphere.com/contact">CONTACT</a></li>
                 </ul>
-            </div>
-
-            <div class="social-icons">
-                <a href="#" title="LinkedIn">📧</a>
-                <a href="#" title="Twitter">🐦</a>
-                <a href="#" title="YouTube">📺</a>
             </div>
 
             <div class="mobile-menu-btn" id="mobileMenuBtn">
@@ -411,11 +354,7 @@
         </div>
     </header>
 
-    <!-- Demo Content -->
-    <div class="demo-content">
-        <h1>Header Demo</h1>
-        <p>Scroll down to see the header effect. The header will become more opaque and compact as you scroll. Try the dropdown menu and mobile responsive features.</p>
-    </div>
+
 
     <script>
         // Header scroll effect
