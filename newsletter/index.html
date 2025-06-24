@@ -1,15 +1,4 @@
-<body>
-    <div id="header"></div>
-    <script>
-      fetch('/header.html')
-        .then(res => res.text())
-        .then(data => {
-          document.getElementById('header').innerHTML = data;
-        });
-    </script>
-    
-    <a href="#main-content" class="skip-link">Skip to main content</a>
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -668,6 +657,15 @@
     </style>
 </head>
 <body>
+    <div id="header"></div>
+    <script>
+      fetch('/header.html')
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById('header').innerHTML = data;
+        });
+    </script>
+    
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
     <div class="toast-container" id="toastContainer"></div>
@@ -2936,4 +2934,4 @@
         });
     </script>
 </body>
-</html>   
+</html>
