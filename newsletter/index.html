@@ -2518,7 +2518,7 @@
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
                                 <tr>
                                     <td align="center">
-                                        <h2 style="font-family: ${newsletterData.design.headerFont}; font-size: 28px; font-weight: 300; color: #333; margin: 0;">${newsletterData.content.customSubtitle || config.subtitle}</h2>
+                                        <h2 style="font-family: Arial, sans-serif; font-size: 28px; font-weight: 300; color: #333; margin: 0;">${newsletterData.content.customSubtitle || config.subtitle}</h2>
                                     </td>
                                 </tr>
                             </table>
@@ -2526,7 +2526,7 @@
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 40px 0;">
                                 <tr>
                                     <td style="background-color: #f8f9fa; border-left: 4px solid #EA102A; border-radius: 8px; padding: 25px; text-align: center;">
-                                        <p style="font-family: ${newsletterData.design.bodyFont}; font-size: 16px; line-height: 1.8; color: #555; margin: 0; font-style: italic;">${newsletterData.content.personalMessage}</p>
+                                        <p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.8; color: #555; margin: 0; font-style: italic;">${newsletterData.content.personalMessage}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -2560,10 +2560,9 @@
 
         function generateEmailBannerHTML(config) {
             const bannerStyle = newsletterData.design.bannerStyle;
-            const headerFont = newsletterData.design.headerFont;
             
             if (bannerStyle === 'none') {
-                return `<h1 style="font-family: ${headerFont}; font-size: 36px; font-weight: 400; letter-spacing: 3px; margin: 0; color: #333; text-align: center;">${config.title}</h1>`;
+                return `<h1 style="font-family: Arial, sans-serif; font-size: 36px; font-weight: 400; letter-spacing: 3px; margin: 0; color: #333; text-align: center;">${config.title}</h1>`;
             }
             
             let backgroundImage = '';
@@ -2578,7 +2577,7 @@
                         <tr>
                             <td style="background-image: url('${backgroundImage}'); background-size: cover; background-position: center; border-radius: 20px; height: 300px; position: relative;" background="${backgroundImage}" valign="middle" align="center">
                                 <div style="background-color: rgba(0,0,0,0.3); padding: 50px; border-radius: 20px;">
-                                    <h1 style="font-family: ${headerFont}; font-size: 42px; font-weight: 400; letter-spacing: 4px; margin: 0; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: center;">${config.title}</h1>
+                                    <h1 style="font-family: Arial, sans-serif; font-size: 42px; font-weight: 400; letter-spacing: 4px; margin: 0; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: center;">${config.title}</h1>
                                 </div>
                             </td>
                         </tr>
@@ -2586,7 +2585,7 @@
                 `;
             }
             
-            return `<h1 style="font-family: ${headerFont}; font-size: 36px; font-weight: 400; letter-spacing: 3px; margin: 0; color: #333; text-align: center; border-bottom: 2px solid #EA102A; padding-bottom: 10px; display: inline-block;">${config.title}</h1>`;
+            return `<h1 style="font-family: Arial, sans-serif; font-size: 36px; font-weight: 400; letter-spacing: 3px; margin: 0; color: #333; text-align: center; border-bottom: 2px solid #EA102A; padding-bottom: 10px; display: inline-block;">${config.title}</h1>`;
         }
 
         function generateEmailActionButtons() {
@@ -2645,7 +2644,7 @@
             const previousMonth = monthNames[previousIndex].charAt(0).toUpperCase() + monthNames[previousIndex].slice(1);
             
             return `
-                <h2 style="font-family: ${newsletterData.design.headerFont}; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">Snapshot of ${previousMonth} STATISTICS</h2>
+                <h2 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">Snapshot of ${previousMonth} STATISTICS</h2>
                 
                 <!-- Main Stats Table -->
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
@@ -2686,6 +2685,48 @@
                     </tr>
                 </table>
                 
+                <!-- Supply Metrics -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
+                    <tr>
+                        <td width="50%" style="padding: 10px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9f9f9; border-radius: 8px;">
+                                <tr>
+                                    <td style="padding: 20px; text-align: center;">
+                                        <div style="font-size: 24px; font-weight: 600; color: #ff9800; margin-bottom: 5px;">${stats.inventory}</div>
+                                        <div style="font-size: 12px; color: #666; text-transform: uppercase;">Total Inventory</div>
+                                        <div style="font-size: 14px; font-weight: 500; color: ${stats.inventoryChange && stats.inventoryChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.inventoryChange || 'N/A'} Y/Y</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td width="50%" style="padding: 10px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9f9f9; border-radius: 8px;">
+                                <tr>
+                                    <td style="padding: 20px; text-align: center;">
+                                        <div style="font-size: 24px; font-weight: 600; color: #6366f1; margin-bottom: 5px;">${stats.monthsOfSupply || stats.daysOnMarket + ' days'}</div>
+                                        <div style="font-size: 12px; color: #666; text-transform: uppercase;">${stats.monthsOfSupply ? 'Months of Supply' : 'Days on Market'}</div>
+                                        <div style="font-size: 14px; font-weight: 500; color: ${stats.supplyChange && stats.supplyChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.supplyChange || 'Balanced'}</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                
+                ${generateEmailPropertyTypeBreakdown(stats)}
+                
+                <!-- Market Stats Disclaimer -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 20px 0;">
+                    <tr>
+                        <td style="background-color: #f8f9fa; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #0c5460; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Disclaimer</div>
+                            <p style="font-size: 12px; line-height: 1.4; color: #0c5460; margin: 0; font-family: Arial, sans-serif;">
+                                <strong>Disclaimer:</strong> The statistics and market data presented in this report have been provided by the Calgary Real Estate Board (CREB®). While every effort has been made to ensure accuracy, the information is subject to change and should not be considered as financial or investment advice.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
                 <!-- Market Button -->
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
                     <tr>
@@ -2703,6 +2744,229 @@
             `;
         }
 
+        function generateEmailPropertyTypeBreakdown(stats) {
+            if (!stats.detachedPrice && !stats.semiPrice && !stats.rowPrice && !stats.apartmentPrice) {
+                return '';
+            }
+            
+            return `
+                <!-- Property Type Analysis -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                    <tr>
+                        <td>
+                            <h3 style="font-family: Arial, sans-serif; font-size: 18px; font-weight: 500; text-align: center; margin-bottom: 25px; color: #333;">Property Type Market Analysis</h3>
+                            
+                            <!-- Property Types Grid -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    ${stats.detachedPrice ? `
+                                    <td width="50%" style="padding: 10px; vertical-align: top;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: white; padding: 20px; border-radius: 12px; border-left: 4px solid #EA102A;">
+                                            <tr>
+                                                <td>
+                                                    <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏠 Detached Homes</div>
+                                                    <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.detachedPrice}</div>
+                                                    <div style="font-size: 13px; color: ${stats.detachedChange && stats.detachedChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.detachedChange || 'N/A'} Y/Y</div>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 12px;">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.detachedSales || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                                                    ${stats.detachedSalesChange ? `<div style="font-size: 10px; color: ${stats.detachedSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.detachedSalesChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.detachedListings || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                                                    ${stats.detachedListingsChange ? `<div style="font-size: 10px; color: ${stats.detachedListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.detachedListingsChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.detachedInventory || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.detachedSupply || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    ` : ''}
+                                    
+                                    ${stats.semiPrice ? `
+                                    <td width="50%" style="padding: 10px; vertical-align: top;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: white; padding: 20px; border-radius: 12px; border-left: 4px solid #2563eb;">
+                                            <tr>
+                                                <td>
+                                                    <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏘️ Semi-Detached</div>
+                                                    <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.semiPrice}</div>
+                                                    <div style="font-size: 13px; color: ${stats.semiChange && stats.semiChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.semiChange || 'N/A'} Y/Y</div>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 12px;">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.semiSales || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                                                    ${stats.semiSalesChange ? `<div style="font-size: 10px; color: ${stats.semiSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.semiSalesChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.semiListings || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                                                    ${stats.semiListingsChange ? `<div style="font-size: 10px; color: ${stats.semiListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.semiListingsChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.semiInventory || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.semiSupply || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    ` : ''}
+                                </tr>
+                                <tr>
+                                    ${stats.rowPrice ? `
+                                    <td width="50%" style="padding: 10px; vertical-align: top;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: white; padding: 20px; border-radius: 12px; border-left: 4px solid #28a745;">
+                                            <tr>
+                                                <td>
+                                                    <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏘️ Row/Townhome</div>
+                                                    <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.rowPrice}</div>
+                                                    <div style="font-size: 13px; color: ${stats.rowChange && stats.rowChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.rowChange || 'N/A'} Y/Y</div>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 12px;">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.rowSales || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                                                    ${stats.rowSalesChange ? `<div style="font-size: 10px; color: ${stats.rowSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.rowSalesChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.rowListings || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                                                    ${stats.rowListingsChange ? `<div style="font-size: 10px; color: ${stats.rowListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.rowListingsChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.rowInventory || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.rowSupply || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    ` : ''}
+                                    
+                                    ${stats.apartmentPrice ? `
+                                    <td width="50%" style="padding: 10px; vertical-align: top;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: white; padding: 20px; border-radius: 12px; border-left: 4px solid #ff9800;">
+                                            <tr>
+                                                <td>
+                                                    <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">🏢 Apartment/Condo</div>
+                                                    <div style="font-size: 22px; font-weight: 700; color: #333; margin-bottom: 8px;">${stats.apartmentPrice}</div>
+                                                    <div style="font-size: 13px; color: ${stats.apartmentChange && stats.apartmentChange.startsWith('-') ? '#dc3545' : '#28a745'}; font-weight: 600; margin-bottom: 15px;">${stats.apartmentChange || 'N/A'} Y/Y</div>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 12px;">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #EA102A;">${stats.apartmentSales || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Sales</div>
+                                                                    ${stats.apartmentSalesChange ? `<div style="font-size: 10px; color: ${stats.apartmentSalesChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.apartmentSalesChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #2563eb;">${stats.apartmentListings || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Listings</div>
+                                                                    ${stats.apartmentListingsChange ? `<div style="font-size: 10px; color: ${stats.apartmentListingsChange.startsWith('-') ? '#dc3545' : '#28a745'};">${stats.apartmentListingsChange}</div>` : ''}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                    
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #28a745;">${stats.apartmentInventory || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Inventory</div>
+                                                                </div>
+                                                            </td>
+                                                            <td width="50%" style="padding: 5px;">
+                                                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">
+                                                                    <div style="font-size: 16px; font-weight: 600; color: #ff9800;">${stats.apartmentSupply || 'N/A'}</div>
+                                                                    <div style="font-size: 10px; color: #666; text-transform: uppercase;">Mos. Supply</div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    ` : ''}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            `;
+        }
+
         function generateEmailEvents() {
             if (!newsletterData.customEvents || newsletterData.customEvents.length === 0) {
                 return '';
@@ -2711,7 +2975,7 @@
             const sortedEvents = newsletterData.customEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             return `
-                <h2 style="font-family: ${newsletterData.design.headerFont}; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">Community CALENDAR</h2>
+                <h2 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">Community CALENDAR</h2>
                 ${sortedEvents.map(event => `
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 20px; border: 1px solid #f0f0f0; border-radius: 8px; background-color: #fafafa;">
                         <tr>
@@ -2725,6 +2989,7 @@
                                         </td>
                                         <td style="vertical-align: top;">
                                             <h3 style="font-size: 16px; font-weight: 500; margin: 0 0 5px 0; color: #333;">${event.title}</h3>
+                                            ${event.startTime ? `<p style="font-size: 13px; color: #666; margin: 0 0 5px 0;">🕐 ${formatEventTime(event.startTime, event.endTime)}</p>` : ''}
                                             ${event.location ? `<p style="font-size: 13px; color: #666; margin: 0 0 5px 0;">📍 ${event.location}</p>` : ''}
                                             ${event.description ? `<p style="font-size: 12px; color: #999; margin: 5px 0 0 0; font-style: italic;">${event.description}</p>` : ''}
                                             ${event.detailsLink ? `
@@ -2753,7 +3018,7 @@
 
         function generateEmailMaintenanceTips(config) {
             return `
-                <h2 style="font-family: ${newsletterData.design.headerFont}; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">${newsletterData.content.newsletterSeason.charAt(0).toUpperCase() + newsletterData.content.newsletterSeason.slice(1)} Maintenance TIPS</h2>
+                <h2 style="font-family: Arial, sans-serif; font-size: 24px; font-weight: 400; text-align: center; margin: 0 0 30px 0;">${newsletterData.content.newsletterSeason.charAt(0).toUpperCase() + newsletterData.content.newsletterSeason.slice(1)} Maintenance TIPS</h2>
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9f9f9; border-radius: 8px;">
                     <tr>
                         <td style="padding: 30px;">
@@ -2790,7 +3055,7 @@
                                         }
                                     </td>
                                     <td valign="middle" style="text-align: left;">
-                                        <h3 style="font-family: ${newsletterData.design.headerFont}; font-size: 22px; font-weight: 400; margin: 0 0 5px 0; color: #333;">${newsletterData.agent.name || 'Your Name'}</h3>
+                                        <h3 style="font-family: Arial, sans-serif; font-size: 22px; font-weight: 400; margin: 0 0 5px 0; color: #333;">${newsletterData.agent.name || 'Your Name'}</h3>
                                         <p style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0;">${newsletterData.agent.company || 'Your Company'}</p>
                                         <p style="font-size: 14px; margin: 5px 0; color: #333;">📱 ${newsletterData.agent.phone || '(000) 000-0000'}</p>
                                         <p style="font-size: 14px; margin: 5px 0; color: #333;">✉️ ${newsletterData.agent.email || 'your@email.com'}</p>
