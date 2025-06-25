@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- UPDATE: Change page title -->
-    <title>Page Title - Inside the Sphere</title>
+    <title>Newsletter Builder Guide - Inside the Sphere</title>
     <style>
         * {
             margin: 0;
@@ -19,9 +18,48 @@
             overflow-x: hidden;
         }
 
+        /* Page Header */
+        .page-header {
+            padding: 80px 50px 80px;
+            background: url('https://i.imgur.com/FTUM2IF.png') center/cover;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .page-header h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
         /* Main Content Section */
         .main-content {
-            padding: 180px 50px 100px; /* Added top padding for fixed header */
+            padding: 100px 50px 100px; /* Adjusted for page header */
             background: #111;
             min-height: 60vh;
         }
@@ -428,8 +466,16 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            .page-header {
+                padding: 60px 20px 60px;
+            }
+
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+
             .main-content {
-                padding: 120px 20px 60px; /* Adjusted for mobile */
+                padding: 60px 20px 60px; /* Adjusted for mobile */
             }
 
             .content-grid {
@@ -512,15 +558,19 @@
         });
     </script>
 
-    <!-- Page Header Section - REMOVED -->
+    <!-- Page Header Section -->
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1>NEWSLETTER BUILDER GUIDE</h1>
+            <p>Learn how to create professional real estate newsletters in under 5 minutes</p>
+        </div>
+    </section>
 
     <!-- Main Content -->
     <section class="main-content">
         <div class="content-container">
 
-            <!-- ADD YOUR CONTENT HERE -->
-            
-            <!-- Example Section Header - REMOVE OR MODIFY -->
+            <!-- Section Header -->
             <div class="section-header fade-in">
                 <h2>Newsletter Builder Instruction Guide</h2>
                 <p>Follow this simple step-by-step guide to get started</p>
@@ -586,11 +636,9 @@
                 </div>
 
                 <div class="cta-button-section">
-                    <a href="https://insidethesphere.com/newsletterbuilder/" class="create-newsletter-btn">Create a Newsletter</a>
+                    <a href="https://insidethesphere.com/newsletter/" class="create-newsletter-btn">Create a Newsletter</a>
                 </div>
             </div>
-
-            <!-- Example: You can delete everything below this line and add your own content -->
 
         </div>
     </section>
@@ -617,7 +665,7 @@
 
         // Add any custom JavaScript for your page here
         
-        console.log('Blank template page loaded successfully!');
+        console.log('Newsletter instruction page loaded successfully!');
     </script>
 </body>
 </html>
