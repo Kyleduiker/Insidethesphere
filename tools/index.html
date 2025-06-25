@@ -64,9 +64,8 @@
         }
 
         .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 40px;
+            display: flex;
+            justify-content: center;
             max-width: 1400px;
             margin: 0 auto;
         }
@@ -79,6 +78,8 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            max-width: 450px;
+            width: 100%;
         }
 
         .tool-card::before {
@@ -138,12 +139,6 @@
             border: 1px solid #2ecc71;
         }
 
-        .status-coming-soon {
-            background: rgba(241, 196, 15, 0.2);
-            color: #f1c40f;
-            border: 1px solid #f1c40f;
-        }
-
         .tool-description {
             color: #bbb;
             line-height: 1.6;
@@ -190,17 +185,6 @@
             box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
         }
 
-        .tool-button.disabled {
-            background: rgba(255, 255, 255, 0.1);
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        .tool-button.disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .page-header {
@@ -238,6 +222,7 @@
     </style>
 </head>
 <body>
+    <!-- Dynamic Header Include -->
     <div id="header"></div>
     <script>
       fetch('/header.html')
@@ -274,112 +259,7 @@
                     <li>Analytics tracking</li>
                     <li>A/B testing capabilities</li>
                 </ul>
-                <a href="https://insidethesphere.com/newsletter/" class="tool-button" target="_blank">Launch Tool</a>
-            </div>
-
-            <div class="tool-card fade-in">
-                <div class="tool-header">
-                    <div class="tool-icon">📊</div>
-                    <div class="tool-info">
-                        <h3>Analytics Dashboard</h3>
-                        <span class="tool-status status-coming-soon">COMING SOON</span>
-                    </div>
-                </div>
-                <p class="tool-description">
-                    Comprehensive analytics and insights to track your performance, understand your audience, and make data-driven decisions that drive growth and engagement.
-                </p>
-                <ul class="tool-features">
-                    <li>Real-time performance metrics</li>
-                    <li>Audience behavior analysis</li>
-                    <li>Custom reporting tools</li>
-                    <li>Data visualization</li>
-                    <li>Export capabilities</li>
-                </ul>
-                <a href="#" class="tool-button disabled">Coming Soon</a>
-            </div>
-
-            <div class="tool-card fade-in">
-                <div class="tool-header">
-                    <div class="tool-icon">🎯</div>
-                    <div class="tool-info">
-                        <h3>Campaign Manager</h3>
-                        <span class="tool-status status-coming-soon">COMING SOON</span>
-                    </div>
-                </div>
-                <p class="tool-description">
-                    Plan, execute, and optimize your marketing campaigns from a single unified platform. Manage multiple channels and track ROI across all your marketing efforts.
-                </p>
-                <ul class="tool-features">
-                    <li>Multi-channel campaign management</li>
-                    <li>Automated workflows</li>
-                    <li>ROI tracking</li>
-                    <li>Lead scoring</li>
-                    <li>Integration hub</li>
-                </ul>
-                <a href="#" class="tool-button disabled">Coming Soon</a>
-            </div>
-
-            <div class="tool-card fade-in">
-                <div class="tool-header">
-                    <div class="tool-icon">🤖</div>
-                    <div class="tool-info">
-                        <h3>AI Content Assistant</h3>
-                        <span class="tool-status status-coming-soon">COMING SOON</span>
-                    </div>
-                </div>
-                <p class="tool-description">
-                    Leverage artificial intelligence to create compelling content, generate ideas, and optimize your messaging for maximum impact and engagement.
-                </p>
-                <ul class="tool-features">
-                    <li>AI-powered content generation</li>
-                    <li>SEO optimization</li>
-                    <li>Brand voice consistency</li>
-                    <li>Content scheduling</li>
-                    <li>Performance predictions</li>
-                </ul>
-                <a href="#" class="tool-button disabled">Coming Soon</a>
-            </div>
-
-            <div class="tool-card fade-in">
-                <div class="tool-header">
-                    <div class="tool-icon">💰</div>
-                    <div class="tool-info">
-                        <h3>Revenue Optimizer</h3>
-                        <span class="tool-status status-coming-soon">COMING SOON</span>
-                    </div>
-                </div>
-                <p class="tool-description">
-                    Advanced tools and strategies to maximize your revenue potential, optimize conversion rates, and create sustainable growth for your business.
-                </p>
-                <ul class="tool-features">
-                    <li>Conversion rate optimization</li>
-                    <li>Revenue forecasting</li>
-                    <li>Customer lifetime value analysis</li>
-                    <li>Pricing optimization</li>
-                    <li>Growth strategy recommendations</li>
-                </ul>
-                <a href="#" class="tool-button disabled">Coming Soon</a>
-            </div>
-
-            <div class="tool-card fade-in">
-                <div class="tool-header">
-                    <div class="tool-icon">🔗</div>
-                    <div class="tool-info">
-                        <h3>Integration Hub</h3>
-                        <span class="tool-status status-coming-soon">COMING SOON</span>
-                    </div>
-                </div>
-                <p class="tool-description">
-                    Connect all your favorite tools and platforms in one centralized hub. Streamline workflows and eliminate data silos with our comprehensive integration suite.
-                </p>
-                <ul class="tool-features">
-                    <li>300+ platform integrations</li>
-                    <li>Real-time data sync</li>
-                    <li>Custom API connections</li>
-                    <li>Workflow automation</li>
-                    <li>Data mapping tools</li>
-                </ul>
-                <a href="#" class="tool-button disabled">Coming Soon</a>
+                <a href="https://insidethesphere.com/newsletter/" class="tool-button">Launch Tool</a>
             </div>
         </div>
     </section>
