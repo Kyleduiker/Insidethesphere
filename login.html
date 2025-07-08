@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - InsideTheSphere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+            text-align: left;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #383;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #383;
+            text-align: left;
+            display: none;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s ease infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">🌐 InsideTheSphere</div>
+        <div class="subtitle">Access your digital tools and analytics</div>
+        
+        <div class="auth-tabs">
+            <button class="tab active" id="loginTab">Sign In</button>
+            <button class="tab" id="signupTab">Sign Up</button>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signupForm" class="hidden">
+            <div class="form-group">
+                <label for="signupName">Full Name</label>
+                <input type="text" id="signupName" required placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+                <label for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" required minlength="6" placeholder="At least 6 characters">
+            </div>
+            <button type="submit" class="submit-btn" id="signupBtn">Create Account</button>
+        </form>
+
+        <a href="/" class="back-link">← Back to InsideTheSphere</a>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // TODO: Replace with your Firebase config
+        const firebaseConfig = {
+            // PASTE YOUR FIREBASE CONFIG HERE
+            // It should look like:
+            // apiKey: "...",
+            // authDomain: "...",
+            // projectId: "...",
+            // etc.
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Get DOM elements
+        const loginTab = document.getElementById('loginTab');
+        const signupTab = document.getElementById('signupTab');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+
+        // Tab switching
+        loginTab.addEventListener('click', () => {
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+            clearMessages();
+        });
+
+        signupTab.addEventListener('click', () => {
+            signupTab.classList.add('active');
+            loginTab.classList.remove('active');
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            clearMessages();
+        });
+
+        // Helper functions
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function clearMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        function setLoading(button, isLoading) {
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+                button.textContent = '';
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.textContent = button.id === 'loginBtn' ? 'Sign In' : 'Create Account';
+            }
+        }
+
+        // Login form handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessages();
+            setLoading(loginBtn, true);
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showSuccess('Login successful! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '/tools/'; // Redirect to dashboard
+                }, 1500);
+            } catch (error) {
+                let errorMsg = 'Login failed. Please try again.';
+                if (error.code === 'auth/user-not-found') {
+                    errorMsg = 'No account found with this email.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMsg = 'Incorrect password.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email address.';
+                }
+                showError(errorMsg);
+            } finally {
+                setLoading(loginBtn, false);
+            }
+        });
+
+        // Signup form handler
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessages();
+            setLoading(signupBtn, true);
+
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
+                
+                showSuccess('Account created successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '/tools/'; // Redirect to dashboard
+                }, 1500);
+            } catch (error) {
+                let errorMsg = 'Failed to create account. Please try again.';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMsg = 'An account with this email already exists.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMsg = 'Password should be at least 6 characters.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email address.';
+                }
+                showError(errorMsg);
+            } finally {
+                setLoading(signupBtn, false);
+            }
+        });
+    </script>
+</body>
+</html>
