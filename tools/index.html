@@ -221,6 +221,26 @@
         }
     </style>
 </head>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Your Firebase config (same as login page)
+    const firebaseConfig = {
+        // PASTE THE SAME CONFIG FROM LOGIN PAGE HERE
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Check if user is logged in
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            // Not logged in - redirect to login
+            window.location.href = '/login.html';
+        }
+    });
+</script>    
 <body>
     <!-- Dynamic Header Include -->
     <div id="header"></div>
