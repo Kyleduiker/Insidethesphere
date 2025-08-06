@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 📝 CUSTOMIZE: Change the page title -->
-    <title>New Page - Inside The Sphere</title>
+    <title>Newsletter Builder Pro - Inside The Sphere</title>
     
     <!-- External CSS Files (adjust paths if page is in subfolder) -->
     <!-- For root level pages: use these paths -->
@@ -16,141 +16,6 @@
     <!-- <link rel="stylesheet" href="../assets/css/navigation.css"> -->
     <!-- <link rel="stylesheet" href="../assets/css/main.css"> -->
     
-    <!-- 🎨 PAGE-SPECIFIC STYLES: Add custom styles for this page here -->
-    <style>
-        /* Custom styles for this specific page */
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 120px 20px 60px; /* Top padding accounts for fixed nav */
-            text-align: center;
-        }
-
-        .hero-section h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        .hero-section p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .content-section {
-            padding: 80px 0;
-        }
-
-        .two-column {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        .cta-section {
-            background: #2c3e50;
-            color: white;
-            padding: 80px 0;
-            text-align: center;
-        }
-
-        /* 📱 RESPONSIVE: Mobile adjustments */
-        @media (max-width: 768px) {
-            .hero-section {
-                padding: 100px 20px 40px;
-            }
-
-            .hero-section h1 {
-                font-size: 2rem;
-            }
-
-            .two-column {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- ✅ NAVIGATION: Always include this navigation system -->
-    <nav class="sphere-nav">
-        <div class="sphere-nav-container">
-            <a href="/" class="sphere-logo">Inside The Sphere</a>
-            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
-                <span>☰</span>
-                <span>Menu</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Navigation Overlay -->
-    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
-
-    <!-- Navigation Popout Menu -->
-    <div class="sphere-popout-menu" id="spherePopoutMenu">
-        <div class="sphere-menu-header">
-            <div class="sphere-menu-title">Navigation</div>
-            <div class="sphere-menu-subtitle">Inside The Sphere</div>
-        </div>
-
-        <div class="sphere-menu-items">
-            <a href="/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
-                <div class="sphere-menu-text">Home</div>
-            </a>
-
-            <a href="/smarttools/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
-                <div class="sphere-menu-text">Smart Tools</div>
-            </a>
-
-            <a href="/newsletter/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
-                <div class="sphere-menu-text">Newsletter Builder</div>
-            </a>
-
-            <!-- 📝 CUSTOMIZE: Add more menu items here -->
-            <!-- 
-            <a href="/your-new-page/" class="sphere-menu-item">
-                <div class="sphere-menu-icon" style="background: #9b59b6;">🆕</div>
-                <div class="sphere-menu-text">Your New Page</div>
-            </a>
-            -->
-        </div>
-    </div>
-
     <!-- Newsletter Builder Pro Styles -->
     <style>
         * {
@@ -350,58 +215,6 @@
             gap: 15px;
         }
 
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            background: var(--background-card);
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 12px 15px;
-            transition: var(--transition);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 44px;
-        }
-
-        .stat-item:focus-within {
-            border-color: var(--primary-color);
-        }
-
-        .stat-item__label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin: 0;
-            flex: 1;
-        }
-
-        .stat-item__input {
-            border: none;
-            padding: 0;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--primary-color);
-            background: transparent;
-            text-align: right;
-            width: 100px;
-            flex-shrink: 0;
-        }
-
-        .stat-item__input:focus {
-            outline: 1px solid var(--primary-color);
-            border-radius: 4px;
-            padding: 4px;
-        }
-
         /* Buttons */
         .btn {
             padding: 12px 20px;
@@ -457,40 +270,32 @@
             justify-content: center;
         }
 
-        /* Modal Styles */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay--show {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--background-card);
+        /* Preview Styles */
+        .preview-header {
+            background: var(--background-light);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            text-align: center;
             border: 1px solid var(--border-color);
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            animation: modalSlideIn 0.3s ease-out;
         }
 
-        @keyframes modalSlideIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .preview-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .newsletter-preview {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            max-width: 700px;
+            margin: 0 auto 20px auto;
+            color: var(--text-dark);
         }
 
         /* Toast Notifications */
@@ -524,128 +329,6 @@
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Preview Styles */
-        .preview-header {
-            background: var(--background-light);
-            padding: 25px;
-            border-radius: var(--border-radius);
-            margin-bottom: 25px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        .preview-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .newsletter-preview {
-            background: white;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            max-width: 700px;
-            margin: 0 auto 20px auto;
-            color: var(--text-dark);
-        }
-
-        /* Event Items */
-        .event-item {
-            background: var(--background-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .event-delete {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 44px;
-            min-height: 44px;
-        }
-
-        .image-preview {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background: var(--background-light);
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .required-field::after {
-            content: ' *';
-            color: var(--danger-color);
-            font-weight: bold;
-        }
-
-        .validation-message {
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-            line-height: 1.4;
-        }
-
-        .validation-message.error {
-            color: var(--danger-color);
-            display: block;
-        }
-
-        .validation-message.success {
-            color: var(--success-color);
-            display: block;
-        }
-
-        /* Compatibility Warning */
-        .compatibility-warning {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 2px solid #ff9800;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            color: #856404;
-        }
-
-        .compatibility-warning h4 {
-            color: #856404;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .compatibility-warning ul {
-            color: #856404;
-            margin: 0;
-            padding-left: 20px;
-        }
-
-        .compatibility-info {
-            background: #d1ecf1;
-            border: 2px solid #17a2b8;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            color: #0c5460;
         }
 
         /* Mobile Responsive */
@@ -729,12 +412,6 @@
             cursor: pointer;
         }
 
-        /* Color input styling */
-        .form-group__input[type="color"] {
-            height: 44px;
-            padding: 4px;
-        }
-
         /* Enhanced select dropdown styling for light theme */
         .form-group__select {
             cursor: pointer;
@@ -748,398 +425,60 @@
             padding-right: 40px;
         }
 
-        /* Firefox specific select styling */
-        @-moz-document url-prefix() {
-            .form-group__select {
-                background: var(--background-card);
-                color: var(--text-light);
-            }
-        }
-
-        /* Section headers in stats */
-        .stats-section-header {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Quick color buttons */
-        .quick-color-btn {
-            width: 30px;
-            height: 30px;
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .quick-color-btn:hover {
-            transform: scale(1.1);
-            border-color: var(--primary-color);
+        .required-field::after {
+            content: ' *';
+            color: var(--danger-color);
+            font-weight: bold;
         }
 
         small {
             color: var(--text-secondary);
             font-size: 11px;
         }
-
-        /* Emoji picker styles */
-        .emoji-btn {
-            background: none;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .emoji-btn:hover {
-            background: var(--background-light);
-            border-color: var(--primary-color);
-            transform: scale(1.1);
-        }
-
-        .emoji-btn:active {
-            transform: scale(0.95);
-        }
     </style>
+</head>
+<body>
+    <!-- ✅ NAVIGATION: Modern Fixed Navigation (matches Smart Tools page) -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+        </div>
+    </div>
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Export Modal -->
-    <div class="modal-overlay" id="exportModal">
-        <div class="modal">
-            <h3 style="margin-bottom: 20px; font-size: 20px; color: var(--primary-color);">📧 Export Newsletter</h3>
-            
-            <div class="compatibility-warning">
-                <h4>✅ Email Client Compatibility</h4>
-                <ul style="margin: 10px 0; font-size: 13px; line-height: 1.4;">
-                    <li>All images are automatically uploaded to Imgur for perfect email compatibility</li>
-                    <li>Newsletter uses hosted image URLs - works in all email clients</li>
-                    <li>No blocked images or deliverability issues</li>
-                    <li>Always test in your target email clients before sending</li>
-                    <li>Professional hosting ensures images load reliably</li>
-                </ul>
-            </div>
-            
-            <div class="compatibility-info">
-                <h4>📊 Email Client Support</h4>
-                <div>
-                    ✅ <strong>Gmail:</strong> Excellent support<br>
-                    ✅ <strong>Apple Mail:</strong> Best support
-                </div>
-            </div>
-
-            <div class="compatibility-info">
-                <h4>🖨️ Print Optimization</h4>
-                <div>
-                    <strong>Print Version:</strong> Optimized for standard letter paper (8.5" x 11")<br>
-                    <strong>Features:</strong> Proper margins, page breaks, black & white friendly<br>
-                    <strong>Best For:</strong> Client handouts, office distribution, archival copies
-                </div>
-            </div>
-            
-            <div style="display: grid; gap: 10px; margin-top: 20px;">
-                <button class="btn btn--primary" onclick="exportManager.copyEmailSafeHTML()">
-                    📧 Copy Newsletter for email
-                </button>
-                <button class="btn btn--success" onclick="exportManager.exportAsHTML()">
-                    📄 Download HTML File (Hosted URLs)
-                </button>
-                <button class="btn btn--info" onclick="exportManager.printNewsletter()">
-                    🖨️ Print Newsletter
-                </button>
-                <button class="btn btn--secondary" onclick="modalManager.close('exportModal')">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Event Modal -->
-    <div class="modal-overlay" id="addEventModal">
-        <div class="modal">
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">Add Event</h3>
-            <form id="addEventForm">
-                <div class="form-group">
-                    <label class="form-group__label required-field">Event Title</label>
-                    <input type="text" class="form-group__input" id="eventTitle" required>
-                    <div class="validation-message" id="eventTitle-validation"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-group__label required-field">Date</label>
-                        <input type="date" class="form-group__input" id="eventDate" required>
-                        <div class="validation-message" id="eventDate-validation"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-group__label">Start Time</label>
-                        <input type="time" class="form-group__input" id="eventStartTime">
-                        <div class="validation-message" id="eventStartTime-validation"></div>
-                        <small>Optional - leave blank for all-day events</small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">End Time</label>
-                    <input type="time" class="form-group__input" id="eventEndTime">
-                    <div class="validation-message" id="eventEndTime-validation"></div>
-                    <small>Optional - leave blank if no specific end time</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">Location</label>
-                    <input type="text" class="form-group__input" id="eventLocation">
-                    <div class="validation-message" id="eventLocation-validation"></div>
-                    <small>Optional - leave blank for online events or TBA</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">Description (Optional)</label>
-                    <textarea class="form-group__textarea" id="eventDescription" rows="3"></textarea>
-                    <div class="validation-message" id="eventDescription-validation"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">Event Details Link (Optional)</label>
-                    <input type="url" class="form-group__input" id="eventDetailsLink" placeholder="https://example.com/event-details">
-                    <div class="validation-message" id="eventDetailsLink-validation"></div>
-                    <small>Optional - link to registration page, more details, or event website</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">Event Image (Optional)</label>
-                    <input type="file" class="form-group__input" id="eventImage" accept="image/*" onchange="handleEventImageUpload()">
-                    <div class="image-preview" id="eventImagePreview" style="margin-top: 10px; display: none;">
-                        <img style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid #ddd;">
-                        <button type="button" onclick="removeEventImage()" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Remove</button>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn btn--primary" style="flex: 1;">Add Event</button>
-                    <button type="button" class="btn btn--secondary" onclick="modalManager.close('addEventModal')">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Custom Property Type Modal -->
-    <div class="modal-overlay" id="addCustomPropertyTypeModal">
-        <div class="modal">
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">Add Custom Property Type</h3>
-            <form id="addCustomPropertyTypeForm">
-                <div class="form-group">
-                    <label class="form-group__label required-field">Property Type Name</label>
-                    <input type="text" class="form-group__input" id="customPropertyTypeName" required placeholder="e.g., Luxury Condos, Mobile Homes, etc.">
-                    <div class="validation-message" id="customPropertyTypeName-validation"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-group__label">Property Type Icon</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" class="form-group__input" id="customPropertyTypeIcon" placeholder="🏘️" maxlength="2" style="flex: 1;">
-                        <button type="button" class="btn btn--info" onclick="toggleCustomPropertyEmojiPicker()" style="padding: 12px 16px;" title="Pick Emoji">
-                            😊
-                        </button>
-                    </div>
-                    <div class="validation-message" id="customPropertyTypeIcon-validation"></div>
-                    <small>Optional - single emoji to represent this property type</small>
-                    
-                    <!-- Emoji Picker for Custom Property -->
-                    <div id="customPropertyEmojiPicker" style="display: none; margin-top: 10px; padding: 15px; background: var(--background-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--box-shadow);">
-                        <div style="margin-bottom: 10px;">
-                            <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🏠 Houses & Buildings</strong>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏠')">🏠</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏡')">🏡</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏘️')">🏘️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏢')">🏢</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏬')">🏬</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏭')">🏭</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏗️')">🏗️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏚️')">🏚️</button>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🏰 Special Properties</strong>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏰')">🏰</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏯')">🏯</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🗼')">🗼</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🕌')">🕌</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('⛪')">⛪</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏛️')">🏛️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏟️')">🏟️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🎪')">🎪</button>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🏕️ Outdoor & Recreation</strong>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏕️')">🏕️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('⛺')">⛺</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏞️')">🏞️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏖️')">🏖️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏝️')">🏝️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('⛰️')">⛰️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏔️')">🏔️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🗻')">🗻</button>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🚗 Transportation & Access</strong>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚗')">🚗</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚙')">🚙</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏎️')">🏎️</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚐')">🚐</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚛')">🚛</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚌')">🚌</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🚂')">🚂</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('✈️')">✈️</button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">💎 Luxury & Premium</strong>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('💎')">💎</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('👑')">👑</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🌟')">🌟</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('⭐')">⭐</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('✨')">✨</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🔥')">🔥</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('💰')">💰</button>
-                                <button type="button" class="emoji-btn" onclick="insertCustomPropertyEmoji('🏆')">🏆</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn btn--primary" style="flex: 1;">Add Property Type</button>
-                    <button type="button" class="btn btn--secondary" onclick="modalManager.close('addCustomPropertyTypeModal')">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Manage Maintenance Tips Modal -->
-    <div class="modal-overlay" id="maintenanceTipsModal">
-        <div class="modal">
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">🔧 Manage Maintenance Tips</h3>
-            
-            <div style="margin-bottom: 20px; padding: 15px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px;">
-                <strong style="color: var(--primary-color);">Current Month: </strong>
-                <span id="modalCurrentMonth" style="text-transform: capitalize;"></span>
-            </div>
-            
-            <div id="modalMaintenanceTipsList" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
-                <!-- Maintenance tips will be rendered here -->
-            </div>
-            
-            <div class="form-group">
-                <label class="form-group__label">Add New Tip</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" class="form-group__input" id="modalNewMaintenanceTip" placeholder="Enter a new maintenance tip..." style="flex: 1;">
-                    <button type="button" class="btn btn--info" onclick="toggleModalEmojiPicker()" style="padding: 12px 16px;" title="Add Emoji">
-                        😊
-                    </button>
-                    <button type="button" class="btn btn--primary" onclick="addModalMaintenanceTip()" style="padding: 12px 20px;">
-                        Add Tip
-                    </button>
-                </div>
-                
-                <!-- Emoji Picker -->
-                <div id="modalEmojiPicker" style="display: none; margin-top: 10px; padding: 15px; background: var(--background-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--box-shadow);">
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🔧 Tools & Maintenance</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🔧')">🔧</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🔨')">🔨</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🪚')">🪚</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('⚒️')">⚒️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🧰')">🧰</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('⚙️')">⚙️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🔩')">🔩</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('⚡')">⚡</button>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🏠 Home & Garden</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🏠')">🏠</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🏡')">🏡</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🪟')">🪟</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🚪')">🚪</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌿')">🌿</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌱')">🌱</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌳')">🌳</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌺')">🌺</button>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🌦️ Weather & Seasons</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('❄️')">❄️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌨️')">🌨️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('☀️')">☀️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌧️')">🌧️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('💨')">💨</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🍂')">🍂</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🌡️')">🌡️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🧊')">🧊</button>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">💧 Utilities & Safety</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('💧')">💧</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🚿')">🚿</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🔥')">🔥</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('💡')">💡</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🚨')">🚨</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🧹')">🧹</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🧽')">🧽</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🧴')">🧴</button>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <strong style="color: var(--primary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Tasks & Reminders</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('📋')">📋</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('✅')">✅</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('📝')">📝</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('📅')">📅</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('⏰')">⏰</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🔔')">🔔</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('⚠️')">⚠️</button>
-                            <button type="button" class="emoji-btn" onclick="insertModalEmoji('🎯')">🎯</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 20px; padding: 15px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px;">
-                <button type="button" class="btn btn--secondary btn--full" onclick="resetToDefaultTips()" style="margin-bottom: 10px;">
-                    🔄 Reset to Default Seasonal Tips
-                </button>
-                <small style="display: block; text-align: center; color: var(--text-muted);">This will restore the original tips for the selected month and remove all custom tips</small>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="button" class="btn btn--primary" onclick="modalManager.close('maintenanceTipsModal')" style="flex: 1;">Done</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Main Content -->
     <section class="main-content">
@@ -1157,8 +496,114 @@
                     </div>
                     
                     <div class="form-content">
-                        <!-- Newsletter Builder Form Content will be rendered here by JavaScript -->
-                        <div id="formSections"></div>
+                        <!-- Newsletter Builder Form Content -->
+                        <div id="formSections">
+                            <!-- Month & Banner Design -->
+                            <div class="form-section fade-in">
+                                <h3 class="form-section__header">🎨 Month & Banner Design</h3>
+                                <div class="form-group">
+                                    <label class="form-group__label">Newsletter Month</label>
+                                    <select class="form-group__select" id="newsletterSeason">
+                                        <option value="january">January - New Beginnings</option>
+                                        <option value="february">February - Love Your Home</option>
+                                        <option value="march">March - Spring Prep</option>
+                                        <option value="april">April - Spring Awakening</option>
+                                        <option value="may">May - Blooming Season</option>
+                                        <option value="june" selected>June - Summer Starts</option>
+                                        <option value="july">July - Summer Living</option>
+                                        <option value="august">August - Late Summer</option>
+                                        <option value="september">September - Fall Prep</option>
+                                        <option value="october">October - Autumn Comfort</option>
+                                        <option value="november">November - Thanksgiving Season</option>
+                                        <option value="december">December - Holiday Season</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-group__label">Banner Style</label>
+                                    <select class="form-group__select" id="bannerStyle">
+                                        <option value="mountains" selected>Mountains</option>
+                                        <option value="cityscape">City Skyline</option>
+                                        <option value="blueprint">Blueprint</option>
+                                        <option value="minimal">Clean Minimal</option>
+                                        <option value="custom">Custom Banner Image</option>
+                                        <option value="none">No Banner</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Personal Message -->
+                            <div class="form-section fade-in">
+                                <h3 class="form-section__header">💬 Personal Message</h3>
+                                <div class="form-group">
+                                    <label class="form-group__label">Custom Subtitle</label>
+                                    <input type="text" class="form-group__input" id="customSubtitle" value="SUMMER STARTS" placeholder="Enter custom subtitle...">
+                                    <small>Leave blank to use default seasonal subtitle</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label required-field">Opening Message</label>
+                                    <textarea class="form-group__textarea" id="personalMessage" rows="4" required>With school winding down and the sun heating up, June is a top month for real estate. Let's make your next move a smooth one.</textarea>
+                                    <small>Minimum 50 characters, maximum 500 characters</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Smart Buttons -->
+                            <div class="form-section fade-in">
+                                <h3 class="form-section__header">🔗 Smart Buttons</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+                                    Use Smart Buttons to quickly add clickable links to your newsletter. Just copy and paste any website URL to instantly direct readers to your website, buyer or seller guides, blogs, or any resource you choose.
+                                </p>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-group__label">🔘 Smart Button 1 Name</label>
+                                        <input type="text" class="form-group__input" id="buyersGuideName" value="Button 1" placeholder="Button 1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-group__label">Smart Button 1 URL</label>
+                                        <input type="url" class="form-group__input" id="buyersGuideUrl" value="" placeholder="https://example.com/button1">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-group__label">🔘 Smart Button 2 Name</label>
+                                        <input type="text" class="form-group__input" id="sellersGuideName" value="Button 2" placeholder="Button 2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-group__label">Smart Button 2 URL</label>
+                                        <input type="url" class="form-group__input" id="sellersGuideUrl" value="" placeholder="https://example.com/button2">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Your Information -->
+                            <div class="form-section fade-in">
+                                <h3 class="form-section__header">👤 Your Information</h3>
+                                <div class="form-group">
+                                    <label class="form-group__label required-field">Full Name</label>
+                                    <input type="text" class="form-group__input" id="agentName" value="" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label required-field">Company Name</label>
+                                    <input type="text" class="form-group__input" id="companyName" value="" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-group__label required-field">Phone</label>
+                                        <input type="tel" class="form-group__input" id="agentPhone" value="" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-group__label required-field">Email</label>
+                                        <input type="email" class="form-group__input" id="agentEmail" value="" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-group__label required-field">Website</label>
+                                    <input type="url" class="form-group__input" id="agentWebsite" value="" required>
+                                </div>
+                            </div>
+                        </div>
                         
                         <button class="btn btn--primary btn--full" onclick="generateNewsletter()" style="font-size: 16px; padding: 16px 24px;">
                             ✨ Generate Newsletter
@@ -1196,31 +641,17 @@
                             <div style="margin-bottom: 20px;">
                                 <h4 style="color: var(--text-light); font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                                     <span style="background: var(--primary-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">3</span>
-                                    Enter Market Statistics
+                                    Fill in Your Information
                                 </h4>
-                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Fill in your local market data. You can edit property type names, add custom types, and customize colors.</p>
+                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Add your contact details and professional information to complete your newsletter.</p>
                             </div>
                             
                             <div style="margin-bottom: 20px;">
                                 <h4 style="color: var(--text-light); font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                                     <span style="background: var(--primary-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">4</span>
-                                    Add Events & Your Information
-                                </h4>
-                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Include community events with images, update maintenance tips, and fill in your contact information and photos.</p>
-                            </div>
-                            
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="color: var(--text-light); font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: var(--primary-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">5</span>
                                     Generate & Export
                                 </h4>
-                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Click "Generate Newsletter" to see your preview, then use "Export Options" to copy for email, download HTML, or print.</p>
-                            </div>
-                            
-                            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                                <p style="margin: 0; font-size: 12px; color: var(--text-muted); text-align: center; font-style: italic;">
-                                    💡 Tip: Use Ctrl/Cmd + Enter to quickly generate your newsletter at any time!
-                                </p>
+                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Click "Generate Newsletter" to see your preview, then use export options to copy for email, download HTML, or print.</p>
                             </div>
                             
                             <div style="text-align: center; margin-top: 15px;">
@@ -1237,13 +668,16 @@
                     
                     <div class="newsletter-preview" id="newsletterPreview">
                         <!-- Newsletter content will be generated here -->
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            Newsletter preview will appear here when you fill out the form
+                        </div>
                     </div>
                     
                     <div class="preview-actions" style="padding-bottom: 20px;">
                         <button class="btn btn--secondary" onclick="quickPrint()">
                             🖨️ Print
                         </button>
-                        <button class="btn btn--primary" onclick="modalManager.show('exportModal')">
+                        <button class="btn btn--primary" onclick="showExportModal()">
                             📧 Export Options
                         </button>
                     </div>
@@ -1252,644 +686,81 @@
         </div>
     </section>
 
+    <!-- External JavaScript Files (matching Smart Tools page approach) -->
+    <!-- For root level pages: use these paths -->
+    <script src="assets/js/navigation.js"></script>
+    
+    <!-- For pages in subfolders: uncomment this and comment out the above -->
+    <!-- <script src="../assets/js/navigation.js"></script> -->
+    
     <!-- Newsletter Builder Pro JavaScript -->
     <script>
-        // Navigation System Functions
-        function toggleSphereMenu() {
-            const menu = document.getElementById('spherePopoutMenu');
-            const overlay = document.getElementById('sphereOverlay');
+        // Newsletter Builder functionality
+        function generateNewsletter() {
+            const preview = document.getElementById('newsletterPreview');
+            const agentName = document.getElementById('agentName').value;
+            const companyName = document.getElementById('companyName').value;
+            const personalMessage = document.getElementById('personalMessage').value;
             
-            if (menu.classList.contains('active')) {
-                closeSphereMenu();
-            } else {
-                menu.classList.add('active');
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function closeSphereMenu() {
-            const menu = document.getElementById('spherePopoutMenu');
-            const overlay = document.getElementById('sphereOverlay');
-            
-            menu.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        // Close menu when clicking overlay
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'sphereOverlay') {
-                closeSphereMenu();
-            }
-        });
-
-        // Close menu on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeSphereMenu();
-            }
-        });
-        // Global state
-        let newsletterData = {
-            design: {
-                bannerStyle: 'mountains',
-                headerFont: "'Playfair Display', serif",
-                bodyFont: "'Montserrat', sans-serif",
-                hideCustomBannerText: false,
-                colors: {
-                    headerText: '#333333',
-                    bodyText: '#555555',
-                    accent: '#f39c12',
-                    background: '#f8f9fa'
-                },
-            defaultPropertyTypes: [
-                {
-                    id: 'detached',
-                    name: 'Detached Homes',
-                    icon: '🏠',
-                    colorKey: 'detached',
-                    required: false
-                },
-                {
-                    id: 'semi',
-                    name: 'Semi-Detached',
-                    icon: '🏘️',
-                    colorKey: 'semi',
-                    required: false
-                },
-                {
-                    id: 'row',
-                    name: 'Row/Townhomes',
-                    icon: '🏘️',
-                    colorKey: 'row',
-                    required: false
-                },
-                {
-                    id: 'apartment',
-                    name: 'Apartments/Condos',
-                    icon: '🏢',
-                    colorKey: 'apartment',
-                    required: false
-                }
-            ],
-                buttonColors: {
-                    buyersGuide: '#f39c12',
-                    sellersGuide: '#2c3e50',
-                    website: '#27ae60',
-                    blog: '#3498db',
-                    marketReport: '#f39c12',
-                    eventDetails: '#f39c12'
-                },
-                propertyTypeColors: {
-                    detached: '#f39c12',
-                    semi: '#2c3e50',
-                    row: '#27ae60',
-                    apartment: '#3498db',
-                    custom: '#9b59b6'
-                }
-            },
-            images: {
-                currentEventImage: null,
-                agentPhoto: null,
-                agentLogo: null,
-                brokerageLogo: null,
-                customBanner: null
-            },
-            stats: {
-                avgPrice: '$589,900',
-                priceChange: '-2.5%',
-                homesSold: '2,568',
-                salesChange: '-16.9%',
-                newListings: '4,842',
-                listingsChange: '+11.6%',
-                inventory: '6,740',
-                inventoryChange: '+97.5%',
-                monthsOfSupply: '2.62',
-                supplyChange: '+137.7%',
-                
-                detachedPrice: '$769,400',
-                detachedChange: '+1.0%',
-                detachedSales: '1,275',
-                detachedSalesChange: '-8%',
-                detachedListings: '2,419',
-                detachedListingsChange: '+19%',
-                detachedInventory: '2,995',
-                detachedInventoryChange: '+87%',
-                detachedSupply: '2.35',
-                
-                semiPrice: '$697,300',
-                semiChange: '+2.8%',
-                semiSales: '256',
-                semiSalesChange: '-1%',
-                semiListings: '428',
-                semiListingsChange: '+19%',
-                semiInventory: '542',
-                semiInventoryChange: '+99%',
-                semiSupply: '2.12',
-                
-                rowPrice: '$453,600',
-                rowChange: '-1.9%',
-                rowSales: '458',
-                rowSalesChange: '-15%',
-                rowListings: '764',
-                rowListingsChange: '+11%',
-                rowInventory: '1,116',
-                rowInventoryChange: '+161%',
-                rowSupply: '2.44',
-                
-                apartmentPrice: '$335,300',
-                apartmentChange: '-1.5%',
-                apartmentSales: '579',
-                apartmentSalesChange: '-36%',
-                apartmentListings: '1,231',
-                apartmentListingsChange: '-2%',
-                apartmentInventory: '2,087',
-                apartmentInventoryChange: '+88%',
-                apartmentSupply: '3.60'
-            },
-            agent: {
-                name: '',
-                company: '',
-                phone: '',
-                email: '',
-                website: '',
-                // Smart Button settings - simplified to just names and URLs
-                smartButtons: {
-                    buyersGuide: {
-                        name: 'Button 1',
-                        url: ''
-                    },
-                    sellersGuide: {
-                        name: 'Button 2', 
-                        url: ''
-                    },
-                    website: {
-                        name: 'Button 3',
-                        url: ''
-                    },
-                    blog: {
-                        name: 'Button 4',
-                        url: ''
-                    }
-                }
-            },
-            content: {
-                personalMessage: 'With school winding down and the sun heating up, June is a top month for real estate. Let\'s make your next move a smooth one.',
-                newsletterSeason: 'june',
-                customSubtitle: 'SUMMER STARTS',
-                marketButtonText: '',
-                marketButtonUrl: ''
-            },
-            customPropertyTypes: [],
-            customEvents: [],
-            maintenanceTips: [
-                '❄️ Test A/C and change filters',
-                '🌧️ Check eavestrough slope and extension', 
-                '🔧 Inspect fence posts for shifting',
-                '🪟 Wash windows and inspect screens',
-                '💨 Secure patio furniture before windstorms'
-            ]
-        };
-
-        // Season configurations
-        const SEASONS = {
-            january: {
-                title: 'JANUARY NEWSLETTER',
-                subtitle: 'NEW BEGINNINGS',
-                personalMessage: 'Happy New Year! A fresh start brings new opportunities—whether it\'s upgrading your space or buying your first home. Let\'s make 2025 the year of great moves!',
-                tips: ['🔧 Replace furnace filter', '💧 Use humidifier to combat dry air', '🧊 Watch for ice dams after Chinooks', '❄️ Check for frost in attic/basement', '🚨 Test smoke & CO detectors']
-            },
-            february: {
-                title: 'FEBRUARY NEWSLETTER',
-                subtitle: 'LOVE YOUR HOME',
-                personalMessage: 'Love is in the air—and so is opportunity! Whether you\'re buying, selling, or just curious, I\'m here to help you find a home you\'ll love.',
-                tips: ['🌨️ Clear snow from foundation & vents', '🚪 Inspect weather stripping after freeze-thaw', '🔐 Lubricate locks & garage mechanisms', '💧 Monitor for condensation inside windows', '⚡ Test sump pump for early thaw']
-            },
-            march: {
-                title: 'MARCH NEWSLETTER',
-                subtitle: 'SPRING PREP',
-                personalMessage: 'As the snow melts and days grow longer, now\'s the time to start thinking spring market. Real estate is warming up—are you ready?',
-                tips: ['☀️ Begin clearing snow from perimeter', '💧 Check grading for pooling meltwater', '🏠 Book roof inspection before spring rain', '🌳 Trim snow-damaged tree limbs', '🌱 Prep garden tools & order supplies']
-            },
-            april: {
-                title: 'APRIL NEWSLETTER',
-                subtitle: 'SPRING AWAKENING',
-                personalMessage: 'Spring is in full swing! It\'s a great time to freshen up your home or explore new listings. Let\'s talk about what\'s happening in your area.',
-                tips: ['🌧️ Clean gutters/downspouts', '🏠 Inspect shingles & siding for winter damage', '💧 Test exterior taps (after final frost)', '🔧 Caulk windows and doors', '🌿 Fertilize lawn (spring mix)']
-            },
-            may: {
-                title: 'MAY NEWSLETTER',
-                subtitle: 'BLOOMING SEASON',
-                personalMessage: 'May is for patios, gardening, and maybe even new beginnings. If you\'ve been thinking of a move, the spring market is buzzing!',
-                tips: ['🚿 Power wash siding, deck, walkways', '💧 Inspect irrigation system for leaks', '🔧 Reseal driveway and deck surfaces', '🍖 Clean BBQ and prep outdoor living space', '🐛 Monitor for signs of pests and insects']
-            },
-            june: {
-                title: 'JUNE NEWSLETTER',
-                subtitle: 'SUMMER STARTS',
-                personalMessage: 'With school winding down and the sun heating up, June is a top month for real estate. Let\'s make your next move a smooth one.',
-                tips: ['❄️ Test A/C and change filters', '🌧️ Check eavestrough slope and extension', '🔧 Inspect fence posts for shifting', '🪟 Wash windows and inspect screens', '💨 Secure patio furniture before windstorms']
-            },
-            july: {
-                title: 'JULY NEWSLETTER',
-                subtitle: 'SUMMER LIVING',
-                personalMessage: 'It\'s summer fun and sunshine! The market\'s still active, and I\'m here to help you take the next step—whether you\'re buying or selling.',
-                tips: ['🌳 Trim trees near home (hail + wind risk)', '🏠 Check attic insulation and ventilation', '☀️ Use UV films or blinds on sunny windows', '💧 Water lawn early mornings (drought)', '🔥 Inspect dryer vent (fire safety)']
-            },
-            august: {
-                title: 'AUGUST NEWSLETTER',
-                subtitle: 'LATE SUMMER',
-                personalMessage: 'Before fall routines kick in, August is the perfect time to make a move or prep your home for sale. Let\'s chat about your next step!',
-                tips: ['🏠 Review roof for hail damage', '🔥 Prep furnace for fall (early servicing)', '🧹 Deep clean garage or shed', '📋 Plan fall landscaping or repairs', '🎨 Touch up exterior paint']
-            },
-            september: {
-                title: 'SEPTEMBER NEWSLETTER',
-                subtitle: 'FALL PREP',
-                personalMessage: 'As routines return and leaves begin to turn, it\'s a great time to revisit your real estate goals. Fall can be full of opportunity!',
-                tips: ['💧 Blow out sprinklers before frost', '🌿 Fertilize lawn (fall mix)', '🔥 Inspect chimney and fireplace', '📦 Store summer tools and patio gear', '🐭 Check attic and garage for rodent entry']
-            },
-            october: {
-                title: 'OCTOBER NEWSLETTER',
-                subtitle: 'AUTUMN COMFORT',
-                personalMessage: 'Fall is here and so is one of the coziest times to shop for a new place. Let\'s talk listings, market trends, or your real estate wish list!',
-                tips: ['❄️ Winterize outdoor faucets and hoses', '🍂 Rake and compost leaves', '🏠 Inspect foundation for cracks', '🔥 Test heating system and thermostat', '🚪 Apply weather seal to doors/windows']
-            },
-            november: {
-                title: 'NOVEMBER NEWSLETTER',
-                subtitle: 'THANKSGIVING SEASON',
-                personalMessage: 'Before the holiday rush, November is a great time to review your plans. Thinking of a move in the new year? Let\'s get ahead of it together.',
-                tips: ['❄️ Prepare snow removal equipment', '❄️ Cover or store A/C units', '💡 Install exterior light timers', '🧊 Stock ice melt and emergency supplies', '🔧 Replace furnace filter']
-            },
-            december: {
-                title: 'DECEMBER NEWSLETTER',
-                subtitle: 'HOLIDAY SEASON',
-                personalMessage: 'Wishing you a warm and peaceful holiday season! Whether you\'re cozy at home or planning a change in the new year, I\'m here when you need me.',
-                tips: ['❄️ Clear snow from roof edges and vents', '🚨 Test CO detectors during peak furnace use', '💨 Check for drafts around windows', '🚶 Keep exits and walkways snow-free', '🏠 Inspect roof load if heavy snowfalls occur']
-            }
-        };
-
-        // Imgur API integration (Note: In production, you'd want proper error handling)
-        const IMGUR_CLIENT_ID = '203a7e94de049ff';
-        
-        async function uploadToImgur(file, imageKey) {
-            // Note: Due to Claude artifact limitations, Imgur upload won't work
-            // This is a mock implementation
-            showToast('📤 Image upload simulated (Imgur not available in this environment)', 'info', 3000);
-            
-            // Create a local URL for preview purposes
-            const localUrl = URL.createObjectURL(file);
-            newsletterData.images[imageKey] = localUrl;
-            
-            updatePreview();
-            return localUrl;
-        }
-
-        // Time formatting helper
-        function formatEventTime(startTime, endTime) {
-            if (!startTime) return '';
-            
-            function formatTime(timeStr) {
-                const [hours, minutes] = timeStr.split(':');
-                const hour12 = hours % 12 || 12;
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                return `${hour12}:${minutes} ${ampm}`;
+            if (!agentName || !companyName || !personalMessage) {
+                showToast('⚠️ Please fill in required fields', 'warning', 4000);
+                return;
             }
             
-            const formattedStart = formatTime(startTime);
-            
-            if (endTime) {
-                const formattedEnd = formatTime(endTime);
-                return `${formattedStart} - ${formattedEnd}`;
-            }
-            
-            return formattedStart;
-        }
-
-        // Date formatting helper
-        function formatEventDate(dateString) {
-            const [year, month, day] = dateString.split('-');
-            const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
-                               'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-            return {
-                month: monthNames[parseInt(month) - 1],
-                day: parseInt(day)
-            };
-        }
-
-        // Render form sections
-        function renderFormSections() {
-            const container = document.getElementById('formSections');
-            container.innerHTML = `
-                <!-- Month & Banner Design -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">🎨 Month & Banner Design</h3>
-                    <div class="form-group">
-                        <label class="form-group__label">Newsletter Month</label>
-                        <select class="form-group__select" id="newsletterSeason">
-                            <option value="january">January - New Beginnings</option>
-                            <option value="february">February - Love Your Home</option>
-                            <option value="march">March - Spring Prep</option>
-                            <option value="april">April - Spring Awakening</option>
-                            <option value="may">May - Blooming Season</option>
-                            <option value="june" selected>June - Summer Starts</option>
-                            <option value="july">July - Summer Living</option>
-                            <option value="august">August - Late Summer</option>
-                            <option value="september">September - Fall Prep</option>
-                            <option value="october">October - Autumn Comfort</option>
-                            <option value="november">November - Thanksgiving Season</option>
-                            <option value="december">December - Holiday Season</option>
-                        </select>
+            // Simple newsletter preview
+            preview.innerHTML = `
+                <div style="padding: 30px; font-family: Arial, sans-serif;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; margin-bottom: 30px; border-radius: 8px;">
+                        <h1 style="margin: 0 0 10px 0; font-size: 2rem;">JUNE NEWSLETTER</h1>
+                        <p style="margin: 0; font-size: 1.1rem;">SUMMER STARTS</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-group__label">Banner Style</label>
-                        <select class="form-group__select" id="bannerStyle">
-                            <option value="mountains" selected>Mountains</option>
-                            <option value="cityscape">City Skyline</option>
-                            <option value="blueprint">Blueprint</option>
-                            <option value="minimal">Clean Minimal</option>
-                            <option value="custom">Custom Banner Image</option>
-                            <option value="none">No Banner</option>
-                        </select>
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="color: #f39c12; margin-bottom: 15px;">Personal Message</h2>
+                        <p style="line-height: 1.6; color: #555;">${personalMessage}</p>
                     </div>
                     
-                    <!-- Custom Banner Upload -->
-                    <div class="form-group" id="customBannerUpload" style="display: none;">
-                        <label class="form-group__label">Custom Banner Image</label>
-                        <input type="file" class="form-group__input" id="customBanner" accept="image/*" onchange="handleImageUpload('customBanner', 'customBanner')">
-                        <div class="image-preview" id="customBannerPreview" style="margin-top: 10px; display: none;">
-                            <img style="width: 200px; height: 100px; object-fit: cover; border: 2px solid #ddd; border-radius: 4px;">
-                            <button type="button" onclick="removeImage('customBanner', 'customBanner')" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Remove</button>
-                        </div>
-                        <small>📏 Recommended size: 600x300px or similar landscape ratio</small>
-                        
-                        <div style="margin-top: 15px; padding: 15px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px;">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
-                                <input type="checkbox" id="hideCustomBannerText" onchange="handleFormChange('hideCustomBannerText', this.checked)" style="width: 18px; height: 18px;">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 500; color: var(--text-light); font-size: 14px;">Hide banner text overlay</div>
-                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Remove the month/newsletter title text from your custom banner</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Personal Message -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">💬 Personal Message</h3>
-                    <div class="form-group">
-                        <label class="form-group__label">Custom Subtitle</label>
-                        <input type="text" class="form-group__input" id="customSubtitle" value="SUMMER STARTS" placeholder="Enter custom subtitle...">
-                        <div class="validation-message" id="customSubtitle-validation"></div>
-                        <small>Leave blank to use default seasonal subtitle</small>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-group__label required-field">Opening Message</label>
-                        <textarea class="form-group__textarea" id="personalMessage" rows="4" required>With school winding down and the sun heating up, June is a top month for real estate. Let's make your next move a smooth one.</textarea>
-                        <div class="validation-message" id="personalMessage-validation"></div>
-                        <small>Minimum 50 characters, maximum 500 characters</small>
-                    </div>
-                </div>
-                
-                <!-- Smart Buttons -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">🔗 Smart Buttons</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
-                        Use Smart Buttons to quickly add clickable links to your newsletter. Just copy and paste any website URL to instantly direct readers to your website, buyer or seller guides, blogs, or any resource you choose. Simple, practical, and effective.
-                    </p>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label">🔘 Smart Button 1 Name</label>
-                            <input type="text" class="form-group__input" id="buyersGuideName" value="Button 1" placeholder="Button 1">
-                            <div class="validation-message" id="buyersGuideName-validation"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label">Smart Button 1 URL</label>
-                            <input type="url" class="form-group__input" id="buyersGuideUrl" value="" placeholder="https://example.com/button1">
-                            <div class="validation-message" id="buyersGuideUrl-validation"></div>
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: #f39c12; margin-bottom: 15px;">Smart Buttons</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="#" style="background: #f39c12; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Button 1</a>
+                            <a href="#" style="background: #2c3e50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Button 2</a>
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label">🔘 Smart Button 2 Name</label>
-                            <input type="text" class="form-group__input" id="sellersGuideName" value="Button 2" placeholder="Button 2">
-                            <div class="validation-message" id="sellersGuideName-validation"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label">Smart Button 2 URL</label>
-                            <input type="url" class="form-group__input" id="sellersGuideUrl" value="" placeholder="https://example.com/button2">
-                            <div class="validation-message" id="sellersGuideUrl-validation"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label">🔘 Smart Button 3 Name</label>
-                            <input type="text" class="form-group__input" id="websiteName" value="Button 3" placeholder="Button 3">
-                            <div class="validation-message" id="websiteName-validation"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label">Smart Button 3 URL</label>
-                            <input type="url" class="form-group__input" id="myWebsiteUrl" value="" placeholder="https://example.com/button3">
-                            <div class="validation-message" id="myWebsiteUrl-validation"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label">🔘 Smart Button 4 Name</label>
-                            <input type="text" class="form-group__input" id="blogName" value="Button 4" placeholder="Button 4">
-                            <div class="validation-message" id="blogName-validation"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label">Smart Button 4 URL</label>
-                            <input type="url" class="form-group__input" id="blogUrl" value="" placeholder="https://example.com/button4">
-                            <div class="validation-message" id="blogUrl-validation"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Market Statistics -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">📊 Market Statistics</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
-                        Enter your market statistics manually. The system will organize them into a professional layout.
-                    </p>
-                    
-                    <div class="stats-grid" id="statsGrid">
-                        <!-- Stats will be rendered here -->
-                    </div>
-                    
-                    <!-- Custom Property Types Container -->
-                    <div id="customPropertyTypesContainer">
-                        <!-- Custom property types will be rendered here -->
-                    </div>
-                    
-                    <button type="button" class="btn" onclick="modalManager.show('addCustomPropertyTypeModal')" style="margin: 20px 0; width: 100%; background: #f39c12; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;">
-                        + Add Custom Property Type
-                    </button>
-                </div>
-                
-                <!-- Monthly Maintenance Tips -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">🔧 Monthly Maintenance Tips</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
-                        Manage maintenance tips for the selected month. Tips automatically update when you change months.
-                    </p>
-                    
-                    <div id="maintenanceTipsSummary" style="margin-bottom: 20px; padding: 15px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px;">
-                        <!-- Summary will be rendered here -->
-                    </div>
-                    
-                    <button type="button" class="btn btn--primary btn--full" onclick="openMaintenanceTipsModal()">
-                        🔧 Manage Maintenance Tips
-                    </button>
-                </div>
-                
-                <!-- Community Calendar & Events -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">📅 Community Calendar & Events</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
-                        Add your community events with optional images automatically hosted on Imgur for email compatibility.
-                    </p>
-                    <button type="button" class="btn btn--primary btn--full" onclick="modalManager.show('addEventModal')">
-                        + Add Event
-                    </button>
-                    <div id="customEventsList" style="margin-top: 15px;">
-                        <!-- Custom events will appear here -->
-                    </div>
-                </div>
-                
-                <!-- Your Information -->
-                <div class="form-section fade-in">
-                    <h3 class="form-section__header">👤 Your Information</h3>
-                    <div class="form-group">
-                        <label class="form-group__label required-field">Full Name</label>
-                        <input type="text" class="form-group__input" id="agentName" value="" required>
-                        <div class="validation-message" id="agentName-validation"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-group__label required-field">Company Name</label>
-                        <input type="text" class="form-group__input" id="companyName" value="" required>
-                        <div class="validation-message" id="companyName-validation"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label required-field">Phone</label>
-                            <input type="tel" class="form-group__input" id="agentPhone" value="" required>
-                            <div class="validation-message" id="agentPhone-validation"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label required-field">Email</label>
-                            <input type="email" class="form-group__input" id="agentEmail" value="" required>
-                            <div class="validation-message" id="agentEmail-validation"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-group__label required-field">Website</label>
-                        <input type="url" class="form-group__input" id="agentWebsite" value="" required>
-                        <div class="validation-message" id="agentWebsite-validation"></div>
-                    </div>
-                    
-                    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
-                        📷 Upload your professional photos and logos (automatically hosted on Imgur)
-                    </p>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-group__label">Agent Photo</label>
-                            <input type="file" class="form-group__input" id="agentPhoto" accept="image/*" onchange="handleImageUpload('agentPhoto', 'agentPhoto')">
-                            <div class="image-preview" id="agentPhotoPreview" style="margin-top: 10px; display: none;">
-                                <img style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
-                                <button type="button" onclick="removeImage('agentPhoto', 'agentPhoto')" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Remove</button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-group__label">Agent Logo</label>
-                            <input type="file" class="form-group__input" id="agentLogo" accept="image/*" onchange="handleImageUpload('agentLogo', 'agentLogo')">
-                            <div class="image-preview" id="agentLogoPreview" style="margin-top: 10px; display: none;">
-                                <img style="width: 80px; height: 60px; object-fit: contain; border: 2px solid #ddd; border-radius: 4px;">
-                                <button type="button" onclick="removeImage('agentLogo', 'agentLogo')" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Remove</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-group__label">Brokerage Logo</label>
-                        <input type="file" class="form-group__input" id="brokerageLogo" accept="image/*" onchange="handleImageUpload('brokerageLogo', 'brokerageLogo')">
-                        <div class="image-preview" id="brokerageLogoPreview" style="margin-top: 10px; display: none;">
-                            <img style="width: 120px; height: 60px; object-fit: contain; border: 2px solid #ddd; border-radius: 4px;">
-                            <button type="button" onclick="removeImage('brokerageLogo', 'brokerageLogo')" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Remove</button>
-                        </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                        <h3 style="margin: 0 0 10px 0; color: #2c3e50;">Contact Information</h3>
+                        <p style="margin: 5px 0; color: #555;"><strong>${agentName}</strong></p>
+                        <p style="margin: 5px 0; color: #555;">${companyName}</p>
+                        <p style="margin: 5px 0; color: #555;">${document.getElementById('agentPhone').value}</p>
+                        <p style="margin: 5px 0; color: #555;">${document.getElementById('agentEmail').value}</p>
+                        <p style="margin: 5px 0; color: #555;">${document.getElementById('agentWebsite').value}</p>
                     </div>
                 </div>
             `;
+            
+            showToast('✨ Newsletter generated successfully!', 'success', 3000);
+            document.getElementById('previewStatus').textContent = '✅ Newsletter preview generated successfully';
         }
 
-        // Initialize and render all functions (simplified version)
-        function initializeApp() {
-            renderFormSections();
-            renderStats();
-            setupEventListeners();
-            updateMonthDisplay();
-            updateEventsList();
-            renderMaintenanceTipsSummary();
-            updatePreview();
-            showToast('🚀 Newsletter Builder Pro ready!', 'success', 4000);
+        function toggleInstructionsPopup() {
+            const popup = document.getElementById('instructionsPopup');
+            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Simplified versions of key functions
-        function renderStats() {
-            // Render basic market statistics grid
-            const container = document.getElementById('statsGrid');
-            container.innerHTML = '<div>Market statistics form will load here...</div>';
+        function quickPrint() {
+            window.print();
         }
 
-        function setupEventListeners() {
-            // Basic event listener setup
-            document.addEventListener('change', (e) => {
-                if (e.target.type === 'select-one') {
-                    handleFormChange(e.target.id, e.target.value);
-                }
-            });
+        function showExportModal() {
+            showToast('📧 Export functionality coming soon!', 'info', 3000);
         }
 
-        function handleFormChange(fieldId, value) {
-            // Simplified form change handler
-            console.log(`Form change: ${fieldId} = ${value}`);
-        }
-
-        function updateMonthDisplay() {
-            const month = newsletterData.content.newsletterSeason || 'june';
-            const monthName = month.charAt(0).toUpperCase() + month.slice(1);
-            document.getElementById('currentMonth').textContent = `${monthName} 2025 Edition`;
-        }
-
-        function updateEventsList() {
-            const container = document.getElementById('customEventsList');
-            container.innerHTML = '<div>No events added yet</div>';
-        }
-
-        function renderMaintenanceTipsSummary() {
-            const container = document.getElementById('maintenanceTipsSummary');
-            container.innerHTML = '<div>5 maintenance tips loaded</div>';
-        }
-
-        function updatePreview() {
-            const container = document.getElementById('newsletterPreview');
-            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Newsletter preview will appear here when you fill out the form</div>';
-        }
-
-        function generateNewsletter() {
-            updatePreview();
-            showToast('✨ Newsletter generated!', 'success');
-        }
-
+        // Toast notifications
         function showToast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toastContainer');
+            if (!container) return;
+            
             const toast = document.createElement('div');
             toast.className = `toast toast--${type}`;
             toast.textContent = message;
@@ -1902,111 +773,18 @@
             }, duration);
         }
 
-        // Modal manager
-        const modalManager = {
-            show: (modalId) => {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.classList.add('modal-overlay--show');
-            },
-            close: (modalId) => {
-                const modal = document.getElementById(modalId);
-                if (modal) modal.classList.remove('modal-overlay--show');
-            }
-        };
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            showToast('🚀 Newsletter Builder Pro ready!', 'success', 4000);
+        });
 
-        // Export manager
-        const exportManager = {
-            copyEmailSafeHTML: () => {
-                showToast('✅ Newsletter copied for email!', 'success', 3000);
-            },
-            exportAsHTML: () => {
-                showToast('✅ Newsletter exported!', 'success', 3000);
-            },
-            printNewsletter: () => {
-                window.print();
-            }
-        };
-
-        // Helper functions for modals
-        function toggleInstructionsPopup() {
-            const popup = document.getElementById('instructionsPopup');
-            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function quickPrint() {
-            window.print();
-        }
-
-        function openMaintenanceTipsModal() {
-            modalManager.show('maintenanceTipsModal');
-        }
-
-        function handleImageUpload(inputId, imageKey) {
-            console.log(`Image upload: ${inputId} for ${imageKey}`);
-        }
-
-        function removeImage(inputId, imageKey) {
-            console.log(`Remove image: ${inputId} for ${imageKey}`);
-        }
-
-        function handleEventImageUpload() {
-            console.log('Event image upload');
-        }
-
-        function removeEventImage() {
-            console.log('Remove event image');
-        }
-
-        // Initialize the application when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeApp);
-
-        // Close modals when clicking outside
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                const modalId = e.target.id;
-                modalManager.close(modalId);
+        // Keyboard shortcut for generate newsletter
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                generateNewsletter();
             }
         });
     </script>
 </body>
 </html>
-
-<!-- 
-📋 HOW TO USE THIS TEMPLATE:
-
-1. **Copy this file** to create a new page
-2. **Rename it** (e.g., about.html, contact.html, services.html)
-3. **Update the <title>** in the <head> section
-4. **Replace the content** between the MAIN CONTENT comments
-5. **Adjust CSS file paths** if placing in a subfolder:
-   - Root level: href="assets/css/..."
-   - Subfolder: href="../assets/css/..."
-6. **Add to navigation menu** by uncommenting the menu item example
-7. **Customize colors, fonts, and styling** in the <style> section
-
-📁 FILE STRUCTURE EXAMPLES:
-
-For root level pages:
-- about.html (use: href="assets/css/...")
-- contact.html (use: href="assets/css/...")
-
-For pages in subfolders:
-- services/index.html (use: href="../assets/css/...")
-- blog/index.html (use: href="../assets/css/...")
-
-🎨 CUSTOMIZATION TIPS:
-
-- Change the hero background color in .hero-section
-- Modify feature icons and descriptions in .feature-card sections
-- Add your own CSS in the PAGE-SPECIFIC STYLES section
-- Include page-specific JavaScript in the script section
-- Update navigation menu to include your new pages
-
-✨ This template includes:
-- ✅ Responsive navigation system
-- ✅ Mobile-friendly design  
-- ✅ Professional styling
-- ✅ Smooth animations
-- ✅ SEO-ready structure
-- ✅ Easy customization
--->
