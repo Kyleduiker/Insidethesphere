@@ -186,6 +186,7 @@
             color: var(--text-light);
             min-height: 100vh;
             line-height: 1.5;
+            padding-top: 70px; /* Account for fixed navigation */
         }
 
         /* Main Content Section */
@@ -1251,16 +1252,44 @@
         </div>
     </section>
 
-    <!-- ✅ JAVASCRIPT: Always include navigation functionality -->
-    
-    <!-- For root level pages: use this path -->
-    <script src="assets/js/navigation.js"></script>
-    
-    <!-- For pages in subfolders: uncomment this and comment out the above -->
-    <!-- <script src="../assets/js/navigation.js"></script> -->
-
     <!-- Newsletter Builder Pro JavaScript -->
     <script>
+        // Navigation System Functions
+        function toggleSphereMenu() {
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            
+            if (menu.classList.contains('active')) {
+                closeSphereMenu();
+            } else {
+                menu.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeSphereMenu() {
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            
+            menu.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close menu when clicking overlay
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'sphereOverlay') {
+                closeSphereMenu();
+            }
+        });
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSphereMenu();
+            }
+        });
         // Global state
         let newsletterData = {
             design: {
