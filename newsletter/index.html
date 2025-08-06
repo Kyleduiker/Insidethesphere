@@ -3,27 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- 📝 CUSTOMIZE: Change the page title -->
     <title>New Page - Inside The Sphere</title>
     
-    <!-- External CSS Files -->
-    <!-- For root level pages: use these paths -->
-    <link rel="stylesheet" href="assets/css/navigation.css">
-    <link rel="stylesheet" href="assets/css/main.css">
-    
-    <!-- For pages in subfolders: uncomment these and comment out the above -->
-    <!-- <link rel="stylesheet" href="../assets/css/navigation.css"> -->
-    <!-- <link rel="stylesheet" href="../assets/css/main.css"> -->
-    
-    <!-- 🎨 ADD YOUR CUSTOM STYLES HERE -->
     <style>
-        /* Add your page-specific styles here */
-        
+        /* Navigation Styles - Inside The Sphere */
+        .sphere-nav {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            z-index: 9999 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .sphere-nav-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-logo {
+            font-size: 24px !important;
+            font-weight: bold !important;
+            color: #f39c12 !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-logo:hover {
+            color: #e67e22 !important;
+            text-decoration: none !important;
+        }
+
+        .sphere-menu-btn {
+            background: #f39c12 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-btn:hover {
+            background: #e67e22 !important;
+        }
+
+        .sphere-menu-btn.active {
+            background: #e67e22 !important;
+        }
+
+        /* Popout Menu */
+        .sphere-popout-menu {
+            position: fixed !important;
+            top: 0 !important;
+            left: -300px !important;
+            width: 280px !important;
+            height: 100vh !important;
+            background: #2c3e50 !important;
+            z-index: 10000 !important;
+            transition: left 0.3s ease !important;
+            overflow-y: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-popout-menu.active {
+            left: 0 !important;
+        }
+
+        .sphere-menu-header {
+            padding: 25px 20px !important;
+            border-bottom: 1px solid #34495e !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-title {
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            font-family: Arial, sans-serif !important;
+            margin-top: 0 !important;
+        }
+
+        .sphere-menu-subtitle {
+            color: #bdc3c7 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-items {
+            padding: 20px 0 !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 15px 20px !important;
+            color: #ecf0f1 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            border-left: 3px solid transparent !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-item:hover {
+            background: #34495e !important;
+            border-left-color: #f39c12 !important;
+            text-decoration: none !important;
+            color: #ecf0f1 !important;
+        }
+
+        .sphere-menu-icon {
+            width: 24px !important;
+            height: 24px !important;
+            margin-right: 15px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            color: white !important;
+            flex-shrink: 0 !important;
+        }
+
+        .sphere-menu-text {
+            font-weight: 500 !important;
+            font-size: 15px !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        /* Icon Colors */
+        .sphere-icon-home { background: #3498db !important; }
+        .sphere-icon-tools { background: #f39c12 !important; }
+        .sphere-icon-newsletter { background: #e74c3c !important; }
+
+        /* Overlay */
+        .sphere-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            z-index: 9998 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Main Page Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 80px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f39c12;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.3);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sphere-nav-container {
+                padding: 15px 20px !important;
+            }
+
+            .sphere-logo {
+                font-size: 20px !important;
+            }
+
+            .sphere-menu-btn {
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+            }
+
+            .sphere-popout-menu {
+                width: 100% !important;
+                left: -100% !important;
+            }
+
+            body {
+                padding-top: 70px;
+            }
+
+            .section {
+                padding: 60px 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- ✅ NAVIGATION MENU (Always include this) -->
+    <!-- Navigation Menu -->
     <nav class="sphere-nav">
         <div class="sphere-nav-container">
             <a href="/" class="sphere-logo">Inside The Sphere</a>
@@ -60,39 +304,122 @@
                 <div class="sphere-menu-text">Newsletter Builder</div>
             </a>
 
-            <!-- 📝 ADD MORE MENU ITEMS HERE -->
-            <!-- 
-            <a href="/your-new-page/" class="sphere-menu-item">
-                <div class="sphere-menu-icon" style="background: #9b59b6;">🆕</div>
-                <div class="sphere-menu-text">Your New Page</div>
-            </a>
-            -->
+            <!-- Add more menu items here -->
         </div>
     </div>
 
-    <!-- 🎯 ADD YOUR PAGE CONTENT HERE -->
+    <!-- Page Content -->
     <main style="padding-top: 80px; min-height: calc(100vh - 80px);">
         <div class="container">
-            
-            <!-- Your content goes here -->
-            <h1>Your Page Title</h1>
-            <p>Add your content here...</p>
-            
+            <div class="section">
+                <div class="section-header">
+                    <h2>Welcome to Your New Page</h2>
+                    <p style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto;">
+                        This is a fully functional template with navigation and styling included.
+                        You can customize this content to create your own page.
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin: 40px 0;">
+                    <p style="font-size: 1.1rem; margin-bottom: 30px; color: #555;">
+                        Click the menu button above to test the navigation!
+                    </p>
+                    <a href="#demo" class="btn">Get Started</a>
+                </div>
+
+                <div id="demo" style="margin-top: 60px; padding: 40px; background: #f8f9fa; border-radius: 12px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px;">Demo Content</h3>
+                    <p style="color: #666; line-height: 1.8;">
+                        Replace this section with your own content. The navigation system is fully functional
+                        and the page is mobile-responsive. You can customize the colors, fonts, and layout
+                        by modifying the CSS in the &lt;style&gt; section above.
+                    </p>
+                </div>
+            </div>
         </div>
     </main>
 
-    <!-- ✅ JAVASCRIPT (Always include this) -->
-    
-    <!-- For root level pages: use this path -->
-    <script src="assets/js/navigation.js"></script>
-    
-    <!-- For pages in subfolders: uncomment this and comment out the above -->
-    <!-- <script src="../assets/js/navigation.js"></script> -->
-    
-    <!-- 🔧 ADD YOUR CUSTOM JAVASCRIPT HERE -->
+    <!-- JavaScript -->
     <script>
-        // Add your page-specific JavaScript here
-        
+        // Navigation functionality
+        function toggleSphereMenu() {
+            console.log('Toggle menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    menuBtn.classList.remove('active');
+                    console.log('Menu closed');
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    menuBtn.classList.add('active');
+                    console.log('Menu opened');
+                }
+            } else {
+                console.error('One or more navigation elements not found');
+            }
+        }
+
+        function closeSphereMenu() {
+            console.log('Close menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                menuBtn.classList.remove('active');
+                console.log('Menu closed');
+            }
+        }
+
+        // Initialize navigation when page loads
+        function initializeNavigation() {
+            console.log('Initializing navigation...');
+            
+            // Add event listeners
+            const overlay = document.getElementById('sphereOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSphereMenu);
+                console.log('Overlay click listener added');
+            }
+
+            // Close menu with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    console.log('Escape key pressed');
+                    closeSphereMenu();
+                }
+            });
+
+            // Close menu when clicking on menu items
+            const menuItems = document.querySelectorAll('.sphere-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    console.log('Menu item clicked');
+                    closeSphereMenu();
+                });
+            });
+
+            console.log('Navigation initialization complete');
+        }
+
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeNavigation);
+        } else {
+            initializeNavigation();
+        }
+
+        console.log('Navigation JS loaded successfully');
     </script>
 </body>
 </html>
