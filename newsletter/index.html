@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 📝 CUSTOMIZE: Change the page title -->
+    <title>Your Page Title - Inside The Sphere</title>
+    
+    <!-- External CSS Files (adjust paths if page is in subfolder) -->
+    <!-- For root level pages: use these paths -->
+    <link rel="stylesheet" href="assets/css/navigation.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    
+    <!-- For pages in subfolders: uncomment these and comment out the above -->
+    <!-- <link rel="stylesheet" href="../assets/css/navigation.css"> -->
+    <!-- <link rel="stylesheet" href="../assets/css/main.css"> -->
+    
+    <!-- 🎨 PAGE-SPECIFIC STYLES: Add custom styles for your content here -->
+    <style>
+        /* Add your custom styles here */
+        body {
+            padding-top: 80px; /* Accounts for fixed navigation */
+        }
+    </style>
+</head>
+<body>
+    <!-- ✅ NAVIGATION: Navigation system -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+
+            <!-- 📝 CUSTOMIZE: Add more menu items here -->
+            <!-- 
+            <a href="/your-new-page/" class="sphere-menu-item">
+                <div class="sphere-menu-icon" style="background: #9b59b6;">🆕</div>
+                <div class="sphere-menu-text">Your New Page</div>
+            </a>
+            -->
+        </div>
+    </div>
+
+    <!-- 🎯 YOUR CONTENT GOES HERE -->
+    <!-- Paste your code directly below this comment -->
+    
+
+
+    <!-- ✅ JAVASCRIPT: Navigation functionality -->
+    
+    <!-- For root level pages: use this path -->
+    <script src="assets/js/navigation.js"></script>
+    
+    <!-- For pages in subfolders: uncomment this and comment out the above -->
+    <!-- <script src="../assets/js/navigation.js"></script> -->
+    
+    <!-- 🔧 YOUR JAVASCRIPT: Add your custom JavaScript here -->
+    <script>
+        // Add your page-specific JavaScript here
+        console.log('Navigation template loaded successfully!');
+    </script>
+</body>
+</html>
