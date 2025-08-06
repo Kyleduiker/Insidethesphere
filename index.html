@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inside The Sphere - Real Estate Tools</title>
+    
+    <!-- External CSS Files -->
+    <link rel="stylesheet" href="assets/css/navigation.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    
+    <!-- Hero section styles -->
+    <style>
+        /* Hero Section with modern navigation */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
+                        url('https://i.imgur.com/UQeIaxC.png');
+            background-size: cover;
+            background-position: center top;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            padding-top: 80px; /* Account for fixed navigation */
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Modern Fixed Navigation -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Hero Section with Background Image -->
+    <section class="hero">
+        <!-- Hidden hero content (as in your original) -->
+        <div class="hero-content" style="display: none;">
+            <h1>Inside The Sphere</h1>
+            <p>Smart tools. Simple systems. Real estate made easier.</p>
+        </div>
+    </section>
+
+    <!-- Welcome Section -->
+    <section class="section create-section" id="studio">
+        <div class="container">
+            <div class="create-content">
+                <div class="create-text">
+                    <h3>Welcome to Inside The Sphere</h3>
+                    <p class="tagline">Smart tools. Simple systems. Real estate made easier.</p>
+                    
+                    <p class="intro-paragraph">Inside The Sphere helps agents streamline their business with step-by-step guides, CRM shortcuts, and custom tools—built especially for BoldTrail (RLP Sphere) users.</p>
+                    
+                    <p>From newsletter builders to website upgrades, we take the tech stress out of your day so you can focus on what matters most: your clients.</p>
+                    
+                    <p class="closing-paragraph">Discover how our specialized tools and systems can transform your real estate workflow and boost your productivity.</p>
+                </div>
+                
+                <div class="blank-space">
+                    <!-- Blank space for future content -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section" id="portfolio">
+        <div class="container">
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-image">🛠️</div>
+                    <div class="service-content">
+                        <h4>Smart Tools</h4>
+                        <p>Streamline your real estate business with our specialized tools designed for BoldTrail (RLP Sphere) users.</p>
+                        <ul class="service-features">
+                            <li>Newsletter builders</li>
+                            <li>CRM shortcuts & automation</li>
+                            <li>Website upgrade tools</li>
+                            <li>Step-by-step guides</li>
+                            <li>Custom workflow solutions</li>
+                        </ul>
+                        <a href="/smarttools/" class="action-btn">Explore Tools</a>
+                    </div>
+                </div>
+                
+                <div class="service-card">
+                    <div class="service-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">💬</div>
+                    <div class="service-content">
+                        <h4>Connect with Us</h4>
+                        <p>Ready to streamline your real estate workflow? Get in touch and let's discuss how we can help.</p>
+                        
+                        <form class="contact-form" onsubmit="handleSubmit(event)">
+                            <div class="form-group">
+                                <input type="text" placeholder="Your Name" required name="name">
+                            </div>
+                            <div class="form-group">
+                                <input type="tel" placeholder="Phone Number" required name="phone">
+                            </div>
+                            <div class="form-group">
+                                <input type="email" placeholder="Email Address" required name="email">
+                            </div>
+                            <div class="form-group">
+                                <textarea placeholder="Your Message" required name="message"></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">Send Message</button>
+                        </form>
+                        
+                        <div class="coming-soon-overlay">
+                            <div class="coming-soon-text">Coming Soon</div>
+                            <div class="coming-soon-subtitle">We're working on something amazing!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section" id="contact" style="background: #2c3e50; color: white;">
+        <div class="container">
+            <div class="section-header">
+                <h2 style="color: white;">Ready to Start Your Project?</h2>
+                <p style="color: #bdc3c7; font-size: 1.1rem;">Let's create something amazing together</p>
+                <br>
+                <a href="#contact" class="btn">Get Started Today</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- External JavaScript Files -->
+    <script src="assets/js/navigation.js"></script>
+    
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Contact form handling
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(form);
+            const data = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                message: formData.get('message'),
+                timestamp: new Date().toISOString(),
+                source: 'Inside The Sphere Website'
+            };
+            
+            try {
+                // For demo purposes
+                alert('Form is ready for Zapier integration! Please configure your webhook URL.\n\nFor demo purposes, your message was received:\n\nName: ' + data.name + '\nEmail: ' + data.email);
+                form.reset();
+                
+                submitBtn.textContent = 'Message Sent!';
+                submitBtn.style.background = '#27ae60';
+                
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.style.background = '#f39c12';
+                    submitBtn.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('Sorry, there was an error sending your message. Please try again.');
+                
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '#f39c12';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Animation functionality
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Initialize animations
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
