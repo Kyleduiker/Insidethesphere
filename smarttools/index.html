@@ -5,12 +5,163 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Tools - Inside The Sphere</title>
     
-    <!-- External CSS Files (go up one directory) -->
-    <link rel="stylesheet" href="../assets/css/navigation.css">
-    <link rel="stylesheet" href="../assets/css/main.css">
-    
     <!-- Smart Tools specific styles -->
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+
+        /* Navigation Styles */
+        .sphere-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e0e0e0;
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .sphere-nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            height: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .sphere-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+        }
+
+        .sphere-menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .sphere-menu-btn:hover {
+            background: #e67e22;
+            transform: translateY(-1px);
+        }
+
+        .sphere-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sphere-popout-menu {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100vh;
+            background: white;
+            z-index: 1002;
+            transition: right 0.3s ease;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .sphere-popout-menu.active {
+            right: 0;
+        }
+
+        .sphere-menu-header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sphere-menu-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .sphere-menu-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .sphere-menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sphere-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .sphere-menu-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .sphere-menu-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+        }
+
+        .sphere-icon-home { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .sphere-icon-tools { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .sphere-icon-newsletter { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+        .sphere-menu-text {
+            font-weight: 600;
+        }
+
         /* Header Section */
         .header {
             text-align: center;
@@ -460,6 +611,16 @@
                     </div>
                 </div>
 
+                <div class="tool-card" data-category="website">
+                    <div class="tool-icon icon-website">🌐</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Website Enhancement</div>
+                        <div class="tool-name">Adding a video background on your website</div>
+                        <div class="tool-description">Upgrade the background on your Bold Trail (RLP Sphere) website in just a few clicks. Follow these simple step-by-step instructions to customize your site, stand out from the competition, and create a more engaging experience for your visitors.</div>
+                        <a href="https://insidethesphere.com/background-customization/" class="launch-btn">Get Started</a>
+                    </div>
+                </div>
+
                 <div class="tool-card has-banner" data-category="crm">
                     <div class="coming-soon-banner">Coming Soon</div>
                     <div class="tool-icon icon-crm">⚙️</div>
@@ -467,16 +628,6 @@
                         <div class="tool-category">CRM Automation</div>
                         <div class="tool-name">CRM Shortcuts</div>
                         <div class="tool-description">CRM Shortcuts streamlines your BoldTrail workflows with custom automation and one-click actions. Transform hours of manual work into seconds with intelligent shortcuts designed for real estate professionals.</div>
-                    </div>
-                </div>
-
-                <div class="tool-card has-banner" data-category="website">
-                    <div class="coming-soon-banner">Coming Soon</div>
-                    <div class="tool-icon icon-website">🌐</div>
-                    <div class="tool-content">
-                        <div class="tool-category">Website Enhancement</div>
-                        <div class="tool-name">Website Upgrade Tools</div>
-                        <div class="tool-description">Website Upgrade Tools transform your Sphere website with professional customizations that convert visitors into leads. Get modern designs optimized for real estate lead generation.</div>
                     </div>
                 </div>
 
@@ -512,12 +663,26 @@
             </div>
         </main>
     </div>
-
-    <!-- External JavaScript Files -->
-    <script src="../assets/js/navigation.js"></script>
     
     <!-- Page-specific JavaScript -->
     <script>
+        // Navigation menu functions
+        function toggleSphereMenu() {
+            const overlay = document.getElementById('sphereOverlay');
+            const menu = document.getElementById('spherePopoutMenu');
+            
+            overlay.classList.add('active');
+            menu.classList.add('active');
+        }
+
+        function closeSphereMenu() {
+            const overlay = document.getElementById('sphereOverlay');
+            const menu = document.getElementById('spherePopoutMenu');
+            
+            overlay.classList.remove('active');
+            menu.classList.remove('active');
+        }
+
         // Filter tools by category
         function filterTools(category) {
             const cards = document.querySelectorAll('.tool-card');
