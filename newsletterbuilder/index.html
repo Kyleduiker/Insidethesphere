@@ -43,7 +43,7 @@
 
         /* Main Content Section */
         .main-content {
-            padding: 40px 20px;
+            padding: 100px 20px 40px 20px;
             background: var(--background-light);
             min-height: 100vh;
         }
@@ -581,6 +581,161 @@
             cursor: pointer;
         }
 
+        /* Navigation Styles */
+        .sphere-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .sphere-nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .sphere-logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            letter-spacing: -0.5px;
+        }
+
+        .sphere-menu-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sphere-menu-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .sphere-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sphere-popout-menu {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sphere-popout-menu.active {
+            right: 0;
+        }
+
+        .sphere-menu-header {
+            padding: 30px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .sphere-menu-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .sphere-menu-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .sphere-menu-items {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .sphere-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sphere-menu-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+            color: #667eea;
+        }
+
+        .sphere-menu-item-active {
+            background: rgba(102, 126, 234, 0.15);
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .sphere-menu-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .sphere-menu-item:hover .sphere-menu-icon,
+        .sphere-menu-item-active .sphere-menu-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .sphere-menu-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
         /* Color input styling */
         .form-group__input[type="color"] {
             height: 44px;
@@ -664,6 +819,45 @@
     </style>
 </head>
 <body>
+    <!-- Modern Fixed Navigation -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="../index.html" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="../index.html" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="../smarttools/index.html" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="index.html" class="sphere-menu-item sphere-menu-item-active">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -3687,6 +3881,42 @@
                 console.error('Application initialization error:', error);
                 showToast('⚠️ Application started with some limitations. Please refresh if you encounter issues.', 'warning', 6000);
             }
+        });
+    </script>
+    
+    <!-- Navigation JavaScript -->
+    <script>
+        // Sphere Navigation Functions
+        function toggleSphereMenu() {
+            const overlay = document.getElementById('sphereOverlay');
+            const menu = document.getElementById('spherePopoutMenu');
+            
+            overlay.classList.add('active');
+            menu.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSphereMenu() {
+            const overlay = document.getElementById('sphereOverlay');
+            const menu = document.getElementById('spherePopoutMenu');
+            
+            overlay.classList.remove('active');
+            menu.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close menu with escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSphereMenu();
+            }
+        });
+
+        // Close menu when clicking on menu links
+        document.querySelectorAll('.sphere-menu-item').forEach(link => {
+            link.addEventListener('click', function() {
+                closeSphereMenu();
+            });
         });
     </script>
 </body>
