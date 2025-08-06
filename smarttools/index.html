@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tools - Inside The Sphere</title>
+    
+    <!-- External CSS Files (go up one directory) -->
+    <link rel="stylesheet" href="../assets/css/navigation.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    
+    <!-- Smart Tools specific styles -->
+    <style>
+        /* Header Section */
+        .header {
+            text-align: center;
+            padding: 120px 20px 40px; /* Extra padding for fixed nav */
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+        }
+
+        .icon-shape {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 -8px;
+            color: white;
+        }
+
+        .icon-red { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .icon-blue { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+        .icon-yellow { background: linear-gradient(135deg, #feca57, #ff9ff3); }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .header p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 30px 0;
+            position: sticky;
+            top: 80px; /* Account for fixed nav */
+            height: fit-content;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+            border-left-color: #f39c12;
+        }
+
+        .nav-link.active {
+            background: rgba(243, 156, 18, 0.15);
+            color: #f39c12;
+            border-left-color: #f39c12;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .tool-count {
+            margin-left: auto;
+            background: #e0e0e0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .nav-link.active .tool-count {
+            background: #f39c12;
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            max-width: calc(100% - 280px);
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .content-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Tools Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            border-color: #f39c12;
+        }
+
+        .tool-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .tool-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-category {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tool-name {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .tool-description {
+            color: #666;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Coming Soon Banner */
+        .coming-soon-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 6px 0;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            z-index: 10;
+        }
+
+        .tool-card.has-banner {
+            padding-top: 45px;
+        }
+
+        /* Tool Icon Colors */
+        .icon-newsletter { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .icon-crm { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .icon-website { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .icon-guides { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .icon-workflow { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .icon-analytics { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: static;
+                width: 100%;
+                top: auto;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .content-area {
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 100px 20px 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .tool-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Launch Button */
+        .launch-btn {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #27ae60;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .launch-btn:hover {
+            background: #229954;
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modern Fixed Navigation -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <section class="header">
+        <div class="header-icon">
+            <div class="icon-shape icon-red">🛠️</div>
+            <div class="icon-shape icon-blue">⚙️</div>
+            <div class="icon-shape icon-yellow">🚀</div>
+        </div>
+        <h1>Smart Tools Directory</h1>
+        <p>Inside The Sphere is a curated collection of tools for real estate professionals using BoldTrail (RLP Sphere). We regularly review new tools to create the most up-to-date directory available, helping you to become the best real estate professional you can be.</p>
+    </section>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Tool Categories</div>
+                <div class="sidebar-subtitle">Browse by category</div>
+            </div>
+
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="filterTools('all')">
+                        <span class="nav-icon">📋</span>
+                        All Tools
+                        <span class="tool-count">6</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('email')">
+                        <span class="nav-icon">📧</span>
+                        Email Marketing
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('crm')">
+                        <span class="nav-icon">⚙️</span>
+                        CRM Automation
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('website')">
+                        <span class="nav-icon">🌐</span>
+                        Website Enhancement
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('training')">
+                        <span class="nav-icon">📚</span>
+                        Training & Support
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('development')">
+                        <span class="nav-icon">🔧</span>
+                        Custom Development
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="filterTools('analytics')">
+                        <span class="nav-icon">📊</span>
+                        Business Intelligence
+                        <span class="tool-count">1</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h2 class="content-title">All Tools</h2>
+                <p class="content-description">Browse all available tools for BoldTrail (RLP Sphere) users</p>
+            </div>
+
+            <!-- Tools Grid -->
+            <div class="tools-grid">
+                <div class="tool-card" data-category="email">
+                    <div class="tool-icon icon-newsletter">📧</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Email Marketing</div>
+                        <div class="tool-name">Newsletter Builder Pro</div>
+                        <div class="tool-description">Newsletter Builder is a comprehensive solution for creating professional, branded newsletters. You can design templates, manage contacts, schedule campaigns, and track performance all in one secure platform.</div>
+                        <a href="/newsletter/" class="launch-btn">Launch Builder</a>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="crm">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-crm">⚙️</div>
+                    <div class="tool-content">
+                        <div class="tool-category">CRM Automation</div>
+                        <div class="tool-name">CRM Shortcuts</div>
+                        <div class="tool-description">CRM Shortcuts streamlines your BoldTrail workflows with custom automation and one-click actions. Transform hours of manual work into seconds with intelligent shortcuts designed for real estate professionals.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="website">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-website">🌐</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Website Enhancement</div>
+                        <div class="tool-name">Website Upgrade Tools</div>
+                        <div class="tool-description">Website Upgrade Tools transform your Sphere website with professional customizations that convert visitors into leads. Get modern designs optimized for real estate lead generation.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="training">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-guides">📋</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Training & Support</div>
+                        <div class="tool-name">Step-by-Step Guides</div>
+                        <div class="tool-description">Step-by-Step Guides provide comprehensive tutorials and training materials to master every aspect of your BoldTrail system. Video tutorials, written guides, and best practice recommendations.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="development">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-workflow">🔧</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Custom Development</div>
+                        <div class="tool-name">Custom Workflows</div>
+                        <div class="tool-description">Custom Workflows provide tailored solutions built specifically for your business needs within the Sphere ecosystem. Get personalized consultation and custom tool development.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="analytics">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-analytics">📊</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Business Intelligence</div>
+                        <div class="tool-name">Analytics Dashboard</div>
+                        <div class="tool-description">Analytics Dashboard provides insights into your business performance with custom dashboards and reporting tools. Track lead conversion, marketing ROI, and pipeline performance.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- External JavaScript Files -->
+    <script src="../assets/js/navigation.js"></script>
+    
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Filter tools by category
+        function filterTools(category) {
+            const cards = document.querySelectorAll('.tool-card');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentTitle = document.querySelector('.content-title');
+            const contentDescription = document.querySelector('.content-description');
+
+            // Remove active class from all nav links
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            // Add active class to clicked link
+            event.target.classList.add('active');
+
+            // Filter cards
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update content header
+            const categoryTitles = {
+                'all': 'All Tools',
+                'email': 'Email Marketing Tools',
+                'crm': 'CRM Automation Tools',
+                'website': 'Website Enhancement Tools',
+                'training': 'Training & Support Tools',
+                'development': 'Custom Development Tools',
+                'analytics': 'Business Intelligence Tools'
+            };
+
+            const categoryDescriptions = {
+                'all': 'Browse all available tools for BoldTrail (RLP Sphere) users',
+                'email': 'Tools for email marketing and newsletter management',
+                'crm': 'Automation and shortcuts for your CRM workflow',
+                'website': 'Enhance your website and online presence',
+                'training': 'Learning resources and support materials',
+                'development': 'Custom solutions tailored to your needs',
+                'analytics': 'Business intelligence and performance tracking'
+            };
+
+            contentTitle.textContent = categoryTitles[category];
+            contentDescription.textContent = categoryDescriptions[category];
+        }
+    </script>
+</body>
+</html>
