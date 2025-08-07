@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player - Inside The Sphere</title>
+    
+    <style>
+        /* Navigation Styles - Inside The Sphere */
+        .sphere-nav {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            z-index: 9999 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .sphere-nav-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-logo {
+            font-size: 24px !important;
+            font-weight: bold !important;
+            color: #f39c12 !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-logo:hover {
+            color: #e67e22 !important;
+            text-decoration: none !important;
+        }
+
+        .sphere-menu-btn {
+            background: #f39c12 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-btn:hover {
+            background: #e67e22 !important;
+        }
+
+        .sphere-menu-btn.active {
+            background: #e67e22 !important;
+        }
+
+        /* Popout Menu */
+        .sphere-popout-menu {
+            position: fixed !important;
+            top: 0 !important;
+            left: -300px !important;
+            width: 280px !important;
+            height: 100vh !important;
+            background: #2c3e50 !important;
+            z-index: 10000 !important;
+            transition: left 0.3s ease !important;
+            overflow-y: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-popout-menu.active {
+            left: 0 !important;
+        }
+
+        .sphere-menu-header {
+            padding: 25px 20px !important;
+            border-bottom: 1px solid #34495e !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-title {
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            font-family: Arial, sans-serif !important;
+            margin-top: 0 !important;
+        }
+
+        .sphere-menu-subtitle {
+            color: #bdc3c7 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-items {
+            padding: 20px 0 !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 15px 20px !important;
+            color: #ecf0f1 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            border-left: 3px solid transparent !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-item:hover {
+            background: #34495e !important;
+            border-left-color: #f39c12 !important;
+            text-decoration: none !important;
+            color: #ecf0f1 !important;
+        }
+
+        .sphere-menu-icon {
+            width: 24px !important;
+            height: 24px !important;
+            margin-right: 15px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            color: white !important;
+            flex-shrink: 0 !important;
+        }
+
+        .sphere-menu-text {
+            font-weight: 500 !important;
+            font-size: 15px !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        /* Icon Colors */
+        .sphere-icon-home { background: #3498db !important; }
+        .sphere-icon-tools { background: #f39c12 !important; }
+        .sphere-icon-newsletter { background: #e74c3c !important; }
+
+        /* Overlay */
+        .sphere-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            z-index: 9998 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Main Page Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 80px;
+            background: #f8f9fa;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            padding: 40px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f39c12;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.3);
+        }
+
+        /* Video Player Styles */
+        .video-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .video-url-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .video-url-input:focus {
+            outline: none;
+            border-color: #f39c12;
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+        }
+
+        .load-video-btn {
+            padding: 12px 24px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .load-video-btn:hover {
+            background: #e67e22;
+            transform: translateY(-1px);
+        }
+
+        .instructions {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #f39c12;
+        }
+
+        .step-number {
+            background: #f39c12;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .step-content p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .example-urls {
+            background: #e8f4f8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .example-urls h5 {
+            color: #2980b9;
+            margin-bottom: 10px;
+        }
+
+        .example-urls code {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #2c3e50;
+            display: block;
+            margin: 5px 0;
+            word-break: break-all;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sphere-nav-container {
+                padding: 15px 20px !important;
+            }
+
+            .sphere-logo {
+                font-size: 20px !important;
+            }
+
+            .sphere-menu-btn {
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+            }
+
+            .sphere-popout-menu {
+                width: 100% !important;
+                left: -100% !important;
+            }
+
+            body {
+                padding-top: 70px;
+            }
+
+            .section {
+                padding: 30px 0;
+            }
+
+            .video-container, .instructions {
+                padding: 25px;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .video-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .video-url-input {
+                min-width: 100%;
+            }
+
+            .instruction-step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-number {
+                margin-right: 0;
+                margin-bottom: 15px;
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <main style="min-height: calc(100vh - 80px);">
+        <div class="container">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Adding a Social Feed to Your Website</h2>
+                </div>
+                
+                <!-- Video Player Section -->
+                <div class="video-container">
+                    <div class="video-wrapper" id="videoWrapper">
+                        <iframe 
+                            id="videoPlayer"
+                            src="https://www.youtube.com/embed/G0PclD-bKQ8?rel=0&modestbranding=1"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    
+                    <p style="color: #888; text-align: center; font-style: italic;">
+                        🎬 Instagram Social Feed Integration Tutorial - Watch the complete guide above
+                    </p>
+                </div>
+
+                <!-- Social Feed Integration Guide -->
+                <div class="instructions" style="margin-top: 30px;">
+                    <h3>📱 Instagram Social Feed Integration Guide</h3>
+                    <p style="color: #666; margin-bottom: 30px; font-style: italic;">
+                        Complete step-by-step instructions for adding an Instagram feed to your website using elfsight.com and integrating it into a KV core website.
+                    </p>
+                    
+                    <div style="border-left: 4px solid #3498db; padding: 20px; background: #f8f9fa; border-radius: 0 8px 8px 0; margin-bottom: 30px;">
+                        <h4 style="color: #2980b9; margin-bottom: 15px;">🌐 About Elf Sight Integration</h4>
+                        <p style="margin: 0; color: #666;">
+                            This guide uses the Instagram feed widget from <a href="https://elfsight.com/" target="_blank" style="color: #2980b9; text-decoration: none;">elfsight.com</a>. The presenter uses the Pro version to avoid app logos, but a free version is also available. The paid version costs around $12 per month and is useful for managing multiple websites.
+                        </p>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">1️⃣</div>
+                        <div class="step-content">
+                            <h4>Part 1: Setting up Your Social Feed on elfsight.com</h4>
+                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                                <li><strong>Navigate to elfsight.com</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Go to <a href="https://elfsight.com/" target="_blank" style="color: #2980b9; text-decoration: none;">elfsight.com</a> (link available in the video and on the presenter's blog)</li>
+                                        <li>The presenter uses the Instagram feed app and pays for Pro version to avoid logos</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Create a New Widget</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Once on elfsight.com, create a widget</li>
+                                        <li>Browse different feed options - the presenter prefers the top template</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Configure Your Social Account</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Add the social account (can be yours or another account like Remax)</li>
+                                        <li>Business accounts connect through Facebook (presenter noted issues with managed pages)</li>
+                                        <li>For public accounts, input username directly from the account's URL</li>
+                                        <li>You can also add feeds by searching hashtags</li>
+                                        <li>Click "add" - this process may take about a minute</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">🎨</div>
+                        <div class="step-content">
+                            <h4>Customize the Layout</h4>
+                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                                <li>After adding the account, you will see all the posts</li>
+                                <li>Navigate to the <strong>"Layout"</strong> section (not "Post" or "Style")</li>
+                                <li><strong>Adjust columns and rows</strong>: Use two columns for a simpler look (one is often not enough)</li>
+                                <li><strong>Add spacing/gap</strong>: Add a gap of 10 to prevent posts from overlapping and create white space</li>
+                                <li>Once satisfied with the layout, click <strong>"publish"</strong></li>
+                                <li>Close the window - the widget will initially be "Untitled"</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">2️⃣</div>
+                        <div class="step-content">
+                            <h4>Part 2: Integrating the Social Feed into Your Website</h4>
+                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                                <li><strong>Get the Widget Codes</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>From your created widget (might be "Untitled" initially), click "install"</li>
+                                        <li>You will receive two different codes that need to be added to your website</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add the Custom Header Code (Script)</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Copy the <strong>top code</strong> (the script)</li>
+                                        <li>Go to your KV core website settings</li>
+                                        <li>Scroll down to <strong>"custom header code"</strong></li>
+                                        <li>Paste the copied script into this section</li>
+                                        <li>Save the changes</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add the Feed Code (Widget)</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>The <strong>bottom code</strong> is the feed code</li>
+                                        <li>Return to your website manager in KV core, go to "widgets"</li>
+                                        <li>Ensure you are on the correct scope (company or your specific website)</li>
+                                        <li>Add a new custom widget</li>
+                                        <li>Give it a name (e.g., "discover C IG feed")</li>
+                                        <li>Fill in all required spots within the custom widget</li>
+                                        <li>Paste the feed code (bottom code) into the HTML section</li>
+                                        <li>Save the widget (may take a moment to process)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">3️⃣</div>
+                        <div class="step-content">
+                            <h4>Part 3: Arranging and Refining Your Feed</h4>
+                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                                <li><strong>Place the Feed Widget</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Decide where to place the feed on your website</li>
+                                        <li>The presenter added it near existing logo and "follow me" button</li>
+                                        <li>Refresh your website to see the changes</li>
+                                        <li>Note: The widget creator will likely be the only one to see it initially</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Adjust Spacing and Position (Optional)</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>If the feed appears too close to other elements, adjust position</li>
+                                        <li>Move other widgets (like "market report" bar) to create space</li>
+                                        <li>Edit the IG feed widget and add paragraph tags (&lt;p&gt;) for spacing</li>
+                                        <li>Refresh the site to see added space</li>
+                                        <li>Continue drag and drop widgets to rearrange layout as desired</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Final Review</strong>:
+                                    <ul style="margin: 10px 0 10px 20px;">
+                                        <li>Review the new layout on your website</li>
+                                        <li>Arrange elements like featured area, branding, feed, contact box, and other sections</li>
+                                        <li>The presenter's final arrangement included branding, feed, contact area, and other sections</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin-top: 30px; text-align: center;">
+                        <h4 style="color: #155724; margin-bottom: 10px;">💡 Pro Tip</h4>
+                        <p style="color: #155724; margin: 0; font-style: italic;">
+                            The elfsight.com app offers a free version (likely for one feed) and a paid version (around $12/month for more feeds). The paid version is particularly useful for managing multiple websites and removing app branding.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        // Navigation functionality
+        function toggleSphereMenu() {
+            console.log('Toggle menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    menuBtn.classList.remove('active');
+                    console.log('Menu closed');
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    menuBtn.classList.add('active');
+                    console.log('Menu opened');
+                }
+            } else {
+                console.error('One or more navigation elements not found');
+            }
+        }
+
+        function closeSphereMenu() {
+            console.log('Close menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                menuBtn.classList.remove('active');
+                console.log('Menu closed');
+            }
+        }
+
+        // Initialize navigation when page loads
+        function initializeNavigation() {
+            console.log('Initializing navigation...');
+            
+            // Add event listeners
+            const overlay = document.getElementById('sphereOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSphereMenu);
+                console.log('Overlay click listener added');
+            }
+
+            // Close menu with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    console.log('Escape key pressed');
+                    closeSphereMenu();
+                }
+            });
+
+            // Close menu when clicking on menu items
+            const menuItems = document.querySelectorAll('.sphere-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    console.log('Menu item clicked');
+                    closeSphereMenu();
+                });
+            });
+
+            console.log('Navigation initialization complete');
+        }
+
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeNavigation);
+        } else {
+            initializeNavigation();
+        }
+
+        console.log('Page scripts loaded successfully');
+    </script>
+</body>
+</html>
