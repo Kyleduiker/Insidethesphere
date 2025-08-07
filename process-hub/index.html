@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Page - Inside The Sphere</title>
+    <title>Real Estate Process Hub - Inside The Sphere</title>
     
     <style>
         /* Navigation Styles - Inside The Sphere */
@@ -158,7 +158,6 @@
         .sphere-icon-home { background: #3498db !important; }
         .sphere-icon-tools { background: #f39c12 !important; }
         .sphere-icon-newsletter { background: #e74c3c !important; }
-        .sphere-icon-realestate { background: #27ae60 !important; }
 
         /* Overlay */
         .sphere-overlay {
@@ -239,7 +238,7 @@
 
         /* Real Estate Hub Styles */
         .real-estate-hub {
-            display: none;
+            display: block;
             position: fixed;
             top: 80px;
             left: 0;
@@ -554,11 +553,6 @@
                 <div class="sphere-menu-text">Newsletter Builder</div>
             </a>
 
-            <a href="#real-estate-guides" onclick="showRealEstateHub()" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-realestate">🏡</div>
-                <div class="sphere-menu-text">Real Estate Guides</div>
-            </a>
-
             <!-- Add more menu items here -->
         </div>
     </div>
@@ -605,7 +599,6 @@
             <button class="hub-nav-btn active" onclick="showJourneySelector()">Choose Journey</button>
             <button class="hub-nav-btn" onclick="showSellerProcess()">Seller Guide</button>
             <button class="hub-nav-btn" onclick="showBuyerProcess()">Buyer Guide</button>
-            <button class="hub-nav-btn" onclick="closeRealEstateHub()">← Back to Main</button>
         </div>
 
         <!-- Journey Selector -->
@@ -805,6 +798,9 @@
             });
 
             console.log('Navigation initialization complete');
+            
+            // Initialize Real Estate Hub
+            initializeRealEstateHub();
         }
 
         // Wait for DOM to be ready
@@ -952,14 +948,10 @@
         };
 
         // Real Estate Hub Functions
-        function showRealEstateHub() {
-            document.getElementById('realEstateHub').classList.add('active');
-            closeSphereMenu();
+        function initializeRealEstateHub() {
             initializeProcessData();
-        }
-
-        function closeRealEstateHub() {
-            document.getElementById('realEstateHub').classList.remove('active');
+            // Auto-show journey selector on load
+            showJourneySelector();
         }
 
         function showJourneySelector() {
@@ -1000,17 +992,13 @@
         }
 
         function initializeProcessData() {
-            // Initialize task completion states from localStorage if available
-            const savedSellerProgress = JSON.parse(localStorage.getItem('sellerProgress') || '{}');
-            const savedBuyerProgress = JSON.parse(localStorage.getItem('buyerProgress') || '{}');
-            
-            // Apply saved progress to tasks
+            // Initialize task completion states in memory
             realEstateData.seller.tasks.forEach((task, index) => {
-                task.completed = savedSellerProgress[index] || false;
+                task.completed = false;
             });
             
             realEstateData.buyer.tasks.forEach((task, index) => {
-                task.completed = savedBuyerProgress[index] || false;
+                task.completed = false;
             });
         }
 
@@ -1077,11 +1065,9 @@
             if (type === 'seller') {
                 realEstateData.seller.tasks[index].completed = !realEstateData.seller.tasks[index].completed;
                 updateSellerProgress();
-                saveSellerProgress();
             } else {
                 realEstateData.buyer.tasks[index].completed = !realEstateData.buyer.tasks[index].completed;
                 updateBuyerProgress();
-                saveBuyerProgress();
             }
         }
 
@@ -1103,22 +1089,6 @@
             document.getElementById('buyerProgress').style.width = percentage + '%';
             document.getElementById('buyerProgressText').textContent = 
                 `${completed} of ${total} tasks completed (${percentage}%)`;
-        }
-
-        function saveSellerProgress() {
-            const progress = {};
-            realEstateData.seller.tasks.forEach((task, index) => {
-                if (task.completed) progress[index] = true;
-            });
-            localStorage.setItem('sellerProgress', JSON.stringify(progress));
-        }
-
-        function saveBuyerProgress() {
-            const progress = {};
-            realEstateData.buyer.tasks.forEach((task, index) => {
-                if (task.completed) progress[index] = true;
-            });
-            localStorage.setItem('buyerProgress', JSON.stringify(progress));
         }
 
         function showSellerPhase(phase) {
