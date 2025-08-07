@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Page - Inside The Sphere</title>
+    
+    <style>
+        /* Navigation Styles - Inside The Sphere */
+        .sphere-nav {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            z-index: 9999 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .sphere-nav-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-logo {
+            font-size: 24px !important;
+            font-weight: bold !important;
+            color: #f39c12 !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-logo:hover {
+            color: #e67e22 !important;
+            text-decoration: none !important;
+        }
+
+        .sphere-menu-btn {
+            background: #f39c12 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-btn:hover {
+            background: #e67e22 !important;
+        }
+
+        .sphere-menu-btn.active {
+            background: #e67e22 !important;
+        }
+
+        /* Popout Menu */
+        .sphere-popout-menu {
+            position: fixed !important;
+            top: 0 !important;
+            left: -300px !important;
+            width: 280px !important;
+            height: 100vh !important;
+            background: #2c3e50 !important;
+            z-index: 10000 !important;
+            transition: left 0.3s ease !important;
+            overflow-y: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-popout-menu.active {
+            left: 0 !important;
+        }
+
+        .sphere-menu-header {
+            padding: 25px 20px !important;
+            border-bottom: 1px solid #34495e !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-title {
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            font-family: Arial, sans-serif !important;
+            margin-top: 0 !important;
+        }
+
+        .sphere-menu-subtitle {
+            color: #bdc3c7 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-items {
+            padding: 20px 0 !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 15px 20px !important;
+            color: #ecf0f1 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            border-left: 3px solid transparent !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-item:hover {
+            background: #34495e !important;
+            border-left-color: #f39c12 !important;
+            text-decoration: none !important;
+            color: #ecf0f1 !important;
+        }
+
+        .sphere-menu-icon {
+            width: 24px !important;
+            height: 24px !important;
+            margin-right: 15px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            color: white !important;
+            flex-shrink: 0 !important;
+        }
+
+        .sphere-menu-text {
+            font-weight: 500 !important;
+            font-size: 15px !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        /* Icon Colors */
+        .sphere-icon-home { background: #3498db !important; }
+        .sphere-icon-tools { background: #f39c12 !important; }
+        .sphere-icon-newsletter { background: #e74c3c !important; }
+        .sphere-icon-realestate { background: #27ae60 !important; }
+
+        /* Overlay */
+        .sphere-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            z-index: 9998 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Main Page Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 80px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f39c12;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.3);
+        }
+
+        /* Real Estate Hub Styles */
+        .real-estate-hub {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 80px);
+            background: #f8f9fa;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .real-estate-hub.active {
+            display: block;
+        }
+
+        .hub-header {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .hub-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .hub-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .hub-navigation {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hub-nav-btn {
+            padding: 12px 24px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .hub-nav-btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .hub-nav-btn.active {
+            background: #27ae60;
+        }
+
+        .journey-selector {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .journey-cards {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            max-width: 800px;
+            margin: 40px auto 0;
+            flex-wrap: wrap;
+        }
+
+        .journey-card {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .journey-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .journey-card.seller {
+            border-color: #e74c3c;
+        }
+
+        .journey-card.buyer {
+            border-color: #3498db;
+        }
+
+        .journey-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .journey-card .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .process-container {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .process-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .phase-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .phase-tab {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .phase-tab.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .phase-tab:hover:not(.active) {
+            background: #bdc3c7;
+        }
+
+        .phase-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .phase-content.active {
+            display: block;
+        }
+
+        .phase-header {
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .phase-header h3 {
+            color: #27ae60;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            background: #e8f5e8;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .task-notes {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .task-completed {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 768px) {
+            .journey-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .phase-tabs {
+                justify-content: center;
+            }
+
+            .hub-navigation {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .sphere-nav-container {
+                padding: 15px 20px !important;
+            }
+
+            .sphere-logo {
+                font-size: 20px !important;
+            }
+
+            .sphere-menu-btn {
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+            }
+
+            .sphere-popout-menu {
+                width: 100% !important;
+                left: -100% !important;
+            }
+
+            body {
+                padding-top: 70px;
+            }
+
+            .section {
+                padding: 60px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav class="sphere-nav">
+        <div class="sphere-nav-container">
+            <a href="/" class="sphere-logo">Inside The Sphere</a>
+            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                <span>☰</span>
+                <span>Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Navigation Overlay -->
+    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
+
+    <!-- Navigation Popout Menu -->
+    <div class="sphere-popout-menu" id="spherePopoutMenu">
+        <div class="sphere-menu-header">
+            <div class="sphere-menu-title">Navigation</div>
+            <div class="sphere-menu-subtitle">Inside The Sphere</div>
+        </div>
+
+        <div class="sphere-menu-items">
+            <a href="/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
+                <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="/smarttools/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
+                <div class="sphere-menu-text">Smart Tools</div>
+            </a>
+
+            <a href="/newsletter/" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                <div class="sphere-menu-text">Newsletter Builder</div>
+            </a>
+
+            <a href="#real-estate-guides" onclick="showRealEstateHub()" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-realestate">🏡</div>
+                <div class="sphere-menu-text">Real Estate Guides</div>
+            </a>
+
+            <!-- Add more menu items here -->
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <main style="padding-top: 80px; min-height: calc(100vh - 80px);">
+        <div class="container">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Welcome to Your New Page</h2>
+                    <p style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto;">
+                        This is a fully functional template with navigation and styling included.
+                        You can customize this content to create your own page.
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin: 40px 0;">
+                    <p style="font-size: 1.1rem; margin-bottom: 30px; color: #555;">
+                        Click the menu button above to test the navigation!
+                    </p>
+                    <a href="#demo" class="btn">Get Started</a>
+                </div>
+
+                <div id="demo" style="margin-top: 60px; padding: 40px; background: #f8f9fa; border-radius: 12px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px;">Demo Content</h3>
+                    <p style="color: #666; line-height: 1.8;">
+                        Replace this section with your own content. The navigation system is fully functional
+                        and the page is mobile-responsive. You can customize the colors, fonts, and layout
+                        by modifying the CSS in the &lt;style&gt; section above.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Real Estate Process Hub -->
+    <div id="realEstateHub" class="real-estate-hub">
+        <div class="hub-header">
+            <h1>🏡 Real Estate Process Hub</h1>
+            <p>Your complete step-by-step guide to buying and selling real estate</p>
+        </div>
+
+        <div class="hub-navigation">
+            <button class="hub-nav-btn active" onclick="showJourneySelector()">Choose Journey</button>
+            <button class="hub-nav-btn" onclick="showSellerProcess()">Seller Guide</button>
+            <button class="hub-nav-btn" onclick="showBuyerProcess()">Buyer Guide</button>
+            <button class="hub-nav-btn" onclick="closeRealEstateHub()">← Back to Main</button>
+        </div>
+
+        <!-- Journey Selector -->
+        <div id="journeySelector" class="journey-selector">
+            <h2>Choose Your Real Estate Journey</h2>
+            <p style="font-size: 1.1rem; color: #666; margin-bottom: 40px;">
+                Select the path that best describes your current situation
+            </p>
+            
+            <div class="journey-cards">
+                <div class="journey-card seller" onclick="showSellerProcess()">
+                    <div class="icon">🏠</div>
+                    <h3>I'm Selling</h3>
+                    <p>Complete guide to selling your property, from listing preparation to closing</p>
+                    <div style="margin-top: 20px; font-weight: 600; color: #e74c3c;">
+                        55 Expert Tasks →
+                    </div>
+                </div>
+                
+                <div class="journey-card buyer" onclick="showBuyerProcess()">
+                    <div class="icon">🔑</div>
+                    <h3>I'm Buying</h3>
+                    <p>Step-by-step process from finding your dream home to getting the keys</p>
+                    <div style="margin-top: 20px; font-weight: 600; color: #3498db;">
+                        29 Essential Steps →
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seller Process -->
+        <div id="sellerProcess" class="process-container">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2>🏠 Seller Process Guide</h2>
+                <p>Follow these 55 expert tasks to successfully sell your property</p>
+                <div class="progress-bar">
+                    <div id="sellerProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="sellerProgressText">0 of 55 tasks completed (0%)</div>
+            </div>
+
+            <div class="phase-tabs" id="sellerPhaseTabs">
+                <button class="phase-tab active" onclick="showSellerPhase('initial')">Initial Setup</button>
+                <button class="phase-tab" onclick="showSellerPhase('listing')">Listing Prep</button>
+                <button class="phase-tab" onclick="showSellerPhase('active')">Active Marketing</button>
+                <button class="phase-tab" onclick="showSellerPhase('offer')">Offer & Closing</button>
+            </div>
+
+            <!-- Seller Phase Content -->
+            <div id="sellerPhaseInitial" class="phase-content active">
+                <div class="phase-header">
+                    <h3>📋 Initial Setup & Lead Management</h3>
+                    <p>Essential first steps when working with potential sellers</p>
+                </div>
+                <div id="sellerInitialTasks"></div>
+            </div>
+
+            <div id="sellerPhaseListing" class="phase-content">
+                <div class="phase-header">
+                    <h3>📝 Listing Preparation & Documentation</h3>
+                    <p>Prepare all materials and documentation for your listing</p>
+                </div>
+                <div id="sellerListingTasks"></div>
+            </div>
+
+            <div id="sellerPhaseActive" class="phase-content">
+                <div class="phase-header">
+                    <h3>📢 Active Marketing & Management</h3>
+                    <p>Marketing activities and ongoing listing management</p>
+                </div>
+                <div id="sellerActiveTasks"></div>
+            </div>
+
+            <div id="sellerPhaseOffer" class="phase-content">
+                <div class="phase-header">
+                    <h3>✅ Offers, Negotiations & Closing</h3>
+                    <p>From accepted offer through successful closing</p>
+                </div>
+                <div id="sellerOfferTasks"></div>
+            </div>
+        </div>
+
+        <!-- Buyer Process -->
+        <div id="buyerProcess" class="process-container">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2>🔑 Buyer Process Guide</h2>
+                <p>Navigate these 29 essential steps to purchase your new home</p>
+                <div class="progress-bar">
+                    <div id="buyerProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="buyerProgressText">0 of 29 tasks completed (0%)</div>
+            </div>
+
+            <div class="phase-tabs" id="buyerPhaseTabs">
+                <button class="phase-tab active" onclick="showBuyerPhase('setup')">Initial Setup</button>
+                <button class="phase-tab" onclick="showBuyerPhase('search')">Search & Show</button>
+                <button class="phase-tab" onclick="showBuyerPhase('offer')">Offer & Closing</button>
+            </div>
+
+            <!-- Buyer Phase Content -->
+            <div id="buyerPhaseSetup" class="phase-content active">
+                <div class="phase-header">
+                    <h3>🏁 Initial Setup & Preparation</h3>
+                    <p>Getting started with the buying process</p>
+                </div>
+                <div id="buyerSetupTasks"></div>
+            </div>
+
+            <div id="buyerPhaseSearch" class="phase-content">
+                <div class="phase-header">
+                    <h3>🔍 Property Search & Showings</h3>
+                    <p>Finding and viewing potential properties</p>
+                </div>
+                <div id="buyerSearchTasks"></div>
+            </div>
+
+            <div id="buyerPhaseOffer" class="phase-content">
+                <div class="phase-header">
+                    <h3>📝 Offers, Negotiations & Closing</h3>
+                    <p>From writing offers through getting your keys</p>
+                </div>
+                <div id="buyerOfferTasks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+
+    <!-- JavaScript -->
+    <script>
+        // Navigation functionality
+        function toggleSphereMenu() {
+            console.log('Toggle menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    menuBtn.classList.remove('active');
+                    console.log('Menu closed');
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    menuBtn.classList.add('active');
+                    console.log('Menu opened');
+                }
+            } else {
+                console.error('One or more navigation elements not found');
+            }
+        }
+
+        function closeSphereMenu() {
+            console.log('Close menu function called');
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                menuBtn.classList.remove('active');
+                console.log('Menu closed');
+            }
+        }
+
+        // Initialize navigation when page loads
+        function initializeNavigation() {
+            console.log('Initializing navigation...');
+            
+            // Add event listeners
+            const overlay = document.getElementById('sphereOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSphereMenu);
+                console.log('Overlay click listener added');
+            }
+
+            // Close menu with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    console.log('Escape key pressed');
+                    closeSphereMenu();
+                }
+            });
+
+            // Close menu when clicking on menu items
+            const menuItems = document.querySelectorAll('.sphere-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    console.log('Menu item clicked');
+                    closeSphereMenu();
+                });
+            });
+
+            console.log('Navigation initialization complete');
+        }
+
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeNavigation);
+        } else {
+            initializeNavigation();
+        }
+
+        console.log('Navigation JS loaded successfully');
+
+        // Real Estate Process Data
+        const realEstateData = {
+            seller: {
+                tasks: [
+                    // Initial Setup Phase
+                    { phase: 'initial', task: 'Get a File folder Write address and sellers name on the folder', notes: 'Put paper documents related to the client in the file' },
+                    { phase: 'initial', task: 'Create a file on your computer with the address and sellers name', notes: 'Put digital documents related to the client in the file ( Use google Drive)' },
+                    { phase: 'initial', task: 'Add Prospective seller into CRM (RLP sphere)', notes: 'Link to RLP network ( Access to RLP sphere)' },
+                    { phase: 'initial', task: 'Review ID and Fintrac Sellers', notes: 'Use the Realty Trusted App or website' },
+                    
+                    // Listing Preparation Phase  
+                    { phase: 'listing', task: 'Print a Listing checklist', notes: 'Listing Checklist' },
+                    { phase: 'listing', task: 'Book initial meeting with potential seller for Listing Presentation', notes: '' },
+                    { phase: 'listing', task: 'Add Listing presentation to calendar', notes: '' },
+                    { phase: 'listing', task: 'Write a thank you card to Referral if applicable', notes: 'Mail or Hand deliver card. ( add a small thank you gift if you chose)' },
+                    { phase: 'listing', task: 'Send sellers a reminder email ( Listing presentation, I look forward to seeing your home)', notes: '' },
+                    { phase: 'listing', task: 'Pull Title / Parking, Storage titles ( If a condo) CAD sheets', notes: 'Use Spin2 to buy Titles and other documents' },
+                    { phase: 'listing', task: 'Read Title and put in File', notes: 'Make sure there are not any Red flag. Confirm that the sellers ID matches Title' },
+                    { phase: 'listing', task: 'Save Spin2 Receipt for taxes', notes: '' },
+                    { phase: 'listing', task: 'Prepare listing presentation, CMA', notes: 'Creating CMAs webinar CMA Participant Manual.pdf' },
+                    { phase: 'listing', task: 'Go to Listing presentation', notes: '' },
+                    { phase: 'listing', task: 'Complete Listing presentation & Take photo of outside of the house', notes: 'Outside Photo will be used for Marketing Materials' },
+                    { phase: 'listing', task: 'Complete listing documents and review with seller', notes: 'Instructions for Exclusive Seller agreement' },
+                    { phase: 'listing', task: 'Sign Listing documents with Seller - In person or Electronically', notes: '' },
+                    { phase: 'listing', task: 'Review ALL documents to ensure there is no errors', notes: '' },
+                    { phase: 'listing', task: 'Save signed listing documents in Google drive client file', notes: '' },
+                    { phase: 'listing', task: 'Upload all documents into Deal Manager', notes: 'Deal Manager link' },
+                    { phase: 'listing', task: 'Get door keys from seller', notes: '' },
+                    { phase: 'listing', task: 'Install Lockbox on property, Put keys in lockbox', notes: 'take a picture of the serial number and put the picture in the Client file.' },
+                    { phase: 'listing', task: 'Request For Sale sign to be installed', notes: 'Riteway Signs link' },
+                    { phase: 'listing', task: 'Book Photos and Measurements', notes: 'Add link to Preferred suppliers' },
+                    { phase: 'listing', task: 'Attend Photos and measurement appointment', notes: '' },
+                    { phase: 'listing', task: 'Add Photos and Measurement Receipt to taxes receipt file', notes: '' },
+                    
+                    // Active Marketing Phase
+                    { phase: 'active', task: 'Marketing / Social media post - Coming soon with outside picture', notes: 'Listings must be live within 48 hours of a coming soon post' },
+                    { phase: 'active', task: 'Add to the file the date that listing will come live', notes: '' },
+                    { phase: 'active', task: 'Prepare Pillar9 listing input', notes: 'Pillar9 Input form' },
+                    { phase: 'active', task: 'Work on Write up for Public remarks', notes: 'Save in Client file on google drive, If you need help with writing public remarks use ChatGPT for ideas' },
+                    { phase: 'active', task: 'Review photos. See if any of the photos need to be edited.', notes: 'Box Brownie, Clipdrop' },
+                    { phase: 'active', task: 'Create Listing materials.', notes: 'Pay Hannah to make Feature sheets, ect, Canva, RLP sphere Core listing machine' },
+                    { phase: 'active', task: 'Complete Pillar9 Listing input. Include photos, measurements, supplements', notes: '' },
+                    { phase: 'active', task: 'Prepare Social media posts', notes: '' },
+                    { phase: 'active', task: 'Confirm showing instructions with the sellers', notes: 'If there are tenants get contact info for them.' },
+                    { phase: 'active', task: 'Deliver any marketing materials that need to be at the property', notes: '' },
+                    { phase: 'active', task: 'Have the seller to provide a copy of their RPR', notes: 'Help them order a new RPR if needed. Preferred Suppliers 2024' },
+                    { phase: 'active', task: 'Activate listing on pillar9 to Active', notes: '' },
+                    { phase: 'active', task: 'Setup Showingtime with listing details', notes: 'Restrictions, Feedback, ect' },
+                    { phase: 'active', task: 'Setup Lockbox on Sentrilock.', notes: 'Assign lockbox to listing' },
+                    { phase: 'active', task: 'Add Review listing activity report to calendar 1-2 weeks after listing date', notes: '' },
+                    { phase: 'active', task: 'Email the seller " We are live" email with a link to their listing', notes: '' },
+                    { phase: 'active', task: 'Schedule an Open house if applicable', notes: '' },
+                    { phase: 'active', task: 'Schedule an Event if applicable', notes: '' },
+                    { phase: 'active', task: 'Just listed Social media post', notes: 'Tag sellers in posts if applicable' },
+                    { phase: 'active', task: 'Review Activity and Feedback with Sellers 1-2 weeks after listing date', notes: '' },
+                    
+                    // Offer & Closing Phase
+                    { phase: 'offer', task: 'Save accepted offer in Seller file in Google drive', notes: '' },
+                    { phase: 'offer', task: 'Upload purchase contract in Deal manager.', notes: 'Deal Manager Link' },
+                    { phase: 'offer', task: 'Send Buyers agent all requested documents & deposit instructions', notes: 'Copy of Trust Deposit Form - Aug 2023.pdf' },
+                    { phase: 'offer', task: 'Send Sellers an email with a copy of the accepted offer and conditions dates.', notes: '' },
+                    { phase: 'offer', task: 'Send Sellers an update when the deposit has been received', notes: '' },
+                    { phase: 'offer', task: 'If a Condo order any missing condo documents', notes: '' },
+                    { phase: 'offer', task: 'Change status to Pending in Pillar9.', notes: '' },
+                    { phase: 'offer', task: 'Remove listing from Showingtime', notes: '' },
+                    { phase: 'offer', task: 'Post on Social media Sold', notes: '' },
+                    { phase: 'offer', task: 'Install Sold sign on For Sale sign', notes: '' },
+                    { phase: 'offer', task: 'Update RLP sphere', notes: 'Status to Sold, Sold price, Sold date' },
+                    { phase: 'offer', task: 'Send seller Thank you card', notes: '' },
+                    { phase: 'offer', task: 'Set a reminder to remove the lockbox.', notes: '' },
+                    { phase: 'offer', task: 'Request new mailing address from sellers', notes: 'Send sellers a moving card' },
+                    { phase: 'offer', task: 'Make sure you have ordered the for sale sign down', notes: '' }
+                ]
+            },
+            buyer: {
+                tasks: [
+                    // Initial Setup Phase
+                    { phase: 'setup', task: 'Get a File folder Write Buyers name on it', notes: 'Put paper documents related to the client in the file' },
+                    { phase: 'setup', task: 'Create a file on your computer with Buyers name', notes: 'Put digital documents related to the client in the file ( Use google Drive)' },
+                    { phase: 'setup', task: 'Buyers Checklist for required documents', notes: 'Purchase Checklist' },
+                    { phase: 'setup', task: 'Send a thank you to referral if applicable', notes: 'Card, Text, Phone call' },
+                    { phase: 'setup', task: 'Book a buyers appointment', notes: 'Meet with buyers and go over buyers guide' },
+                    { phase: 'setup', task: 'Prepare Presentation for buyers appointment', notes: 'The process, Needs / Wants' },
+                    { phase: 'setup', task: 'Add buyer into RLPsphere', notes: '' },
+                    { phase: 'setup', task: 'Get MLS search setup in Pillar9', notes: '' },
+                    { phase: 'setup', task: 'Complete Buyers appointment', notes: 'If you aren\'t having a buyers appointment. Bring buyers the buyers guide' },
+                    { phase: 'setup', task: 'ID the buyers and complete Fintrac', notes: 'Make sure you have completed Fintrac for all Buyers. Use Fintracker app' },
+                    { phase: 'setup', task: 'Prepare Buyer\'s Representation agreement / Have buyers sign', notes: 'Remember Buyers representation agreements must be signed and dated before a purchase contract' },
+                    { phase: 'setup', task: 'Welcome email', notes: 'Steps and tips for showings' },
+                    { phase: 'setup', task: 'Recommend a Mortgage Broker if needed', notes: '' },
+                    { phase: 'setup', task: 'Add Mortgage Broker info into the file.', notes: '' },
+                    { phase: 'setup', task: 'Check in with buyers to see if an modifications need to be made to the search', notes: '' },
+                    
+                    // Search & Showings Phase
+                    { phase: 'search', task: 'Book and confirm listing appointments', notes: 'book showings on Showtime' },
+                    { phase: 'search', task: 'Review listing details', notes: 'Review pillar9 MLS sheet. Know all the details about the property' },
+                    { phase: 'search', task: 'Bring a copy of the MLS sheet to the showing', notes: '' },
+                    { phase: 'search', task: 'Meet buyers at the property', notes: '' },
+                    { phase: 'search', task: 'Use SentriKey app to open lockbox', notes: '' },
+                    { phase: 'search', task: 'Show property to buyers', notes: '' },
+                    
+                    // Offer & Closing Phase
+                    { phase: 'offer', task: 'Review MLS sheet', notes: '' },
+                    { phase: 'offer', task: 'Pull Property title', notes: '' },
+                    { phase: 'offer', task: 'Confirm with buyer the details of the offer.', notes: 'Possession day, Purchase price, Deposit, Conditions, Terms' },
+                    { phase: 'offer', task: 'Review and sign consumer guide with Buyers', notes: '' },
+                    { phase: 'offer', task: 'Fill out Purchase contract.', notes: 'Included step by step purchase contract instructions' },
+                    { phase: 'offer', task: 'Negotiate with the selling agent', notes: '' },
+                    { phase: 'offer', task: 'Buyers and Sellers have agreed on contract', notes: '' },
+                    { phase: 'offer', task: 'Send the buyers a complete purchase contract , MLS sheet', notes: '' },
+                    { phase: 'offer', task: 'Make sure documents have been sent to the mortgage broker', notes: 'Purchase contract, MLS sheet,' },
+                    { phase: 'offer', task: 'Pick up Deposit from Buyer and deliver to Sellers brokerage', notes: 'Ask sellers agent for Deposit info for Wire transfers, and location drop offs' },
+                    { phase: 'offer', task: 'Add Condition dates to calendar', notes: '' },
+                    { phase: 'offer', task: 'Book Home inspection and add to calendar', notes: 'Preferred Suppliers 2024' },
+                    { phase: 'offer', task: 'Book Condo document review ( if a condo)', notes: '' },
+                    { phase: 'offer', task: 'Turn off MLS search for Buyers in Pillar 9', notes: '' },
+                    { phase: 'offer', task: 'Upload all documents into Deal manager', notes: 'Make sure you are entering the info under the "Deals" tab' },
+                    { phase: 'offer', task: 'Collect the Buyers lawyer info / Recommend a lawyer', notes: '' },
+                    { phase: 'offer', task: 'Have Buyers sign a Waiver Notice Removing conditions', notes: '' },
+                    { phase: 'offer', task: 'Send a copy of the waiver to the selling agent', notes: 'The waiver must be delivered before the condition period expires' },
+                    { phase: 'offer', task: 'Upload copy of signed waiver into Deal manager', notes: '' },
+                    { phase: 'offer', task: 'Add possession day to the calendar', notes: '' },
+                    { phase: 'offer', task: 'Send buyers a congratulations email. with a list of things they need to do', notes: '' },
+                    { phase: 'offer', task: 'Create social media post', notes: '' },
+                    { phase: 'offer', task: 'Update RLPsphere', notes: 'New address, Possession day anniversary date, any notes' },
+                    { phase: 'offer', task: 'Provide lawyer info to the sellers agent', notes: '' },
+                    { phase: 'offer', task: 'Make sure buyers have appointment booked with lawyer', notes: '' },
+                    { phase: 'offer', task: 'Buy a possession day gift', notes: '' },
+                    { phase: 'offer', task: 'Confirm what time on possession day you\'ll meet the buyers at the property', notes: '' },
+                    { phase: 'offer', task: 'Send the sellers agent a thank you note', notes: 'Mail the selling agent a thank you card.' },
+                    { phase: 'offer', task: 'Check in with buyers a few days after possession. See if they need anything.', notes: '' }
+                ]
+            }
+        };
+
+        // Real Estate Hub Functions
+        function showRealEstateHub() {
+            document.getElementById('realEstateHub').classList.add('active');
+            closeSphereMenu();
+            initializeProcessData();
+        }
+
+        function closeRealEstateHub() {
+            document.getElementById('realEstateHub').classList.remove('active');
+        }
+
+        function showJourneySelector() {
+            // Hide process containers
+            document.getElementById('sellerProcess').classList.remove('active');
+            document.getElementById('buyerProcess').classList.remove('active');
+            document.getElementById('journeySelector').style.display = 'block';
+            
+            // Update nav buttons
+            updateNavButtons('journey');
+        }
+
+        function showSellerProcess() {
+            document.getElementById('journeySelector').style.display = 'none';
+            document.getElementById('sellerProcess').classList.add('active');
+            document.getElementById('buyerProcess').classList.remove('active');
+            
+            updateNavButtons('seller');
+            loadSellerTasks();
+        }
+
+        function showBuyerProcess() {
+            document.getElementById('journeySelector').style.display = 'none';
+            document.getElementById('buyerProcess').classList.add('active');
+            document.getElementById('sellerProcess').classList.remove('active');
+            
+            updateNavButtons('buyer');
+            loadBuyerTasks();
+        }
+
+        function updateNavButtons(active) {
+            const buttons = document.querySelectorAll('.hub-nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (active === 'journey') buttons[0].classList.add('active');
+            else if (active === 'seller') buttons[1].classList.add('active');
+            else if (active === 'buyer') buttons[2].classList.add('active');
+        }
+
+        function initializeProcessData() {
+            // Initialize task completion states from localStorage if available
+            const savedSellerProgress = JSON.parse(localStorage.getItem('sellerProgress') || '{}');
+            const savedBuyerProgress = JSON.parse(localStorage.getItem('buyerProgress') || '{}');
+            
+            // Apply saved progress to tasks
+            realEstateData.seller.tasks.forEach((task, index) => {
+                task.completed = savedSellerProgress[index] || false;
+            });
+            
+            realEstateData.buyer.tasks.forEach((task, index) => {
+                task.completed = savedBuyerProgress[index] || false;
+            });
+        }
+
+        function loadSellerTasks() {
+            const phases = {
+                initial: realEstateData.seller.tasks.filter(t => t.phase === 'initial'),
+                listing: realEstateData.seller.tasks.filter(t => t.phase === 'listing'),
+                active: realEstateData.seller.tasks.filter(t => t.phase === 'active'),
+                offer: realEstateData.seller.tasks.filter(t => t.phase === 'offer')
+            };
+
+            Object.entries(phases).forEach(([phase, tasks]) => {
+                const container = document.getElementById(`seller${phase.charAt(0).toUpperCase() + phase.slice(1)}Tasks`);
+                container.innerHTML = '';
+                
+                tasks.forEach((task, taskIndex) => {
+                    const globalIndex = realEstateData.seller.tasks.indexOf(task);
+                    const taskHtml = createTaskHtml(task, globalIndex, 'seller');
+                    container.innerHTML += taskHtml;
+                });
+            });
+
+            updateSellerProgress();
+        }
+
+        function loadBuyerTasks() {
+            const phases = {
+                setup: realEstateData.buyer.tasks.filter(t => t.phase === 'setup'),
+                search: realEstateData.buyer.tasks.filter(t => t.phase === 'search'),
+                offer: realEstateData.buyer.tasks.filter(t => t.phase === 'offer')
+            };
+
+            Object.entries(phases).forEach(([phase, tasks]) => {
+                const container = document.getElementById(`buyer${phase.charAt(0).toUpperCase() + phase.slice(1)}Tasks`);
+                container.innerHTML = '';
+                
+                tasks.forEach((task, taskIndex) => {
+                    const globalIndex = realEstateData.buyer.tasks.indexOf(task);
+                    const taskHtml = createTaskHtml(task, globalIndex, 'buyer');
+                    container.innerHTML += taskHtml;
+                });
+            });
+
+            updateBuyerProgress();
+        }
+
+        function createTaskHtml(task, index, type) {
+            const checked = task.completed ? 'checked' : '';
+            const completedClass = task.completed ? 'task-completed' : '';
+            
+            return `
+                <div class="task-item ${completedClass}">
+                    <input type="checkbox" class="task-checkbox" ${checked} 
+                           onchange="toggleTask(${index}, '${type}')">
+                    <div class="task-content">
+                        <div class="task-title">${task.task}</div>
+                        ${task.notes ? `<div class="task-notes">💡 ${task.notes}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleTask(index, type) {
+            if (type === 'seller') {
+                realEstateData.seller.tasks[index].completed = !realEstateData.seller.tasks[index].completed;
+                updateSellerProgress();
+                saveSellerProgress();
+            } else {
+                realEstateData.buyer.tasks[index].completed = !realEstateData.buyer.tasks[index].completed;
+                updateBuyerProgress();
+                saveBuyerProgress();
+            }
+        }
+
+        function updateSellerProgress() {
+            const completed = realEstateData.seller.tasks.filter(t => t.completed).length;
+            const total = realEstateData.seller.tasks.length;
+            const percentage = Math.round((completed / total) * 100);
+            
+            document.getElementById('sellerProgress').style.width = percentage + '%';
+            document.getElementById('sellerProgressText').textContent = 
+                `${completed} of ${total} tasks completed (${percentage}%)`;
+        }
+
+        function updateBuyerProgress() {
+            const completed = realEstateData.buyer.tasks.filter(t => t.completed).length;
+            const total = realEstateData.buyer.tasks.length;
+            const percentage = Math.round((completed / total) * 100);
+            
+            document.getElementById('buyerProgress').style.width = percentage + '%';
+            document.getElementById('buyerProgressText').textContent = 
+                `${completed} of ${total} tasks completed (${percentage}%)`;
+        }
+
+        function saveSellerProgress() {
+            const progress = {};
+            realEstateData.seller.tasks.forEach((task, index) => {
+                if (task.completed) progress[index] = true;
+            });
+            localStorage.setItem('sellerProgress', JSON.stringify(progress));
+        }
+
+        function saveBuyerProgress() {
+            const progress = {};
+            realEstateData.buyer.tasks.forEach((task, index) => {
+                if (task.completed) progress[index] = true;
+            });
+            localStorage.setItem('buyerProgress', JSON.stringify(progress));
+        }
+
+        function showSellerPhase(phase) {
+            // Hide all seller phase contents
+            document.querySelectorAll('#sellerProcess .phase-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected phase
+            document.getElementById(`sellerPhase${phase.charAt(0).toUpperCase() + phase.slice(1)}`).classList.add('active');
+            
+            // Update phase tabs
+            document.querySelectorAll('#sellerPhaseTabs .phase-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function showBuyerPhase(phase) {
+            // Hide all buyer phase contents
+            document.querySelectorAll('#buyerProcess .phase-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected phase
+            document.getElementById(`buyerPhase${phase.charAt(0).toUpperCase() + phase.slice(1)}`).classList.add('active');
+            
+            // Update phase tabs
+            document.querySelectorAll('#buyerPhaseTabs .phase-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
