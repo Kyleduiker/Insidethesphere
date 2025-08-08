@@ -230,28 +230,6 @@
             padding: 0 16px;
         }
 
-        .error-message {
-            background: rgba(248, 113, 113, 0.2);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            color: #fca5a5;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .success-message {
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: #86efac;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            display: none;
-        }
-
         .footer-links {
             margin-top: 24px;
         }
@@ -266,29 +244,6 @@
         .footer-links a:hover {
             color: #93c5fd;
             text-decoration: underline;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 16px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-        }
-
-        .spinner {
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid #60a5fa;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .password-requirements {
@@ -394,10 +349,6 @@
         <div class="logo">🏠 Inside The Sphere</div>
         <div class="subtitle">Create your account to access powerful real estate tools</div>
         
-        <!-- Error/Success Messages -->
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
-        
         <!-- Signup Form -->
         <form id="signupForm">
             <div class="form-group">
@@ -428,11 +379,6 @@
                 Create Your Account
             </button>
         </form>
-        
-        <div class="loading" id="loadingIndicator">
-            <div class="spinner"></div>
-            Creating your account...
-        </div>
         
         <div class="divider">
             <span>or sign up with</span>
@@ -487,130 +433,63 @@
 
         // Handle email/password signup
         document.getElementById('signupForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const fullName = document.getElementById('fullName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    // Simple validation
-    if (!fullName) {
-        alert('Please enter your full name.');
-        return;
-    }
-    
-    if (password.length < 6) {
-        alert('Password must be at least 6 characters long.');
-        return;
-    }
-    
-    if (password !== confirmPassword) {
-        alert('Passwords do not match.');
-        return;
-    }
-    
-    console.log('Starting signup process...');
-    
-    // Create account
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log('Account created successfully');
-            alert('Account created successfully! Please sign in.');
-            window.location.href = 'login.html';
-        })
-        .catch((error) => {
-            console.log('Signup error:', error);
-            alert('Error: ' + error.message);
-        });
-});
-        });       const user = result.user;
-                    
-                    // Check if user already exists
-                    return db.collection('users').doc(user.uid).get().then((doc) => {
-                        if (!doc.exists) {
-                            // New user - create profile
-                            return db.collection('users').doc(user.uid).set({
-                                name: user.displayName || 'User',
-                                email: user.email,
-                                photoURL: user.photoURL || '',
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                subscriptionStatus: 'free',
-                                profileComplete: true,
-                                bio: ''
-                            });
-                        } else {
-                            // Existing user
-                            return Promise.resolve();
-                        }
-                    });
-                })
-                .then(() => {
-                    showSuccessMessage('Account created successfully! Redirecting to login...');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
+            e.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Simple validation
+            if (!fullName) {
+                alert('Please enter your full name.');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match.');
+                return;
+            }
+            
+            console.log('Starting signup process...');
+            
+            // Create account
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    console.log('Account created successfully');
+                    alert('Account created successfully! Please sign in.');
+                    window.location.href = 'login.html';
                 })
                 .catch((error) => {
-                    console.error('Google signup error:', error);
-                    if (error.code === 'auth/popup-closed-by-user') {
-                        showErrorMessage('Sign-up was cancelled. Please try again.');
-                    } else if (error.code === 'auth/account-exists-with-different-credential') {
-                        showErrorMessage('An account already exists with this email. Please sign in instead.');
-                    } else {
-                        showErrorMessage('Google sign-up failed. Please try again.');
-                    }
+                    console.log('Signup error:', error);
+                    alert('Error: ' + error.message);
                 });
         });
 
         // Handle Google signup
         document.getElementById('googleSignupBtn').addEventListener('click', function() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            hideMessages();
             
             firebase.auth().signInWithPopup(provider)
                 .then((result) => {
-             
-
-        // Helper functions
-        function showErrorMessage(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            // Auto-hide after 8 seconds
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 8000);
-        }
-
-        function showSuccessMessage(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        function getErrorMessage(errorCode) {
-            switch (errorCode) {
-                case 'auth/email-already-in-use':
-                    return 'An account with this email already exists. Try signing in instead.';
-                case 'auth/invalid-email':
-                    return 'Please enter a valid email address.';
-                case 'auth/operation-not-allowed':
-                    return 'Email/password accounts are not enabled. Please contact support.';
-                case 'auth/weak-password':
-                    return 'Password is too weak. Please use at least 6 characters with letters and numbers.';
-                case 'auth/network-request-failed':
-                    return 'Network error. Please check your connection and try again.';
-                default:
-                    return 'Account creation failed. Please try again.';
-            }
-        }
+                    console.log('Google signup successful');
+                    alert('Account created successfully! Please sign in.');
+                    window.location.href = 'login.html';
+                })
+                .catch((error) => {
+                    console.log('Google signup error:', error);
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        alert('Sign-up was cancelled. Please try again.');
+                    } else {
+                        alert('Google sign-up failed. Please try again.');
+                    }
+                });
+        });
     </script>
 </body>
 </html>
