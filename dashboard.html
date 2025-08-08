@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Inside The Sphere</title>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0f1c;
+            color: #ffffff;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated background matching your site */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1a2332, #2d3748, #1a2332, #0a0f1c);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .logout-btn {
+            background: rgba(248, 113, 113, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(248, 113, 113, 0.3);
+            border-color: rgba(248, 113, 113, 0.5);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .welcome-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-to-site {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .back-to-site:hover {
+            color: #93c5fd;
+        }
+
+        /* Tools Grid */
+        .tools-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(96, 165, 250, 0.3);
+            box-shadow: 0 10px 30px rgba(96, 165, 250, 0.1);
+        }
+
+        .tool-card.available {
+            cursor: pointer;
+        }
+
+        .tool-card.premium {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .tool-card.premium:hover {
+            transform: none;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .tool-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tool-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .tool-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-available {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .status-premium {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fde047;
+        }
+
+        /* Account Section */
+        .account-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .account-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .account-item {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .account-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .account-value {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 16px;
+            }
+
+            .main-content {
+                padding: 20px 16px;
+            }
+
+            .user-info {
+                gap: 12px;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Floating particles effect */
+        .particle {
+            position: absolute;
+            background: rgba(96, 165, 250, 0.05);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .particle:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+
+        .particle:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 6s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.05;
+            }
+            50% {
+                transform: translateY(-30px) rotate(180deg);
+                opacity: 0.15;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles for visual appeal -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading">
+        <div class="spinner"></div>
+        <p>Loading your dashboard...</p>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardContent" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">🏠 Inside The Sphere</div>
+                
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Loading...</div>
+                        <div class="user-status" id="userStatus">Free Plan</div>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <h1 class="welcome-title">Welcome to Your Dashboard</h1>
+                <p class="welcome-subtitle">Manage your real estate tools and grow your business</p>
+                <a href="index.html" class="back-to-site">
+                    ← Back to Main Site
+                </a>
+            </section>
+
+            <!-- Tools Section -->
+            <section class="tools-section">
+                <h2 class="section-title">Your Real Estate Tools</h2>
+                <div class="tools-grid">
+                    
+                    <!-- Newsletter Builder -->
+                    <div class="tool-card available" onclick="openTool('newsletter')">
+                        <div class="tool-icon">📧</div>
+                        <h3 class="tool-title">Newsletter Builder</h3>
+                        <p class="tool-description">Create stunning, custom newsletters designed for seamless integration with RLP Sphere and all major CRM platforms.</p>
+                        <span class="tool-status status-available">Available</span>
+                    </div>
+
+                    <!-- Smart Tools -->
+                    <div class="tool-card available" onclick="openTool('smarttools')">
+                        <div class="tool-icon">🛠️</div>
+                        <h3 class="tool-title">Smart Tools</h3>
+                        <p class="tool-description">Access powerful calculation tools and utilities to streamline your real estate processes.</p>
+                        <span class="tool-status status-available">Available</span>
+                    </div>
+
+                    <!-- Process Hub -->
+                    <div class="tool-card available" onclick="openTool('process-hub')">
+                        <div class="tool-icon">📋</div>
+                        <h3 class="tool-title">Process Hub</h3>
+                        <p class="tool-description">Streamline your workflow with buyer and seller process guides and transaction tracking.</p>
+                        <span class="tool-status status-available">Available</span>
+                    </div>
+
+                    <!-- Analytics (Premium) -->
+                    <div class="tool-card premium">
+                        <div class="tool-icon">📊</div>
+                        <h3 class="tool-title">Advanced Analytics</h3>
+                        <p class="tool-description">Track your performance and gain valuable insights into your audience engagement and content effectiveness.</p>
+                        <span class="tool-status status-premium">Premium</span>
+                    </div>
+
+                    <!-- Automation (Premium) -->
+                    <div class="tool-card premium">
+                        <div class="tool-icon">⚡</div>
+                        <h3 class="tool-title">Automation Suite</h3>
+                        <p class="tool-description">Powerful automation features designed to save time and increase productivity across all your digital channels.</p>
+                        <span class="tool-status status-premium">Premium</span>
+                    </div>
+
+                    <!-- Transaction Tracker (Premium) -->
+                    <div class="tool-card premium">
+                        <div class="tool-icon">🎯</div>
+                        <h3 class="tool-title">Transaction Tracker</h3>
+                        <p class="tool-description">Comprehensive transaction management with progress tracking, deadlines, and automated reminders.</p>
+                        <span class="tool-status status-premium">Premium</span>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Account Section -->
+            <section class="account-section">
+                <h2 class="section-title">Account Information</h2>
+                <div class="account-grid">
+                    <div class="account-item">
+                        <div class="account-label">Account Type</div>
+                        <div class="account-value" id="accountType">Free Plan</div>
+                    </div>
+                    <div class="account-item">
+                        <div class="account-label">Member Since</div>
+                        <div class="account-value" id="memberSince">Loading...</div>
+                    </div>
+                    <div class="account-item">
+                        <div class="account-label">Email</div>
+                        <div class="account-value" id="userEmail">Loading...</div>
+                    </div>
+                    <div class="account-item">
+                        <div class="account-label">Tools Accessed</div>
+                        <div class="account-value">3 of 6</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // Check authentication and load user data
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is signed in
+                loadUserDashboard(user);
+            } else {
+                // User is signed out - redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+
+        function loadUserDashboard(user) {
+            // Hide loading and show dashboard
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+
+            // Set user info
+            const userName = user.displayName || user.email.split('@')[0] || 'User';
+            const userInitial = userName.charAt(0).toUpperCase();
+            
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userAvatar').textContent = userInitial;
+
+            // Set member since date
+            const creationDate = new Date(user.metadata.creationTime);
+            const options = { year: 'numeric', month: 'long' };
+            document.getElementById('memberSince').textContent = creationDate.toLocaleDateString('en-US', options);
+
+            console.log('Dashboard loaded for user:', user.email);
+        }
+
+        // Handle logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            firebase.auth().signOut().then(() => {
+                console.log('User signed out');
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Sign out error:', error);
+                alert('Error signing out. Please try again.');
+            });
+        });
+
+        // Handle tool clicks
+        function openTool(toolName) {
+            // Map tool names to your existing URLs
+            const toolUrls = {
+                'newsletter': '/newsletter/',
+                'smarttools': '/smarttools/',
+                'process-hub': '/process-hub/'
+            };
+
+            const url = toolUrls[toolName];
+            if (url) {
+                window.location.href = url;
+            } else {
+                alert('This tool will be available soon!');
+            }
+        }
+
+        // Welcome animation (optional)
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const welcomeSection = document.querySelector('.welcome-section');
+                if (welcomeSection) {
+                    welcomeSection.style.animation = 'fadeInUp 0.6s ease-out';
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
