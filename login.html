@@ -405,8 +405,8 @@
     </div>
 
     <script>
-        // Initialize Firestore
-        const db = firebase.firestore();
+        // Initialize Firestore (only if not already initialized)
+const db = firebase.firestore();
 
         // Check if user is already logged in
         firebase.auth().onAuthStateChanged(function(user) {
