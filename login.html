@@ -430,8 +430,10 @@
             
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
+                    console.log('Login successful!', userCredential.user);
                     showSuccessMessage('Welcome back! Loading your tools...');
                     setTimeout(() => {
+                        console.log('Redirecting to smarttools/');
                         window.location.href = 'smarttools/';
                     }, 1500);
                 })
@@ -451,25 +453,32 @@
             
             firebase.auth().signInWithPopup(provider)
                 .then((result) => {
-                    // Create user profile if first time
+                    // Create user profile if first time (only if db exists)
                     const user = result.user;
-                    return db.collection('users').doc(user.uid).get().then((doc) => {
-                        if (!doc.exists) {
-                            // New user - create profile
-                            return db.collection('users').doc(user.uid).set({
-                                name: user.displayName || 'User',
-                                email: user.email,
-                                photoURL: user.photoURL || '',
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                subscriptionStatus: 'free',
-                                profileComplete: false
-                            });
-                        }
-                    });
+                    if (typeof db !== 'undefined') {
+                        return db.collection('users').doc(user.uid).get().then((doc) => {
+                            if (!doc.exists) {
+                                // New user - create profile
+                                return db.collection('users').doc(user.uid).set({
+                                    name: user.displayName || 'User',
+                                    email: user.email,
+                                    photoURL: user.photoURL || '',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                    subscriptionStatus: 'free',
+                                    profileComplete: false
+                                });
+                            }
+                        }).catch(err => {
+                            console.log('Firestore error (non-critical):', err);
+                        });
+                    }
+                    return Promise.resolve();
                 })
                 .then(() => {
+                    console.log('Google login successful');
                     showSuccessMessage('Welcome! Loading your tools...');
                     setTimeout(() => {
+                        console.log('Redirecting to smarttools/');
                         window.location.href = 'smarttools/';
                     }, 1500);
                 })
