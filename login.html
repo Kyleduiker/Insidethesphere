@@ -375,7 +375,7 @@
             </div>
             
             <button type="submit" id="loginButton" class="login-btn">
-                Sign In to Your Dashboard
+                Access Smart Tools
             </button>
         </form>
         
@@ -405,11 +405,14 @@
     </div>
 
     <script>
+        // Initialize Firestore
+        const db = firebase.firestore();
+
         // Check if user is already logged in
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
-                // User is already logged in, redirect to dashboard
-                window.location.href = 'dashboard.html';
+                // User is already logged in, redirect to smart tools
+                window.location.href = 'smarttools/';
             }
         });
 
@@ -430,16 +433,16 @@
             
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    showSuccessMessage('Welcome back! Redirecting to your dashboard...');
+                    showSuccessMessage('Welcome back! Loading your tools...');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = 'smarttools/';
                     }, 1500);
                 })
                 .catch((error) => {
                     console.error('Login error:', error);
                     showErrorMessage(getErrorMessage(error.code));
                     loginButton.disabled = false;
-                    loginButton.textContent = 'Sign In to Your Dashboard';
+                    loginButton.textContent = 'Access Smart Tools';
                     loadingIndicator.style.display = 'none';
                 });
         });
@@ -468,9 +471,9 @@
                     });
                 })
                 .then(() => {
-                    showSuccessMessage('Welcome! Redirecting to your dashboard...');
+                    showSuccessMessage('Welcome! Loading your tools...');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = 'smarttools/';
                     }, 1500);
                 })
                 .catch((error) => {
