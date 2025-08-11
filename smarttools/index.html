@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Tools - Inside The Sphere</title>
     
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="../js/firebase-config.js"></script>
+    
     <style>
         /* Navigation Styles - Inside The Sphere */
         .sphere-nav {
@@ -27,6 +35,41 @@
             align-items: center !important;
             justify-content: space-between !important;
             box-sizing: border-box !important;
+        }
+
+        .nav-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .user-info {
+            background: #27ae60 !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .logout-btn {
+            background: #e74c3c !important;
+            color: white !important;
+            border: none !important;
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b !important;
         }
 
         .sphere-logo {
@@ -67,6 +110,42 @@
 
         .sphere-menu-btn.active {
             background: #e67e22 !important;
+        }
+
+        /* Loading Screen */
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .loading-spinner {
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #f39c12;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #666;
+            font-weight: 500;
         }
 
         /* Popout Menu */
@@ -158,6 +237,7 @@
         .sphere-icon-home { background: #3498db !important; }
         .sphere-icon-tools { background: #f39c12 !important; }
         .sphere-icon-newsletter { background: #e74c3c !important; }
+        .sphere-icon-dashboard { background: #9b59b6 !important; }
 
         /* Overlay */
         .sphere-overlay {
@@ -502,6 +582,20 @@
                 font-size: 20px !important;
             }
 
+            .nav-actions {
+                gap: 8px !important;
+            }
+
+            .user-info {
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+            }
+
+            .logout-btn {
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+            }
+
             .sphere-menu-btn {
                 padding: 10px 20px !important;
                 font-size: 14px !important;
@@ -553,14 +647,28 @@
     </style>
 </head>
 <body>
+    <!-- Authentication Loading Screen -->
+    <div id="authLoading" class="auth-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Verifying access...</div>
+    </div>
+
     <!-- Navigation Menu -->
     <nav class="sphere-nav">
         <div class="sphere-nav-container">
             <a href="/" class="sphere-logo">Inside The Sphere</a>
-            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
-                <span>☰</span>
-                <span>Menu</span>
-            </button>
+            
+            <div class="nav-actions">
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <span>👤</span>
+                    <span id="userNameNav">User</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">Logout</button>
+                <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                    <span>☰</span>
+                    <span>Menu</span>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -578,6 +686,11 @@
             <a href="/" class="sphere-menu-item">
                 <div class="sphere-menu-icon sphere-icon-home">🏠</div>
                 <div class="sphere-menu-text">Home</div>
+            </a>
+
+            <a href="../dashboard.html" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-dashboard">👤</div>
+                <div class="sphere-menu-text">My Account</div>
             </a>
 
             <a href="/smarttools/" class="sphere-menu-item">
@@ -749,6 +862,36 @@
 
     <!-- JavaScript -->
     <script>
+        // Authentication Check - FIRST PRIORITY
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is authenticated - show the page
+                document.getElementById('authLoading').style.display = 'none';
+                document.body.style.visibility = 'visible';
+                
+                // Update navigation with user info
+                const userName = user.displayName || user.email.split('@')[0] || 'User';
+                document.getElementById('userNameNav').textContent = userName;
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('logoutBtn').style.display = 'block';
+                
+                console.log('User authenticated:', user.email);
+            } else {
+                // User is NOT authenticated - redirect to login
+                window.location.href = 'https://insidethesphere.com/login';
+            }
+        });
+
+        // Logout function
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'https://insidethesphere.com/login';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+                alert('Error signing out. Please try again.');
+            });
+        }
+
         // Navigation functionality
         function toggleSphereMenu() {
             const menu = document.getElementById('spherePopoutMenu');
@@ -852,6 +995,9 @@
                 });
             });
         }
+
+        // Initialize page content as hidden
+        document.body.style.visibility = 'hidden';
 
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
