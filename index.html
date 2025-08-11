@@ -5,13 +5,233 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inside The Sphere - Real Estate Tools</title>
     
-    <!-- External CSS Files -->
-    <link rel="stylesheet" href="assets/css/navigation.css">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <!-- Hero section styles -->
     <style>
-        /* Hero Section with modern navigation */
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Navigation Styles */
+        .sphere-nav {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            z-index: 9999 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .sphere-nav-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .login-signup-btn {
+            background: #3498db !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            text-decoration: none !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .login-signup-btn:hover {
+            background: #2980b9 !important;
+            text-decoration: none !important;
+            color: white !important;
+        }
+
+        .sphere-logo {
+            font-size: 24px !important;
+            font-weight: bold !important;
+            color: #f39c12 !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-logo:hover {
+            color: #e67e22 !important;
+            text-decoration: none !important;
+        }
+
+        .sphere-menu-btn {
+            background: #f39c12 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-btn:hover {
+            background: #e67e22 !important;
+        }
+
+        .sphere-menu-btn.active {
+            background: #e67e22 !important;
+        }
+
+        /* Popout Menu */
+        .sphere-popout-menu {
+            position: fixed !important;
+            top: 0 !important;
+            left: -300px !important;
+            width: 280px !important;
+            height: 100vh !important;
+            background: #2c3e50 !important;
+            z-index: 10000 !important;
+            transition: left 0.3s ease !important;
+            overflow-y: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sphere-popout-menu.active {
+            left: 0 !important;
+        }
+
+        .sphere-menu-header {
+            padding: 25px 20px !important;
+            border-bottom: 1px solid #34495e !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-title {
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            margin-bottom: 5px !important;
+            font-family: Arial, sans-serif !important;
+            margin-top: 0 !important;
+        }
+
+        .sphere-menu-subtitle {
+            color: #bdc3c7 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-items {
+            padding: 20px 0 !important;
+            margin: 0 !important;
+        }
+
+        .sphere-menu-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 15px 20px !important;
+            color: #ecf0f1 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            border-left: 3px solid transparent !important;
+            margin: 0 !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sphere-menu-item:hover {
+            background: #34495e !important;
+            border-left-color: #f39c12 !important;
+            text-decoration: none !important;
+            color: #ecf0f1 !important;
+        }
+
+        .sphere-menu-icon {
+            width: 24px !important;
+            height: 24px !important;
+            margin-right: 15px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            color: white !important;
+            flex-shrink: 0 !important;
+        }
+
+        .sphere-menu-text {
+            font-weight: 500 !important;
+            font-size: 15px !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        /* Icon Colors */
+        .sphere-icon-home { background: #3498db !important; }
+        .sphere-icon-tools { background: #f39c12 !important; }
+        .sphere-icon-contact { background: #e74c3c !important; }
+        .sphere-icon-about { background: #9b59b6 !important; }
+
+        /* Overlay */
+        .sphere-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            z-index: 9998 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .sphere-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Hero Section */
         .hero {
             height: 100vh;
             background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
@@ -25,7 +245,7 @@
             text-align: center;
             color: white;
             position: relative;
-            padding-top: 80px; /* Account for fixed navigation */
+            padding-top: 80px;
         }
 
         .hero-content h1 {
@@ -41,33 +261,342 @@
             opacity: 0.9;
         }
 
-        /* Responsive adjustments */
+        /* Sections */
+        .section {
+            padding: 80px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .create-section {
+            background: #f8f9fa;
+        }
+
+        .create-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .create-text h3 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            color: #f39c12;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .intro-paragraph {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .create-text p {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .closing-paragraph {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .blank-space {
+            min-height: 300px;
+            background: #e9ecef;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Services Section */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .service-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            color: white;
+        }
+
+        .service-content h4 {
+            font-size: 1.6rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .service-content > p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .service-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .service-features li {
+            padding: 8px 0;
+            color: #555;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .service-features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .action-btn {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Contact Form */
+        .contact-form {
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: #f39c12;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .coming-soon-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 62, 80, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            color: white;
+        }
+
+        .coming-soon-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .coming-soon-subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        /* Contact Section */
+        .section-header {
+            text-align: center;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .hero-content h1 {
-                font-size: 2.5rem;
+            .sphere-nav-container {
+                padding: 15px 20px !important;
             }
-            
+
+            .sphere-logo {
+                font-size: 20px !important;
+            }
+
+            .nav-actions {
+                gap: 8px !important;
+            }
+
+            .login-signup-btn {
+                padding: 8px 16px !important;
+                font-size: 12px !important;
+            }
+
+            .login-signup-btn span:last-child {
+                display: none !important;
+            }
+
+            .sphere-menu-btn {
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+            }
+
+            .sphere-popout-menu {
+                width: 100% !important;
+                left: -100% !important;
+            }
+
             .hero {
                 padding-top: 70px;
             }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .create-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .create-text h3 {
+                font-size: 2rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .service-card {
+                padding: 30px;
+            }
         }
     </style>
-
 </head>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js"></script>
-</head>
-    <body>
+<body>
     <!-- Modern Fixed Navigation -->
     <nav class="sphere-nav">
         <div class="sphere-nav-container">
             <a href="/" class="sphere-logo">Inside The Sphere</a>
-            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
-                <span>☰</span>
-                <span>Menu</span>
-            </button>
+            
+            <div class="nav-actions">
+                <a href="https://insidethesphere.com/login" class="login-signup-btn">
+                    <span>👤</span>
+                    <span>Login / Sign Up</span>
+                </a>
+                <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
+                    <span>☰</span>
+                    <span>Menu</span>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -92,14 +621,15 @@
                 <div class="sphere-menu-text">Smart Tools</div>
             </a>
 
-            <a href="/newsletter/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
-                <div class="sphere-menu-text">Newsletter Builder</div>
+            <a href="#contact" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-contact">💬</div>
+                <div class="sphere-menu-text">Contact Us</div>
             </a>
-              <a href="login.html" class="sphere-menu-item">
-        <div class="sphere-menu-icon sphere-icon-login">👤</div>
-        <div class="sphere-menu-text">Login</div>
-    </a>
+
+            <a href="#about" class="sphere-menu-item">
+                <div class="sphere-menu-icon sphere-icon-about">ℹ️</div>
+                <div class="sphere-menu-text">About Us</div>
+            </a>
         </div>
     </div>
 
@@ -198,11 +728,40 @@
         </div>
     </section>
 
-    <!-- External JavaScript Files -->
-    <script src="assets/js/navigation.js"></script>
-    
-    <!-- Page-specific JavaScript -->
     <script>
+        // Navigation functionality
+        function toggleSphereMenu() {
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    menuBtn.classList.remove('active');
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    menuBtn.classList.add('active');
+                }
+            }
+        }
+
+        function closeSphereMenu() {
+            const menu = document.getElementById('spherePopoutMenu');
+            const overlay = document.getElementById('sphereOverlay');
+            const menuBtn = document.querySelector('.sphere-menu-btn');
+            
+            if (menu && overlay && menuBtn) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                menuBtn.classList.remove('active');
+            }
+        }
+
         // Contact form handling
         async function handleSubmit(event) {
             event.preventDefault();
@@ -269,8 +828,37 @@
             card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
             observer.observe(card);
         });
+
+        // Initialize navigation when page loads
+        function initializeNavigation() {
+            // Add event listeners
+            const overlay = document.getElementById('sphereOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeSphereMenu);
+            }
+
+            // Close menu with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeSphereMenu();
+                }
+            });
+
+            // Close menu when clicking on menu items
+            const menuItems = document.querySelectorAll('.sphere-menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    closeSphereMenu();
+                });
+            });
+        }
+
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeNavigation);
+        } else {
+            initializeNavigation();
+        }
     </script>
 </body>
 </html>
-
-
