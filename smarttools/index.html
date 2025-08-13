@@ -15,8 +15,6 @@
     <link rel="stylesheet" href="../assets/navigation.css">
     
     <style>
-       
-
         /* Main Page Styles */
         * {
             margin: 0;
@@ -29,7 +27,6 @@
             line-height: 1.6;
             color: #333;
             background-color: #fff;
-            padding-top: 80px;
         }
 
         html {
@@ -333,38 +330,6 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .sphere-nav-container {
-                padding: 15px 20px !important;
-            }
-
-            .sphere-logo {
-                font-size: 20px !important;
-            }
-
-            .nav-actions {
-                gap: 8px !important;
-            }
-
-            .user-info {
-                padding: 6px 12px !important;
-                font-size: 12px !important;
-            }
-
-            .logout-btn {
-                padding: 6px 12px !important;
-                font-size: 12px !important;
-            }
-
-            .sphere-menu-btn {
-                padding: 10px 20px !important;
-                font-size: 14px !important;
-            }
-
-            .sphere-popout-menu {
-                width: 100% !important;
-                left: -100% !important;
-            }
-
             .main-container {
                 flex-direction: column;
             }
@@ -398,14 +363,11 @@
                 flex-direction: column;
                 text-align: center;
             }
-
-            body {
-                padding-top: 70px;
-            }
         }
     </style>
 </head>
-
+<body>
+    <!-- Navigation will be automatically inserted here by navigation.js -->
 
     <!-- Header Section -->
     <section class="header">
@@ -562,7 +524,9 @@
         </main>
     </div>
     
-        // Filter tools by category
+    <!-- JavaScript -->
+    <script>
+        // Filter tools by category - KEEP THIS FUNCTION
         function filterTools(category, clickedElement) {
             const cards = document.querySelectorAll('.tool-card');
             const navLinks = document.querySelectorAll('.nav-link');
@@ -608,41 +572,9 @@
             contentTitle.textContent = categoryTitles[category];
             contentDescription.textContent = categoryDescriptions[category];
         }
-
-        // Initialize navigation when page loads
-        function initializeNavigation() {
-            // Add event listeners
-            const overlay = document.getElementById('sphereOverlay');
-            if (overlay) {
-                overlay.addEventListener('click', closeSphereMenu);
-            }
-
-            // Close menu with Escape key
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    closeSphereMenu();
-                }
-            });
-
-            // Close menu when clicking on menu items
-            const menuItems = document.querySelectorAll('.sphere-menu-item');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    closeSphereMenu();
-                });
-            });
-        }
-
-        // Initialize page content as hidden
-        document.body.style.visibility = 'hidden';
-
-        // Wait for DOM to be ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeNavigation);
-        } else {
-            initializeNavigation();
-        }
     </script>
- <script src="../assets/js/navigation.js"></script>
+    
+    <!-- Navigation JavaScript -->
+    <script src="../assets/js/navigation.js"></script>
 </body>
 </html>
