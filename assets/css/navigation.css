@@ -288,3 +288,44 @@ body.has-sphere-nav {
         padding-top: 70px;
     }
 }
+/* LOGIN BUTTON STYLES - ADD TO END OF FILE */
+.login-btn {
+    background: #3498db !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.login-btn:hover {
+    background: #2980b9 !important;
+    text-decoration: none !important;
+    color: white !important;
+}
+
+/* CONSISTENT BUTTON SIZING - ADD TO END OF FILE */
+.nav-actions > * {
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* UPDATE MOBILE SECTION - FIND THE EXISTING @media (max-width: 768px) SECTION AND ADD: */
+@media (max-width: 768px) {
+    /* ... your existing mobile styles ... */
+    
+    /* ADD THIS TO EXISTING MOBILE STYLES */
+    .login-btn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+}
