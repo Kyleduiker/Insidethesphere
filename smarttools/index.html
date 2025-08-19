@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>
-// Configure for private page (login required)
-configureSphereNav({ requireAuth: true });
-</script>
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Tools - Inside The Sphere</title>
@@ -16,7 +12,16 @@ configureSphereNav({ requireAuth: true });
     
     <!-- Your Firebase Config -->
     <script src="../js/firebase-config.js"></script>
+    
+    <!-- Navigation Styles and Scripts -->
     <link rel="stylesheet" href="../assets/css/navigation.css">
+    <script src="../assets/js/navigation.js"></script>
+    
+    <!-- Configuration for this page -->
+    <script>
+    // Configure for private page (login required)
+    configureSphereNav({ requireAuth: true });
+    </script>
     
     <style>
         /* Main Page Styles */
@@ -528,9 +533,9 @@ configureSphereNav({ requireAuth: true });
         </main>
     </div>
     
-    <!-- JavaScript -->
+    <!-- Page-specific JavaScript -->
     <script>
-        // Filter tools by category - KEEP THIS FUNCTION
+        // Filter tools by category
         function filterTools(category, clickedElement) {
             const cards = document.querySelectorAll('.tool-card');
             const navLinks = document.querySelectorAll('.nav-link');
@@ -577,8 +582,5 @@ configureSphereNav({ requireAuth: true });
             contentDescription.textContent = categoryDescriptions[category];
         }
     </script>
-    
-    <!-- Navigation JavaScript -->
-    <script src="../assets/js/navigation.js"></script>
 </body>
 </html>
