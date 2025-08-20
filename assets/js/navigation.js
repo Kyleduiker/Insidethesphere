@@ -71,11 +71,7 @@ function createSphereNavigation() {
                 <a href="${sphereNavConfig.homeUrl}smarttools/" class="sphere-menu-item">
                     <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
                     <div class="sphere-menu-text">Smart Tools</div>
-                </a>
-
-                <a href="${sphereNavConfig.homeUrl}newsletter/" class="sphere-menu-item">
-                    <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
-                    <div class="sphere-menu-text">Newsletter Builder</div>
+                
                 </a>
             </div>
         </div>
