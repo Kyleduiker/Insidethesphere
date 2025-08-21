@@ -84,7 +84,7 @@ function createSphereNavigation() {
     document.body.classList.add('has-sphere-nav');
 }
 
-// Authentication Check - FIRST PRIORITY
+// Authentication Check
 function initializeAuthentication() {
     if (typeof firebase === 'undefined') {
         console.error('Firebase not loaded - showing logged out state');
@@ -230,31 +230,6 @@ function initializeNavigation() {
         });
     });
 
-// Initialize navigation when page loads
-function initializeNavigation() {
-    createSphereNavigation();
-    
-    // Set up event listeners
-    const overlay = document.getElementById('sphereOverlay');
-    if (overlay) {
-        overlay.addEventListener('click', closeSphereMenu);
-    }
-
-    // Close menu with Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeSphereMenu();
-        }
-    });
-
-    // Close menu when clicking on menu items
-    const menuItems = document.querySelectorAll('.sphere-menu-item');
-    menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            closeSphereMenu();
-        });
-    });
-
     // Always check authentication, but only hide page if auth required
     if (sphereNavConfig.requireAuth) {
         // Hide page content initially for protected pages
@@ -263,4 +238,16 @@ function initializeNavigation() {
 
     // Always initialize authentication to update button state
     initializeAuthentication();
+}
+
+// Configuration function to update settings
+function configureSphereNav(options) {
+    Object.assign(sphereNavConfig, options);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeNavigation);
+} else {
+    initializeNavigation();
 }
