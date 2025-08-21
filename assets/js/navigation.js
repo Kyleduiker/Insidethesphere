@@ -94,23 +94,23 @@ function initializeAuthentication() {
     }
 
     firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
-        // User IS authenticated - always show logout button
-        showLoggedInState(user);
-        showPage();
-        console.log('User authenticated:', user.email);
-    } else {
-        // User is NOT authenticated
-        if (sphereNavConfig.requireAuth) {
-            // Redirect to login if auth is required (protected pages)
-            window.location.href = sphereNavConfig.loginRedirectUrl;
-        } else {
-            // Show logged out state (public pages)
-            showLoggedOutState();
+        if (user) {
+            // User IS authenticated - always show logout button
+            showLoggedInState(user);
             showPage();
+            console.log('User authenticated:', user.email);
+        } else {
+            // User is NOT authenticated
+            if (sphereNavConfig.requireAuth) {
+                // Redirect to login if auth is required (protected pages)
+                window.location.href = sphereNavConfig.loginRedirectUrl;
+            } else {
+                // Show logged out state (public pages)
+                showLoggedOutState();
+                showPage();
+            }
         }
-    }
-});
+    });
 }
 
 // Show page function
@@ -122,7 +122,7 @@ function showPage() {
     document.body.style.visibility = 'visible';
 }
 
-// Logout function
+// Logout function - UPDATED TO GO TO HOME PAGE
 function logout() {
     if (typeof firebase === 'undefined') {
         console.error('Firebase not loaded');
@@ -130,7 +130,8 @@ function logout() {
     }
 
     firebase.auth().signOut().then(() => {
-        window.location.href = sphereNavConfig.loginRedirectUrl;
+        // Go to home page instead of login page
+        window.location.href = sphereNavConfig.homeUrl;
     }).catch((error) => {
         console.error('Logout error:', error);
         alert('Error signing out. Please try again.');
@@ -170,7 +171,7 @@ function closeSphereMenu() {
     }
 }
 
-// Helper functions for authentication states - SINGLE BUTTON VERSION
+// Helper functions for authentication states - UPDATED WITH RETURN URL CHECK
 function showLoggedInState(user) {
     const authBtn = document.getElementById('authBtn');
     
@@ -178,6 +179,13 @@ function showLoggedInState(user) {
         authBtn.textContent = 'Logout';
         authBtn.className = 'logout-btn';
         authBtn.setAttribute('data-state', 'logged-in');
+    }
+    
+    // Check if user should be redirected back to a specific page
+    const returnUrl = sessionStorage.getItem('returnAfterLogin');
+    if (returnUrl && returnUrl !== window.location.href) {
+        sessionStorage.removeItem('returnAfterLogin');
+        window.location.href = returnUrl;
     }
 }
 
@@ -191,7 +199,7 @@ function showLoggedOutState() {
     }
 }
 
-// Handle click on the transforming auth button
+// Handle click on the transforming auth button - UPDATED WITH RETURN URL STORAGE
 function handleAuthClick() {
     const authBtn = document.getElementById('authBtn');
     const currentState = authBtn ? authBtn.getAttribute('data-state') : 'logged-out';
@@ -200,7 +208,8 @@ function handleAuthClick() {
         // User is logged in, so logout
         logout();
     } else {
-        // User is logged out, so redirect to login
+        // Store current page before redirecting to login
+        sessionStorage.setItem('returnAfterLogin', window.location.href);
         window.location.href = sphereNavConfig.loginRedirectUrl;
     }
 }
