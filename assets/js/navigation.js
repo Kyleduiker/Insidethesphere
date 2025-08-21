@@ -28,15 +28,9 @@ function createSphereNavigation() {
                 <a href="${sphereNavConfig.homeUrl}" class="sphere-logo">Inside The Sphere</a>
                 
                 <div class="nav-actions">
-                    <!-- LOGGED IN STATE -->
-                    <div class="user-info" id="userInfo" style="display: none;">
-                        <span>👤</span>
-                        <span id="userNameNav">User</span>
-                    </div>
+                    <!-- SINGLE TRANSFORMING BUTTON -->
+                    <a href="${sphereNavConfig.loginRedirectUrl}" class="login-btn" id="loginBtn">Login / Sign Up</a>
                     <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">Logout</button>
-                    
-                    <!-- LOGGED OUT STATE -->
-                    <a href="${sphereNavConfig.loginRedirectUrl}" class="login-btn" id="loginBtn" style="display: none;">Login / Sign Up</a>
                     
                     <!-- ALWAYS VISIBLE -->
                     <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
@@ -71,7 +65,11 @@ function createSphereNavigation() {
                 <a href="${sphereNavConfig.homeUrl}smarttools/" class="sphere-menu-item">
                     <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
                     <div class="sphere-menu-text">Smart Tools</div>
-                
+                </a>
+
+                <a href="${sphereNavConfig.homeUrl}newsletter/" class="sphere-menu-item">
+                    <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
+                    <div class="sphere-menu-text">Newsletter Builder</div>
                 </a>
             </div>
         </div>
@@ -173,34 +171,23 @@ function closeSphereMenu() {
     }
 }
 
-// Helper functions for authentication states
+// Helper functions for authentication states - SIMPLIFIED VERSION
 function showLoggedInState(user) {
-    const userName = user.displayName || user.email.split('@')[0] || 'User';
-    const userNameElement = document.getElementById('userNameNav');
-    const userInfoElement = document.getElementById('userInfo');
     const logoutBtnElement = document.getElementById('logoutBtn');
     const loginBtnElement = document.getElementById('loginBtn');
     
-    // Show logged in elements
-    if (userNameElement) userNameElement.textContent = userName;
-    if (userInfoElement) userInfoElement.style.display = 'flex';
+    // Show logout button, hide login button
     if (logoutBtnElement) logoutBtnElement.style.display = 'flex';
-    
-    // Hide logged out elements
     if (loginBtnElement) loginBtnElement.style.display = 'none';
 }
 
 function showLoggedOutState() {
-    const userInfoElement = document.getElementById('userInfo');
     const logoutBtnElement = document.getElementById('logoutBtn');
     const loginBtnElement = document.getElementById('loginBtn');
     
-    // Hide logged in elements
-    if (userInfoElement) userInfoElement.style.display = 'none';
-    if (logoutBtnElement) logoutBtnElement.style.display = 'none';
-    
-    // Show logged out elements
+    // Show login button, hide logout button
     if (loginBtnElement) loginBtnElement.style.display = 'flex';
+    if (logoutBtnElement) logoutBtnElement.style.display = 'none';
 }
 
 // Initialize navigation when page loads
