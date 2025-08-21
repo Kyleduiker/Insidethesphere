@@ -244,6 +244,250 @@
     visibility: visible !important;
 }
 
+/* Base style for transforming auth button */
+.auth-btn {
+    background: #3498db !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.auth-btn:hover {
+    transform: translateY(-1px) !important;
+}
+
+/* Login button styles */
+.login-btn {
+    background: #3498db !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.login-btn:hover {
+    background: #2980b9 !important;
+    text-decoration: none !important;
+    color: white !important;
+}
+
+/* Consistent button sizing */
+.nav-actions > * {
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* ===== LOGIN MODAL STYLES ===== */
+
+/* Modal Overlay */
+.login-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    z-index: 10002 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+}
+
+.login-modal-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Modal Content */
+.login-modal-content {
+    background: #1a1a1a !important;
+    padding: 40px !important;
+    border-radius: 12px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    position: relative !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid #333 !important;
+}
+
+/* Close Button */
+.login-modal-close {
+    position: absolute !important;
+    top: 15px !important;
+    right: 20px !important;
+    background: none !important;
+    border: none !important;
+    font-size: 24px !important;
+    color: #888 !important;
+    cursor: pointer !important;
+    transition: color 0.3s ease !important;
+}
+
+.login-modal-close:hover {
+    color: #fff !important;
+}
+
+/* Error and Success Messages */
+.login-error-message {
+    background: rgba(248, 113, 113, 0.2) !important;
+    border: 1px solid rgba(248, 113, 113, 0.3) !important;
+    color: #fca5a5 !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+    font-size: 14px !important;
+    display: none !important;
+}
+
+.login-success-message {
+    background: rgba(34, 197, 94, 0.2) !important;
+    border: 1px solid rgba(34, 197, 94, 0.3) !important;
+    color: #86efac !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+    font-size: 14px !important;
+    display: none !important;
+}
+
+/* Login Tabs */
+.login-tabs {
+    display: flex !important;
+    margin-bottom: 24px !important;
+    border-bottom: 1px solid #333 !important;
+}
+
+.login-tab {
+    flex: 1 !important;
+    background: none !important;
+    border: none !important;
+    padding: 12px 0 !important;
+    color: #888 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+.login-tab.active {
+    color: #3498db !important;
+    border-bottom-color: #3498db !important;
+}
+
+.login-tab:hover {
+    color: #3498db !important;
+}
+
+/* Login Forms */
+.login-form {
+    display: none !important;
+}
+
+.login-form.active {
+    display: block !important;
+}
+
+.form-group {
+    margin-bottom: 16px !important;
+}
+
+.form-group input {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    background: #2a2a2a !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.3s ease !important;
+}
+
+.form-group input:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+}
+
+.form-group input::placeholder {
+    color: #888 !important;
+}
+
+/* Submit Button */
+.login-submit-btn {
+    width: 100% !important;
+    background: #3498db !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    margin-bottom: 16px !important;
+}
+
+.login-submit-btn:hover {
+    background: #2980b9 !important;
+}
+
+.login-submit-btn:disabled {
+    background: #555 !important;
+    cursor: not-allowed !important;
+}
+
+/* Login Divider */
+.login-divider {
+    text-align: center !important;
+    margin: 20px 0 10px !important;
+    color: #666 !important;
+    font-size: 14px !important;
+}
+
+/* Google Login Button */
+.google-login-btn {
+    width: 100% !important;
+    background: #fff !important;
+    color: #333 !important;
+    border: 1px solid #ddd !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    margin-top: 16px !important;
+}
+
+.google-login-btn:hover {
+    background: #f8f9fa !important;
+    border-color: #ccc !important;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .sphere-nav-container {
@@ -268,6 +512,16 @@
         font-size: 12px !important;
     }
 
+    .login-btn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+
+    .auth-btn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+
     .sphere-menu-btn {
         padding: 10px 20px !important;
         font-size: 14px !important;
@@ -276,6 +530,32 @@
     .sphere-popout-menu {
         width: 100% !important;
         left: -100% !important;
+    }
+
+    /* Modal Mobile Styles */
+    .login-modal-content {
+        padding: 30px 20px !important;
+        margin: 20px !important;
+        width: calc(100% - 40px) !important;
+    }
+
+    .login-tab {
+        font-size: 14px !important;
+    }
+
+    .form-group input {
+        padding: 10px 14px !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+
+    .login-submit-btn {
+        padding: 12px !important;
+        font-size: 14px !important;
+    }
+
+    .google-login-btn {
+        padding: 12px !important;
+        font-size: 13px !important;
     }
 }
 
@@ -287,77 +567,5 @@ body.has-sphere-nav {
 @media (max-width: 768px) {
     body.has-sphere-nav {
         padding-top: 70px;
-    }
-}
-/* LOGIN BUTTON STYLES - ADD TO END OF FILE */
-.login-btn {
-    background: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-    text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.login-btn:hover {
-    background: #2980b9 !important;
-    text-decoration: none !important;
-    color: white !important;
-}
-
-/* CONSISTENT BUTTON SIZING - ADD TO END OF FILE */
-.nav-actions > * {
-    height: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* UPDATE MOBILE SECTION - FIND THE EXISTING @media (max-width: 768px) SECTION AND ADD: */
-@media (max-width: 768px) {
-    /* ... your existing mobile styles ... */
-    
-    /* ADD THIS TO EXISTING MOBILE STYLES */
-    .login-btn {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
-    }
-}
-
-/* ADD THIS NEW CSS HERE - RIGHT AFTER THE EXISTING MOBILE SECTION */
-/* BASE STYLE FOR TRANSFORMING AUTH BUTTON */
-.auth-btn {
-    background: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-    text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.auth-btn:hover {
-    transform: translateY(-1px) !important;
-}
-
-/* MOBILE RESPONSIVE FOR AUTH BUTTON */
-@media (max-width: 768px) {
-    .auth-btn {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
     }
 }
