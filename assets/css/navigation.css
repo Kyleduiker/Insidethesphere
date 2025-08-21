@@ -13,13 +13,14 @@
 }
 
 .sphere-nav-container {
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding: 20px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px 30px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     box-sizing: border-box !important;
+    width: 100% !important;
 }
 
 .nav-actions {
