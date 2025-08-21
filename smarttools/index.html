@@ -17,14 +17,141 @@
     <link rel="stylesheet" href="../assets/css/navigation.css">
     <script src="../assets/js/navigation.js"></script>
     
-    <!-- Configuration for this page -->
+    <!-- ENHANCED PROTECTION CONFIGURATION -->
     <script>
-    // Configure for private page (login required)
-    configureSphereNav({ requireAuth: true });
+    // Configure for private page with enhanced protection
+    configureSphereNav({ 
+        requireAuth: true,
+        loginRedirectUrl: '/', // Fallback redirect if modal fails
+        homeUrl: '/'
+    });
+
+    // Additional client-side protection
+    function initializePageProtection() {
+        // Hide content immediately
+        document.body.style.visibility = 'hidden';
+        
+        // Add loading indicator
+        const loadingHTML = `
+            <div id="pageLoadingProtection" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #f8f9fa;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+            ">
+                <div style="
+                    border: 4px solid #e0e0e0;
+                    border-top: 4px solid #f39c12;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                "></div>
+                <div style="font-size: 16px; color: #666; font-weight: 500;">
+                    Verifying access to Smart Tools...
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('afterbegin', loadingHTML);
+    }
+
+    // Enhanced protection check
+    function verifyPageAccess() {
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase not loaded - redirecting to home');
+            window.location.href = '/';
+            return;
+        }
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            const loadingElement = document.getElementById('pageLoadingProtection');
+            
+            if (user) {
+                // User is authenticated - show page
+                console.log('User authenticated, showing Smart Tools page');
+                if (loadingElement) loadingElement.remove();
+                document.body.style.visibility = 'visible';
+                
+                // Optional: Track page access
+                logPageAccess(user);
+            } else {
+                // User not authenticated - handle based on context
+                console.log('User not authenticated, showing login modal');
+                if (loadingElement) loadingElement.remove();
+                document.body.style.visibility = 'visible';
+                
+                // Show login modal after a brief delay
+                setTimeout(() => {
+                    if (typeof openLoginModal === 'function') {
+                        openLoginModal();
+                    } else {
+                        // Fallback redirect if modal system fails
+                        alert('Please login to access Smart Tools');
+                        window.location.href = '/';
+                    }
+                }, 500);
+            }
+        });
+    }
+
+    // Optional: Log page access for analytics
+    function logPageAccess(user) {
+        try {
+            if (typeof db !== 'undefined') {
+                db.collection('pageViews').add({
+                    userId: user.uid,
+                    userEmail: user.email,
+                    page: 'smarttools',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+            }
+        } catch (error) {
+            console.log('Analytics logging failed (non-critical):', error);
+        }
+    }
+
+    // Initialize protection immediately
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePageProtection();
+            verifyPageAccess();
+        });
+    } else {
+        initializePageProtection();
+        verifyPageAccess();
+    }
+    </script>
+    
+    <!-- ENHANCED SECURITY HEADERS -->
+    <script>
+    // Prevent page caching for security
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
+    
+    // Disable right-click context menu on sensitive content (optional)
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.tool-card')) {
+            e.preventDefault();
+        }
+    });
     </script>
     
     <style>
-        /* Main Page Styles */
+        /* Your existing styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -36,6 +163,20 @@
             line-height: 1.6;
             color: #333;
             background-color: #fff;
+            /* Start hidden for security */
+            visibility: hidden;
+        }
+
+        /* SECURITY: Hide content by default until auth verified */
+        .main-container,
+        .header {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.authenticated .main-container,
+        body.authenticated .header {
+            opacity: 1;
         }
 
         html {
@@ -337,6 +478,12 @@
             box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
         }
 
+        /* Security Enhancement: Blur sensitive content until authenticated */
+        body:not(.authenticated) .tool-card {
+            filter: blur(2px);
+            pointer-events: none;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .main-container {
@@ -535,52 +682,86 @@
     
     <!-- Page-specific JavaScript -->
     <script>
-        // Filter tools by category
+        // Enhanced filter tools function with authentication check
         function filterTools(category, clickedElement) {
-            const cards = document.querySelectorAll('.tool-card');
-            const navLinks = document.querySelectorAll('.nav-link');
-            const contentTitle = document.querySelector('.content-title');
-            const contentDescription = document.querySelector('.content-description');
-
-            // Remove active class from all nav links
-            navLinks.forEach(link => link.classList.remove('active'));
-
-            // Add active class to clicked link
-            clickedElement.classList.add('active');
-
-            // Filter cards
-            cards.forEach(card => {
-                if (category === 'all' || card.dataset.category === category) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
+            // Check if user is authenticated before allowing filtering
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    openLoginModal();
+                    return;
                 }
+
+                const cards = document.querySelectorAll('.tool-card');
+                const navLinks = document.querySelectorAll('.nav-link');
+                const contentTitle = document.querySelector('.content-title');
+                const contentDescription = document.querySelector('.content-description');
+
+                // Remove active class from all nav links
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                // Add active class to clicked link
+                clickedElement.classList.add('active');
+
+                // Filter cards
+                cards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Update content header
+                const categoryTitles = {
+                    'all': 'All Tools',
+                    'email': 'Email Marketing Tools',
+                    'crm': 'CRM Automation Tools',
+                    'website': 'Website Enhancement Tools',
+                    'training': 'Training & Support Tools',
+                    'development': 'Custom Development Tools',
+                    'analytics': 'Business Intelligence Tools'
+                };
+
+                const categoryDescriptions = {
+                    'all': 'Browse all available tools for BoldTrail (RLP Sphere) users',
+                    'email': 'Tools for email marketing and newsletter management',
+                    'crm': 'Automation and shortcuts for your CRM workflow',
+                    'website': 'Enhance your website and online presence',
+                    'training': 'Learning resources and support materials',
+                    'development': 'Custom solutions tailored to your needs',
+                    'analytics': 'Business intelligence and performance tracking'
+                };
+
+                contentTitle.textContent = categoryTitles[category];
+                contentDescription.textContent = categoryDescriptions[category];
+
+                // Mark body as authenticated for styling
+                document.body.classList.add('authenticated');
             });
-
-            // Update content header
-            const categoryTitles = {
-                'all': 'All Tools',
-                'email': 'Email Marketing Tools',
-                'crm': 'CRM Automation Tools',
-                'website': 'Website Enhancement Tools',
-                'training': 'Training & Support Tools',
-                'development': 'Custom Development Tools',
-                'analytics': 'Business Intelligence Tools'
-            };
-
-            const categoryDescriptions = {
-                'all': 'Browse all available tools for BoldTrail (RLP Sphere) users',
-                'email': 'Tools for email marketing and newsletter management',
-                'crm': 'Automation and shortcuts for your CRM workflow',
-                'website': 'Enhance your website and online presence',
-                'training': 'Learning resources and support materials',
-                'development': 'Custom solutions tailored to your needs',
-                'analytics': 'Business intelligence and performance tracking'
-            };
-
-            contentTitle.textContent = categoryTitles[category];
-            contentDescription.textContent = categoryDescriptions[category];
         }
+
+        // Enhanced launch button protection
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('launch-btn')) {
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (!user) {
+                        e.preventDefault();
+                        openLoginModal();
+                        return false;
+                    }
+                    // User is authenticated, allow the click to proceed
+                });
+            }
+        });
+
+        // Show authenticated state when user logs in
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.body.classList.add('authenticated');
+            } else {
+                document.body.classList.remove('authenticated');
+            }
+        });
     </script>
 </body>
 </html>
