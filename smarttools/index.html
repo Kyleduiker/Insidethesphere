@@ -1,572 +1,1300 @@
-/* Navigation Styles - Inside The Sphere */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tools - Inside The Sphere</title>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="../js/firebase-config.js"></script>
+    
+    <!-- Navigation Styles and Scripts -->
+    <link rel="stylesheet" href="../assets/css/navigation.css">
+    <script src="../assets/js/navigation.js"></script>
+    
+    <!-- ENHANCED PROTECTION CONFIGURATION -->
+    <script>
+    // Configure for private page with enhanced protection
+    configureSphereNav({ 
+        requireAuth: true,
+        loginRedirectUrl: '/', // Fallback redirect if modal fails
+        homeUrl: '/'
+    });
 
-.sphere-nav {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    background: white !important;
-    z-index: 9999 !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.sphere-nav-container {
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 20px 30px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-}
-
-.nav-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-}
-
-.user-info {
-    background: #27ae60 !important;
-    color: white !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-}
-
-.logout-btn {
-    background: #e74c3c !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-}
-
-.logout-btn:hover {
-    background: #c0392b !important;
-}
-
-.sphere-logo {
-    font-size: 24px !important;
-    font-weight: bold !important;
-    color: #f39c12 !important;
-    text-decoration: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    font-family: Arial, sans-serif !important;
-}
-
-.sphere-logo:hover {
-    color: #e67e22 !important;
-    text-decoration: none !important;
-}
-
-.sphere-menu-btn {
-    background: #f39c12 !important;
-    color: white !important;
-    border: none !important;
-    padding: 12px 24px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-    margin: 0 !important;
-}
-
-.sphere-menu-btn:hover {
-    background: #e67e22 !important;
-}
-
-.sphere-menu-btn.active {
-    background: #e67e22 !important;
-}
-
-/* Loading Screen */
-.auth-loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #f8f9fa;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 10001;
-}
-
-.loading-spinner {
-    border: 4px solid #e0e0e0;
-    border-top: 4px solid #f39c12;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-    font-size: 16px;
-    color: #666;
-    font-weight: 500;
-}
-
-/* Popout Menu */
-.sphere-popout-menu {
-    position: fixed !important;
-    top: 0 !important;
-    left: -300px !important;
-    width: 280px !important;
-    height: 100vh !important;
-    background: #2c3e50 !important;
-    z-index: 10000 !important;
-    transition: left 0.3s ease !important;
-    overflow-y: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-}
-
-.sphere-popout-menu.active {
-    left: 0 !important;
-}
-
-.sphere-menu-header {
-    padding: 25px 20px !important;
-    border-bottom: 1px solid #34495e !important;
-    margin: 0 !important;
-}
-
-.sphere-menu-title {
-    color: white !important;
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    margin-bottom: 5px !important;
-    font-family: Arial, sans-serif !important;
-    margin-top: 0 !important;
-}
-
-.sphere-menu-subtitle {
-    color: #bdc3c7 !important;
-    font-size: 14px !important;
-    margin: 0 !important;
-    font-family: Arial, sans-serif !important;
-}
-
-.sphere-menu-items {
-    padding: 20px 0 !important;
-    margin: 0 !important;
-}
-
-.sphere-menu-item {
-    display: flex !important;
-    align-items: center !important;
-    padding: 15px 20px !important;
-    color: #ecf0f1 !important;
-    text-decoration: none !important;
-    transition: all 0.3s ease !important;
-    border-left: 3px solid transparent !important;
-    margin: 0 !important;
-    font-family: Arial, sans-serif !important;
-}
-
-.sphere-menu-item:hover {
-    background: #34495e !important;
-    border-left-color: #f39c12 !important;
-    text-decoration: none !important;
-    color: #ecf0f1 !important;
-}
-
-.sphere-menu-icon {
-    width: 24px !important;
-    height: 24px !important;
-    margin-right: 15px !important;
-    border-radius: 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 14px !important;
-    color: white !important;
-    flex-shrink: 0 !important;
-}
-
-.sphere-menu-text {
-    font-weight: 500 !important;
-    font-size: 15px !important;
-    font-family: Arial, sans-serif !important;
-}
-
-/* Icon Colors */
-.sphere-icon-home { background: #3498db !important; }
-.sphere-icon-tools { background: #f39c12 !important; }
-.sphere-icon-newsletter { background: #e74c3c !important; }
-.sphere-icon-dashboard { background: #9b59b6 !important; }
-
-/* Overlay */
-.sphere-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0,0,0,0.5) !important;
-    z-index: 9998 !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transition: all 0.3s ease !important;
-}
-
-.sphere-overlay.active {
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Base style for transforming auth button */
-.auth-btn {
-    background: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-    text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.auth-btn:hover {
-    transform: translateY(-1px) !important;
-}
-
-/* Login button styles */
-.login-btn {
-    background: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 14px !important;
-    text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.login-btn:hover {
-    background: #2980b9 !important;
-    text-decoration: none !important;
-    color: white !important;
-}
-
-/* Consistent button sizing */
-.nav-actions > * {
-    height: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* ===== LOGIN MODAL STYLES ===== */
-
-/* Modal Overlay */
-.login-modal-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.4) !important;
-    z-index: 10002 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transition: all 0.3s ease !important;
-    backdrop-filter: blur(2px) !important;
-}
-
-.login-modal-overlay.active {
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Modal Content */
-.login-modal-content {
-    background: #1a1a1a !important;
-    padding: 40px !important;
-    border-radius: 12px !important;
-    width: 90% !important;
-    max-width: 400px !important;
-    position: relative !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid #333 !important;
-}
-
-/* Close Button */
-.login-modal-close {
-    position: absolute !important;
-    top: 15px !important;
-    right: 20px !important;
-    background: none !important;
-    border: none !important;
-    font-size: 24px !important;
-    color: #888 !important;
-    cursor: pointer !important;
-    transition: color 0.3s ease !important;
-}
-
-.login-modal-close:hover {
-    color: #fff !important;
-}
-
-/* Error and Success Messages */
-.login-error-message {
-    background: rgba(248, 113, 113, 0.2) !important;
-    border: 1px solid rgba(248, 113, 113, 0.3) !important;
-    color: #fca5a5 !important;
-    padding: 12px !important;
-    border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    font-size: 14px !important;
-    display: none !important;
-}
-
-.login-success-message {
-    background: rgba(34, 197, 94, 0.2) !important;
-    border: 1px solid rgba(34, 197, 94, 0.3) !important;
-    color: #86efac !important;
-    padding: 12px !important;
-    border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    font-size: 14px !important;
-    display: none !important;
-}
-
-/* Login Tabs */
-.login-tabs {
-    display: flex !important;
-    margin-bottom: 24px !important;
-    border-bottom: 1px solid #333 !important;
-}
-
-.login-tab {
-    flex: 1 !important;
-    background: none !important;
-    border: none !important;
-    padding: 12px 0 !important;
-    color: #888 !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    border-bottom: 2px solid transparent !important;
-}
-
-.login-tab.active {
-    color: #3498db !important;
-    border-bottom-color: #3498db !important;
-}
-
-.login-tab:hover {
-    color: #3498db !important;
-}
-
-/* Login Forms */
-.login-form {
-    display: none !important;
-}
-
-.login-form.active {
-    display: block !important;
-}
-
-.form-group {
-    margin-bottom: 16px !important;
-}
-
-.form-group input {
-    width: 100% !important;
-    padding: 12px 16px !important;
-    background: #2a2a2a !important;
-    border: 1px solid #444 !important;
-    border-radius: 8px !important;
-    color: #fff !important;
-    font-size: 14px !important;
-    box-sizing: border-box !important;
-    transition: border-color 0.3s ease !important;
-}
-
-.form-group input:focus {
-    outline: none !important;
-    border-color: #3498db !important;
-}
-
-.form-group input::placeholder {
-    color: #888 !important;
-}
-
-/* Submit Button */
-.login-submit-btn {
-    width: 100% !important;
-    background: #3498db !important;
-    color: white !important;
-    border: none !important;
-    padding: 12px 20px !important;
-    border-radius: 8px !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    margin-bottom: 16px !important;
-}
-
-.login-submit-btn:hover {
-    background: #2980b9 !important;
-}
-
-.login-submit-btn:disabled {
-    background: #555 !important;
-    cursor: not-allowed !important;
-}
-
-/* Login Divider */
-.login-divider {
-    text-align: center !important;
-    margin: 20px 0 10px !important;
-    color: #666 !important;
-    font-size: 14px !important;
-}
-
-/* Google Login Button */
-.google-login-btn {
-    width: 100% !important;
-    background: #fff !important;
-    color: #333 !important;
-    border: 1px solid #ddd !important;
-    padding: 12px 20px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    margin-top: 16px !important;
-}
-
-.google-login-btn:hover {
-    background: #f8f9fa !important;
-    border-color: #ccc !important;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .sphere-nav-container {
-        padding: 15px 20px !important;
+    // Additional client-side protection with preview mode
+    function initializePageProtection() {
+        // Show content immediately but make it non-interactive
+        document.body.style.visibility = 'visible';
+        document.body.classList.add('preview-mode');
+        
+        // Add brief loading indicator that fades quickly
+        const loadingHTML = `
+            <div id="pageLoadingProtection" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(248, 249, 250, 0.95);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                transition: opacity 0.5s ease;
+            ">
+                <div style="
+                    border: 4px solid #e0e0e0;
+                    border-top: 4px solid #f39c12;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                "></div>
+                <div style="font-size: 16px; color: #666; font-weight: 500;">
+                    Loading Smart Tools...
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('afterbegin', loadingHTML);
+        
+        // Remove loading after a short time to reveal preview
+        setTimeout(() => {
+            const loadingElement = document.getElementById('pageLoadingProtection');
+            if (loadingElement) {
+                loadingElement.style.opacity = '0';
+                setTimeout(() => loadingElement.remove(), 500);
+            }
+        }, 1000);
     }
 
-    .sphere-logo {
-        font-size: 20px !important;
+    // Enhanced protection check with preview mode
+    function verifyPageAccess() {
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase not loaded - showing preview and login modal');
+            setTimeout(() => {
+                if (typeof openLoginModal === 'function') {
+                    openLoginModal();
+                } else {
+                    window.location.href = '/';
+                }
+            }, 1500);
+            return;
+        }
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is authenticated - remove preview mode
+                console.log('User authenticated, enabling Smart Tools page');
+                document.body.classList.remove('preview-mode');
+                document.body.classList.add('authenticated');
+                
+                // Optional: Track page access
+                logPageAccess(user);
+            } else {
+                // User not authenticated - show login modal over preview
+                console.log('User not authenticated, showing login modal over preview');
+                document.body.classList.add('preview-mode');
+                document.body.classList.remove('authenticated');
+                
+                // Show login modal after brief delay
+                setTimeout(() => {
+                    if (typeof openLoginModal === 'function') {
+                        openLoginModal();
+                    } else {
+                        // Fallback redirect if modal system fails
+                        alert('Please login to access Smart Tools');
+                        window.location.href = '/';
+                    }
+                }, 1500);
+            }
+        });
     }
 
-    .nav-actions {
-        gap: 8px !important;
+    // Optional: Log page access for analytics
+    function logPageAccess(user) {
+        try {
+            if (typeof db !== 'undefined') {
+                db.collection('pageViews').add({
+                    userId: user.uid,
+                    userEmail: user.email,
+                    page: 'smarttools',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+            }
+        } catch (error) {
+            console.log('Analytics logging failed (non-critical):', error);
+        }
     }
 
-    .user-info {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
+    // Initialize protection immediately
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePageProtection();
+            verifyPageAccess();
+        });
+    } else {
+        initializePageProtection();
+        verifyPageAccess();
     }
-
-    .logout-btn {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
+    </script>
+    
+    <!-- ENHANCED SECURITY HEADERS -->
+    <script>
+    // Prevent page caching for security
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
     }
+    
+    // Disable right-click context menu on sensitive content (optional)
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.tool-card')) {
+            e.preventDefault();
+        }
+    });
+    </script>
+    
+    <style>
+        /* Your existing styles remain the same */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .login-btn {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
 
-    .auth-btn {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
-    }
+        /* PREVIEW MODE: Show content but make it non-interactive */
+        body.preview-mode {
+            overflow: hidden;
+        }
 
-    .sphere-menu-btn {
-        padding: 10px 20px !important;
-        font-size: 14px !important;
-    }
+        body.preview-mode .main-container,
+        body.preview-mode .header {
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
+        }
 
-    .sphere-popout-menu {
-        width: 100% !important;
-        left: -100% !important;
-    }
+        /* Dark overlay for preview mode */
+        body.preview-mode::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            pointer-events: none;
+        }
 
-    /* Modal Mobile Styles */
-    .login-modal-content {
-        padding: 30px 20px !important;
-        margin: 20px !important;
-        width: calc(100% - 40px) !important;
-    }
+        /* AUTHENTICATED: Full access */
+        body.authenticated .main-container,
+        body.authenticated .header {
+            filter: none;
+            pointer-events: auto;
+            user-select: auto;
+            opacity: 1;
+        }
 
-    .login-tab {
-        font-size: 14px !important;
-    }
+        /* Remove overlay when authenticated */
+        body.authenticated::before {
+            display: none;
+        }
 
-    .form-group input {
-        padding: 10px 14px !important;
-        font-size: 16px !important; /* Prevents zoom on iOS */
-    }
+        html {
+            scroll-behavior: smooth;
+        }
 
-    .login-submit-btn {
-        padding: 12px !important;
-        font-size: 14px !important;
-    }
+        /* ===== PREVIEW MODE STYLING ===== */
+        
+        /* PREVIEW MODE: Show content but make it non-interactive */
+        body.preview-mode {
+            overflow: hidden;
+        }
 
-    .google-login-btn {
-        padding: 12px !important;
-        font-size: 13px !important;
-    }
-}
+        body.preview-mode .main-container,
+        body.preview-mode .header {
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
+            transition: filter 0.5s ease;
+        }
 
-/* Body padding for pages with navigation */
-body.has-sphere-nav {
-    padding-top: 80px;
-}
+        /* Dark overlay for preview mode */
+        body.preview-mode::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
 
-@media (max-width: 768px) {
-    body.has-sphere-nav {
-        padding-top: 70px;
-    }
-}
+        /* AUTHENTICATED: Full access */
+        body.authenticated .main-container,
+        body.authenticated .header {
+            filter: none;
+            pointer-events: auto;
+            user-select: auto;
+            opacity: 1;
+            transition: filter 0.5s ease;
+        }
+
+        /* Remove overlay when authenticated */
+        body.authenticated::before {
+            display: none;
+        }
+
+        /* Enhanced Modal Overlay for Preview Mode */
+        .login-modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+            z-index: 10002 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+            backdrop-filter: blur(2px) !important;
+        }
+
+        .login-modal-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Modal Content */
+        .login-modal-content {
+            background: #1a1a1a !important;
+            padding: 40px !important;
+            border-radius: 12px !important;
+            width: 90% !important;
+            max-width: 400px !important;
+            position: relative !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid #333 !important;
+            transform: scale(0.9) !important;
+            transition: transform 0.3s ease !important;
+        }
+
+        .login-modal-overlay.active .login-modal-content {
+            transform: scale(1) !important;
+        }
+
+        /* Close Button */
+        .login-modal-close {
+            position: absolute !important;
+            top: 15px !important;
+            right: 20px !important;
+            background: none !important;
+            border: none !important;
+            font-size: 24px !important;
+            color: #888 !important;
+            cursor: pointer !important;
+            transition: color 0.3s ease !important;
+        }
+
+        .login-modal-close:hover {
+            color: #fff !important;
+        }
+
+        /* Error and Success Messages */
+        .login-error-message {
+            background: rgba(248, 113, 113, 0.2) !important;
+            border: 1px solid rgba(248, 113, 113, 0.3) !important;
+            color: #fca5a5 !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            margin-bottom: 16px !important;
+            font-size: 14px !important;
+            display: none !important;
+        }
+
+        .login-success-message {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border: 1px solid rgba(34, 197, 94, 0.3) !important;
+            color: #86efac !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            margin-bottom: 16px !important;
+            font-size: 14px !important;
+            display: none !important;
+        }
+
+        /* Login Tabs */
+        .login-tabs {
+            display: flex !important;
+            margin-bottom: 24px !important;
+            border-bottom: 1px solid #333 !important;
+        }
+
+        .login-tab {
+            flex: 1 !important;
+            background: none !important;
+            border: none !important;
+            padding: 12px 0 !important;
+            color: #888 !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            border-bottom: 2px solid transparent !important;
+        }
+
+        .login-tab.active {
+            color: #3498db !important;
+            border-bottom-color: #3498db !important;
+        }
+
+        .login-tab:hover {
+            color: #3498db !important;
+        }
+
+        /* Login Forms */
+        .login-form {
+            display: none !important;
+        }
+
+        .login-form.active {
+            display: block !important;
+        }
+
+        .form-group {
+            margin-bottom: 16px !important;
+        }
+
+        .form-group input {
+            width: 100% !important;
+            padding: 12px 16px !important;
+            background: #2a2a2a !important;
+            border: 1px solid #444 !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            font-size: 14px !important;
+            box-sizing: border-box !important;
+            transition: border-color 0.3s ease !important;
+        }
+
+        .form-group input:focus {
+            outline: none !important;
+            border-color: #3498db !important;
+        }
+
+        .form-group input::placeholder {
+            color: #888 !important;
+        }
+
+        /* Submit Button */
+        .login-submit-btn {
+            width: 100% !important;
+            background: #3498db !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-bottom: 16px !important;
+        }
+
+        .login-submit-btn:hover {
+            background: #2980b9 !important;
+        }
+
+        .login-submit-btn:disabled {
+            background: #555 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* Login Divider */
+        .login-divider {
+            text-align: center !important;
+            margin: 20px 0 10px !important;
+            color: #666 !important;
+            font-size: 14px !important;
+        }
+
+        /* Google Login Button */
+        .google-login-btn {
+            width: 100% !important;
+            background: #fff !important;
+            color: #333 !important;
+            border: 1px solid #ddd !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-top: 16px !important;
+        }
+
+        .google-login-btn:hover {
+            background: #f8f9fa !important;
+            border-color: #ccc !important;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+        }
+
+        .icon-shape {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 -8px;
+            color: white;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .icon-shape:nth-child(2) {
+            animation-delay: -1s;
+        }
+
+        .icon-shape:nth-child(3) {
+            animation-delay: -2s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .icon-red { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .icon-blue { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+        .icon-yellow { background: linear-gradient(135deg, #feca57, #ff9ff3); }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .header p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 30px 0;
+            position: sticky;
+            top: 80px;
+            height: fit-content;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+            border-left-color: #f39c12;
+        }
+
+        .nav-link.active {
+            background: rgba(243, 156, 18, 0.15);
+            color: #f39c12;
+            border-left-color: #f39c12;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .tool-count {
+            margin-left: auto;
+            background: #e0e0e0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .nav-link.active .tool-count {
+            background: #f39c12;
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            max-width: calc(100% - 280px);
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .content-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Tools Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            border-color: #f39c12;
+        }
+
+        .tool-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .tool-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-category {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tool-name {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .tool-description {
+            color: #666;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Coming Soon Banner */
+        .coming-soon-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 6px 0;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            z-index: 10;
+        }
+
+        .tool-card.has-banner {
+            padding-top: 45px;
+        }
+
+        /* Tool Icon Colors */
+        .icon-newsletter { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .icon-crm { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .icon-website { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .icon-guides { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .icon-workflow { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .icon-analytics { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+
+        /* Launch Button */
+        .launch-btn {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #27ae60;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .launch-btn:hover {
+            background: #229954;
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: white;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Security Enhancement: Disable interactions in preview mode */
+        body.preview-mode .tool-card {
+            pointer-events: none;
+        }
+
+        body.preview-mode .nav-link {
+            pointer-events: none;
+        }
+
+        /* Enable interactions when authenticated */
+        body.authenticated .tool-card {
+            pointer-events: auto;
+        }
+
+        body.authenticated .nav-link {
+            pointer-events: auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: static;
+                width: 100%;
+                top: auto;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .content-area {
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 60px 20px 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .tool-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be automatically inserted here by navigation.js -->
+
+    <!-- Header Section -->
+    <section class="header">
+        <div class="header-icon">
+            <div class="icon-shape icon-red">🛠️</div>
+            <div class="icon-shape icon-blue">⚙️</div>
+            <div class="icon-shape icon-yellow">🚀</div>
+        </div>
+        <h1>Smart Tools Directory</h1>
+        <p>Inside The Sphere is a curated collection of tools for real estate professionals using BoldTrail (RLP Sphere). We regularly review new tools to create the most up-to-date directory available, helping you to become the best real estate professional you can be.</p>
+    </section>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Tool Categories</div>
+                <div class="sidebar-subtitle">Browse by category</div>
+            </div>
+
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <div class="nav-link active" onclick="filterTools('all', this)">
+                        <span class="nav-icon">📋</span>
+                        All Tools
+                        <span class="tool-count">7</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('email', this)">
+                        <span class="nav-icon">📧</span>
+                        Email Marketing
+                        <span class="tool-count">1</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('crm', this)">
+                        <span class="nav-icon">⚙️</span>
+                        CRM Automation
+                        <span class="tool-count">1</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('website', this)">
+                        <span class="nav-icon">🌐</span>
+                        Website Enhancement
+                        <span class="tool-count">2</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('training', this)">
+                        <span class="nav-icon">📚</span>
+                        Training & Support
+                        <span class="tool-count">1</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('development', this)">
+                        <span class="nav-icon">🔧</span>
+                        Custom Development
+                        <span class="tool-count">1</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="filterTools('analytics', this)">
+                        <span class="nav-icon">📊</span>
+                        Business Intelligence
+                        <span class="tool-count">1</span>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h2 class="content-title">All Tools</h2>
+                <p class="content-description">Browse all available tools for BoldTrail (RLP Sphere) users</p>
+            </div>
+
+            <!-- Tools Grid -->
+            <div class="tools-grid">
+                <div class="tool-card" data-category="email">
+                    <div class="tool-icon icon-newsletter">📧</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Email Marketing</div>
+                        <div class="tool-name">Newsletter Builder Pro</div>
+                        <div class="tool-description">Newsletter Builder is a comprehensive solution for creating professional, branded newsletters. You can design templates, manage contacts, schedule campaigns, and track performance all in one secure platform.</div>
+                        <a href="/newsletter/" class="launch-btn">Launch Builder</a>
+                    </div>
+                </div>
+
+                <div class="tool-card" data-category="website">
+                    <div class="tool-icon icon-website">🌐</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Website Enhancement</div>
+                        <div class="tool-name">Adding a video background on your website</div>
+                        <div class="tool-description">Upgrade the background on your Bold Trail (RLP Sphere) website in just a few clicks. Follow these simple step-by-step instructions to customize your site, stand out from the competition, and create a more engaging experience for your visitors.</div>
+                        <a href="https://insidethesphere.com/background-customization/" class="launch-btn">Get Started</a>
+                    </div>
+                </div>
+
+                <div class="tool-card" data-category="website">
+                    <div class="tool-icon icon-website">🌐</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Website Enhancement</div>
+                        <div class="tool-name">Adding a Social Feed to Your Website</div>
+                        <div class="tool-description">Here is an easy way to add your Social media feeds to your Bold Trail ( RLP sphere) Websites. Follow the youtube video or the step by step instructions</div>
+                        <a href="https://insidethesphere.com/instagram/" class="launch-btn">Get Started</a>
+                    </div>
+                </div>
+
+                <div class="tool-card" data-category="training">
+                    <div class="tool-icon icon-guides">📋</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Training & Support</div>
+                        <div class="tool-name">Real Estate Process Guides</div>
+                        <div class="tool-description">Step by step guides to help navigate your way through working with a buyer or seller. Taking the stress out of real estate</div>
+                        <a href="https://insidethesphere.com/process-hub" class="launch-btn">View Guides</a>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="crm">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-crm">⚙️</div>
+                    <div class="tool-content">
+                        <div class="tool-category">CRM Automation</div>
+                        <div class="tool-name">CRM Shortcuts</div>
+                        <div class="tool-description">CRM Shortcuts streamlines your BoldTrail workflows with custom automation and one-click actions. Transform hours of manual work into seconds with intelligent shortcuts designed for real estate professionals.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="development">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-workflow">🔧</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Custom Development</div>
+                        <div class="tool-name">Custom Workflows</div>
+                        <div class="tool-description">Custom Workflows provide tailored solutions built specifically for your business needs within the Sphere ecosystem. Get personalized consultation and custom tool development.</div>
+                    </div>
+                </div>
+
+                <div class="tool-card has-banner" data-category="analytics">
+                    <div class="coming-soon-banner">Coming Soon</div>
+                    <div class="tool-icon icon-analytics">📊</div>
+                    <div class="tool-content">
+                        <div class="tool-category">Business Intelligence</div>
+                        <div class="tool-name">Analytics Dashboard</div>
+                        <div class="tool-description">Analytics Dashboard provides insights into your business performance with custom dashboards and reporting tools. Track lead conversion, marketing ROI, and pipeline performance.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Enhanced filter tools function with authentication check
+        function filterTools(category, clickedElement) {
+            // Check if user is authenticated before allowing filtering
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    // User not authenticated - show login modal
+                    if (typeof openLoginModal === 'function') {
+                        openLoginModal();
+                    }
+                    return;
+                }
+
+                // User is authenticated - proceed with filtering
+                const cards = document.querySelectorAll('.tool-card');
+                const navLinks = document.querySelectorAll('.nav-link');
+                const contentTitle = document.querySelector('.content-title');
+                const contentDescription = document.querySelector('.content-description');
+
+                // Remove active class from all nav links
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                // Add active class to clicked link
+                clickedElement.classList.add('active');
+
+                // Filter cards
+                cards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Update content header
+                const categoryTitles = {
+                    'all': 'All Tools',
+                    'email': 'Email Marketing Tools',
+                    'crm': 'CRM Automation Tools',
+                    'website': 'Website Enhancement Tools',
+                    'training': 'Training & Support Tools',
+                    'development': 'Custom Development Tools',
+                    'analytics': 'Business Intelligence Tools'
+                };
+
+                const categoryDescriptions = {
+                    'all': 'Browse all available tools for BoldTrail (RLP Sphere) users',
+                    'email': 'Tools for email marketing and newsletter management',
+                    'crm': 'Automation and shortcuts for your CRM workflow',
+                    'website': 'Enhance your website and online presence',
+                    'training': 'Learning resources and support materials',
+                    'development': 'Custom solutions tailored to your needs',
+                    'analytics': 'Business intelligence and performance tracking'
+                };
+
+                contentTitle.textContent = categoryTitles[category];
+                contentDescription.textContent = categoryDescriptions[category];
+            });
+        }
+
+        // Enhanced launch button protection
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('launch-btn')) {
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (!user) {
+                        e.preventDefault();
+                        if (typeof openLoginModal === 'function') {
+                            openLoginModal();
+                        }
+                        return false;
+                    }
+                    // User is authenticated, allow the click to proceed
+                });
+            }
+        });
+
+        // Handle authentication state changes
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.body.classList.remove('preview-mode');
+                document.body.classList.add('authenticated');
+            } else {
+                document.body.classList.add('preview-mode');
+                document.body.classList.remove('authenticated');
+            }
+        });
+
+        // ===== MODAL LOGIN FUNCTIONS FOR SMART TOOLS PAGE =====
+
+        // Enhanced Modal functions with better error handling
+        function openLoginModal() {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                // Clear any previous messages
+                hideLoginMessages();
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                // Reset forms
+                const loginForm = document.getElementById('loginForm');
+                const signupForm = document.getElementById('signupForm');
+                if (loginForm) loginForm.reset();
+                if (signupForm) signupForm.reset();
+                hideLoginMessages();
+            }
+        }
+
+        // Close modal only when clicking overlay, not content
+        function closeLoginModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeLoginModal();
+            }
+        }
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const tabs = document.querySelectorAll('.login-tab');
+            
+            // Reset tabs and forms
+            tabs.forEach(t => t.classList.remove('active'));
+            if (loginForm) loginForm.classList.remove('active');
+            if (signupForm) signupForm.classList.remove('active');
+            hideLoginMessages();
+            
+            // Activate selected tab
+            if (tab === 'login') {
+                document.querySelector('.login-tab:first-child').classList.add('active');
+                if (loginForm) loginForm.classList.add('active');
+            } else {
+                document.querySelector('.login-tab:last-child').classList.add('active');
+                if (signupForm) signupForm.classList.add('active');
+            }
+        }
+
+        // Enhanced login with better error handling
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('.login-submit-btn');
+            const email = form.email.value;
+            const password = form.password.value;
+            
+            // Show loading state
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+            hideLoginMessages();
+            
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                showLoginSuccess('Welcome back! Loading your tools...');
+                setTimeout(() => {
+                    closeLoginModal();
+                    // User state will be handled by onAuthStateChanged
+                }, 1000);
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginError(getLoginErrorMessage(error.code));
+                submitBtn.textContent = 'Login';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Enhanced signup with better logic
+        async function handleSignupSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('.login-submit-btn');
+            const name = form.name.value;
+            const email = form.email.value;
+            const password = form.password.value;
+            const confirmPassword = form.confirmPassword.value;
+            
+            if (password !== confirmPassword) {
+                showLoginError('Passwords do not match');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showLoginError('Password must be at least 6 characters long');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.textContent = 'Creating account...';
+            submitBtn.disabled = true;
+            hideLoginMessages();
+            
+            try {
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                
+                // Update user profile with name
+                await userCredential.user.updateProfile({
+                    displayName: name
+                });
+                
+                // Create user profile in Firestore if available
+                if (typeof db !== 'undefined') {
+                    try {
+                        await db.collection('users').doc(userCredential.user.uid).set({
+                            name: name,
+                            email: email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            subscriptionStatus: 'free',
+                            profileComplete: true
+                        });
+                    } catch (dbError) {
+                        console.log('Firestore error (non-critical):', dbError);
+                    }
+                }
+                
+                showLoginSuccess('Account created! Welcome to Inside The Sphere!');
+                setTimeout(() => {
+                    closeLoginModal();
+                    // User state will be handled by onAuthStateChanged
+                }, 1000);
+            } catch (error) {
+                console.error('Signup error:', error);
+                showLoginError(getLoginErrorMessage(error.code));
+                submitBtn.textContent = 'Sign Up';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Add Google login function
+        async function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            hideLoginMessages();
+            
+            try {
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                
+                // Create user profile if first time (only if db exists)
+                if (typeof db !== 'undefined') {
+                    try {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (!doc.exists) {
+                            await db.collection('users').doc(user.uid).set({
+                                name: user.displayName || 'User',
+                                email: user.email,
+                                photoURL: user.photoURL || '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                subscriptionStatus: 'free',
+                                profileComplete: true
+                            });
+                        }
+                    } catch (dbError) {
+                        console.log('Firestore error (non-critical):', dbError);
+                    }
+                }
+                
+                showLoginSuccess('Welcome! Loading your tools...');
+                setTimeout(() => {
+                    closeLoginModal();
+                }, 1000);
+            } catch (error) {
+                console.error('Google login error:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showLoginError('Sign-in was cancelled. Please try again.');
+                } else {
+                    showLoginError('Google sign-in failed. Please try again.');
+                }
+            }
+        }
+
+        // Message handling functions
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => errorDiv.style.display = 'none', 6000);
+            }
+        }
+
+        function showLoginSuccess(message) {
+            const successDiv = document.getElementById('loginSuccess');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+        }
+
+        function hideLoginMessages() {
+            const errorDiv = document.getElementById('loginError');
+            const successDiv = document.getElementById('loginSuccess');
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+        }
+
+        // Error message function
+        function getLoginErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email. Ready to create one?';
+                case 'auth/wrong-password':
+                    return 'Incorrect password. Please try again.';
+                case 'auth/invalid-email':
+                    return 'Please enter a valid email address.';
+                case 'auth/user-disabled':
+                    return 'This account has been disabled. Contact support.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please wait and try again.';
+                case 'auth/network-request-failed':
+                    return 'Network error. Please check your connection.';
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists.';
+                case 'auth/weak-password':
+                    return 'Password is too weak. Please choose a stronger password.';
+                default:
+                    return 'Authentication failed. Please try again.';
+            }
+        }
+    </script>
+</body>
+</html>
