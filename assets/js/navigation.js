@@ -29,8 +29,7 @@ function createSphereNavigation() {
                 
                 <div class="nav-actions">
                     <!-- SINGLE TRANSFORMING BUTTON -->
-                    <a href="${sphereNavConfig.loginRedirectUrl}" class="login-btn" id="loginBtn">Login / Sign Up</a>
-                    <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">Logout</button>
+                    <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">Login / Sign Up</button>
                     
                     <!-- ALWAYS VISIBLE -->
                     <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
@@ -171,23 +170,39 @@ function closeSphereMenu() {
     }
 }
 
-// Helper functions for authentication states - SIMPLIFIED VERSION
+// Helper functions for authentication states - SINGLE BUTTON VERSION
 function showLoggedInState(user) {
-    const logoutBtnElement = document.getElementById('logoutBtn');
-    const loginBtnElement = document.getElementById('loginBtn');
+    const authBtn = document.getElementById('authBtn');
     
-    // Show logout button, hide login button
-    if (logoutBtnElement) logoutBtnElement.style.display = 'flex';
-    if (loginBtnElement) loginBtnElement.style.display = 'none';
+    if (authBtn) {
+        authBtn.textContent = 'Logout';
+        authBtn.className = 'logout-btn';
+        authBtn.setAttribute('data-state', 'logged-in');
+    }
 }
 
 function showLoggedOutState() {
-    const logoutBtnElement = document.getElementById('logoutBtn');
-    const loginBtnElement = document.getElementById('loginBtn');
+    const authBtn = document.getElementById('authBtn');
     
-    // Show login button, hide logout button
-    if (loginBtnElement) loginBtnElement.style.display = 'flex';
-    if (logoutBtnElement) logoutBtnElement.style.display = 'none';
+    if (authBtn) {
+        authBtn.textContent = 'Login / Sign Up';
+        authBtn.className = 'login-btn';
+        authBtn.setAttribute('data-state', 'logged-out');
+    }
+}
+
+// Handle click on the transforming auth button
+function handleAuthClick() {
+    const authBtn = document.getElementById('authBtn');
+    const currentState = authBtn ? authBtn.getAttribute('data-state') : 'logged-out';
+    
+    if (currentState === 'logged-in') {
+        // User is logged in, so logout
+        logout();
+    } else {
+        // User is logged out, so redirect to login
+        window.location.href = sphereNavConfig.loginRedirectUrl;
+    }
 }
 
 // Initialize navigation when page loads
