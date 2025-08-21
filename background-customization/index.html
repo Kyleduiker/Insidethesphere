@@ -5,179 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player - Inside The Sphere</title>
     
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="../js/firebase-config.js"></script>
+    
+    <!-- Navigation Styles and Scripts -->
+    <link rel="stylesheet" href="../assets/css/navigation.css">
+    <script src="../assets/js/navigation.js"></script>
+    
+    <!-- Configuration for this page -->
+    <script>
+    // Configure for private page (login required) - set to false for public pages
+    configureSphereNav({ requireAuth: true });
+    </script>
+    
     <style>
-        /* Navigation Styles - Inside The Sphere */
-        .sphere-nav {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            background: white !important;
-            z-index: 9999 !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .sphere-nav-container {
-            max-width: 1200px !important;
-            margin: 0 auto !important;
-            padding: 20px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            box-sizing: border-box !important;
-        }
-
-        .sphere-logo {
-            font-size: 24px !important;
-            font-weight: bold !important;
-            color: #f39c12 !important;
-            text-decoration: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            font-family: Arial, sans-serif !important;
-        }
-
-        .sphere-logo:hover {
-            color: #e67e22 !important;
-            text-decoration: none !important;
-        }
-
-        .sphere-menu-btn {
-            background: #f39c12 !important;
-            color: white !important;
-            border: none !important;
-            padding: 12px 24px !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            font-family: Arial, sans-serif !important;
-            font-size: 14px !important;
-            margin: 0 !important;
-        }
-
-        .sphere-menu-btn:hover {
-            background: #e67e22 !important;
-        }
-
-        .sphere-menu-btn.active {
-            background: #e67e22 !important;
-        }
-
-        /* Popout Menu */
-        .sphere-popout-menu {
-            position: fixed !important;
-            top: 0 !important;
-            left: -300px !important;
-            width: 280px !important;
-            height: 100vh !important;
-            background: #2c3e50 !important;
-            z-index: 10000 !important;
-            transition: left 0.3s ease !important;
-            overflow-y: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sphere-popout-menu.active {
-            left: 0 !important;
-        }
-
-        .sphere-menu-header {
-            padding: 25px 20px !important;
-            border-bottom: 1px solid #34495e !important;
-            margin: 0 !important;
-        }
-
-        .sphere-menu-title {
-            color: white !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            margin-bottom: 5px !important;
-            font-family: Arial, sans-serif !important;
-            margin-top: 0 !important;
-        }
-
-        .sphere-menu-subtitle {
-            color: #bdc3c7 !important;
-            font-size: 14px !important;
-            margin: 0 !important;
-            font-family: Arial, sans-serif !important;
-        }
-
-        .sphere-menu-items {
-            padding: 20px 0 !important;
-            margin: 0 !important;
-        }
-
-        .sphere-menu-item {
-            display: flex !important;
-            align-items: center !important;
-            padding: 15px 20px !important;
-            color: #ecf0f1 !important;
-            text-decoration: none !important;
-            transition: all 0.3s ease !important;
-            border-left: 3px solid transparent !important;
-            margin: 0 !important;
-            font-family: Arial, sans-serif !important;
-        }
-
-        .sphere-menu-item:hover {
-            background: #34495e !important;
-            border-left-color: #f39c12 !important;
-            text-decoration: none !important;
-            color: #ecf0f1 !important;
-        }
-
-        .sphere-menu-icon {
-            width: 24px !important;
-            height: 24px !important;
-            margin-right: 15px !important;
-            border-radius: 6px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 14px !important;
-            color: white !important;
-            flex-shrink: 0 !important;
-        }
-
-        .sphere-menu-text {
-            font-weight: 500 !important;
-            font-size: 15px !important;
-            font-family: Arial, sans-serif !important;
-        }
-
-        /* Icon Colors */
-        .sphere-icon-home { background: #3498db !important; }
-        .sphere-icon-tools { background: #f39c12 !important; }
-        .sphere-icon-newsletter { background: #e74c3c !important; }
-
-        /* Overlay */
-        .sphere-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0,0,0,0.5) !important;
-            z-index: 9998 !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .sphere-overlay.active {
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-
         /* Main Page Styles */
         * {
             margin: 0;
@@ -186,10 +32,9 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
             color: #333;
-            padding-top: 80px;
             background: #f8f9fa;
         }
 
@@ -216,6 +61,7 @@
             font-size: 2.5rem;
             margin-bottom: 20px;
             color: #2c3e50;
+            font-weight: 700;
         }
 
         .btn {
@@ -224,7 +70,7 @@
             background: #f39c12;
             color: white;
             text-decoration: none;
-            border-radius: 25px;
+            border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s ease;
             border: none;
@@ -234,7 +80,9 @@
         .btn:hover {
             background: #e67e22;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.3);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
+            text-decoration: none;
+            color: white;
         }
 
         /* Video Player Styles */
@@ -244,6 +92,7 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             padding: 40px;
             margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
         }
 
         .video-wrapper {
@@ -312,12 +161,14 @@
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             padding: 40px;
+            border: 1px solid #e0e0e0;
         }
 
         .instructions h3 {
             color: #2c3e50;
             margin-bottom: 25px;
             font-size: 1.8rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -345,17 +196,33 @@
             font-weight: bold;
             margin-right: 20px;
             flex-shrink: 0;
+            font-size: 0.9rem;
         }
 
         .step-content h4 {
             color: #2c3e50;
             margin-bottom: 8px;
             font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .step-content p {
             color: #666;
             line-height: 1.6;
+        }
+
+        .step-content ol, .step-content ul {
+            margin: 15px 0 15px 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .step-content ol li, .step-content ul li {
+            margin-bottom: 8px;
+        }
+
+        .step-content ul ul {
+            margin: 10px 0 10px 20px;
         }
 
         .example-urls {
@@ -396,10 +263,13 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             text-align: center;
             transition: transform 0.3s ease;
+            border: 1px solid #e0e0e0;
         }
 
         .feature-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            border-color: #f39c12;
         }
 
         .feature-icon {
@@ -410,6 +280,7 @@
         .feature-card h4 {
             color: #2c3e50;
             margin-bottom: 10px;
+            font-weight: 600;
         }
 
         .feature-card p {
@@ -417,30 +288,49 @@
             font-size: 14px;
         }
 
+        /* Alert/Notice Boxes */
+        .alert {
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-info {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .alert h4, .alert h5 {
+            margin-bottom: 10px;
+        }
+
+        .alert ul {
+            margin: 0 0 0 20px;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .sphere-nav-container {
-                padding: 15px 20px !important;
-            }
-
-            .sphere-logo {
-                font-size: 20px !important;
-            }
-
-            .sphere-menu-btn {
-                padding: 10px 20px !important;
-                font-size: 14px !important;
-            }
-
-            .sphere-popout-menu {
-                width: 100% !important;
-                left: -100% !important;
-            }
-
-            body {
-                padding-top: 70px;
-            }
-
             .section {
                 padding: 30px 0;
             }
@@ -472,48 +362,22 @@
                 margin-bottom: 15px;
                 align-self: center;
             }
+
+            .step-content {
+                text-align: left;
+            }
+
+            .instructions h3 {
+                font-size: 1.5rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Menu -->
-    <nav class="sphere-nav">
-        <div class="sphere-nav-container">
-            <a href="/" class="sphere-logo">Inside The Sphere</a>
-            <button class="sphere-menu-btn" onclick="toggleSphereMenu()">
-                <span>☰</span>
-                <span>Menu</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Navigation Overlay -->
-    <div class="sphere-overlay" id="sphereOverlay" onclick="closeSphereMenu()"></div>
-
-    <!-- Navigation Popout Menu -->
-    <div class="sphere-popout-menu" id="spherePopoutMenu">
-        <div class="sphere-menu-header">
-            <div class="sphere-menu-title">Navigation</div>
-            <div class="sphere-menu-subtitle">Inside The Sphere</div>
-        </div>
-
-        <div class="sphere-menu-items">
-            <a href="/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-home">🏠</div>
-                <div class="sphere-menu-text">Home</div>
-            </a>
-
-            <a href="/smarttools/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-tools">🛠️</div>
-                <div class="sphere-menu-text">Smart Tools</div>
-            </a>
-
-            <a href="/newsletter/" class="sphere-menu-item">
-                <div class="sphere-menu-icon sphere-icon-newsletter">📧</div>
-                <div class="sphere-menu-text">Newsletter Builder</div>
-            </a>
-        </div>
-    </div>
+    <!-- Navigation will be automatically inserted here by navigation.js -->
 
     <!-- Page Content -->
     <main style="min-height: calc(100vh - 80px);">
@@ -546,7 +410,7 @@
                         Complete step-by-step instructions for customizing your KvCore website with custom backgrounds, logos, and videos.
                     </p>
                     
-                    <div style="border-left: 4px solid #3498db; padding: 20px; background: #f8f9fa; border-radius: 0 8px 8px 0; margin-bottom: 30px;">
+                    <div class="alert alert-info">
                         <h4 style="color: #2980b9; margin-bottom: 15px;">🚀 General Navigation in KvCore</h4>
                         <ol style="margin-left: 20px; color: #666;">
                             <li><strong>Log in to KvCore</strong>. You will initially be taken to your dashboard.</li>
@@ -559,16 +423,16 @@
                         <div class="step-number">🖼️</div>
                         <div class="step-content">
                             <h4>Adding a Custom Background Picture</h4>
-                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                            <ol>
                                 <li>On the "Edit Settings" page, scroll down until you see the section labeled <strong>"Upload your own image"</strong>.</li>
                                 <li>You have two methods to upload an image:
-                                    <ul style="margin: 10px 0 10px 20px;">
+                                    <ul>
                                         <li><strong>Click</strong> directly on the upload area to open a file selection window, then choose your desired picture and click "Open".</li>
                                         <li><strong>Drag and drop</strong> your chosen image directly into the upload area.</li>
                                     </ul>
                                 </li>
                                 <li>Once the image is uploaded, you can <strong>edit the view or cropping</strong>:
-                                    <ul style="margin: 10px 0 10px 20px;">
+                                    <ul>
                                         <li>Click the <strong>"edit tool"</strong>.</li>
                                         <li>A box will appear, allowing you to move it up or down to select the desired part of the picture to display.</li>
                                         <li>Click <strong>"Confirm"</strong> when satisfied with the framing.</li>
@@ -577,8 +441,8 @@
                                 <li>Crucially, click the <strong>"upload"</strong> button (or "save" if it appears) to ensure your changes are saved. If you do not click this, the changes will not be applied.</li>
                                 <li>To see the new background, <strong>refresh your website</strong>.</li>
                             </ol>
-                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin-top: 15px;">
-                                <p style="margin: 0; color: #856404;"><strong>💡 Note:</strong> KvCore also provides a variety of pre-loaded background pictures if you do not have a custom one. Jeff's website, for example, uses one of the basic KvCore backgrounds.</p>
+                            <div class="alert alert-warning">
+                                <p style="margin: 0;"><strong>💡 Note:</strong> KvCore also provides a variety of pre-loaded background pictures if you do not have a custom one. Jeff's website, for example, uses one of the basic KvCore backgrounds.</p>
                             </div>
                         </div>
                     </div>
@@ -587,13 +451,13 @@
                         <div class="step-number">🏷️</div>
                         <div class="step-content">
                             <h4>Adding a Logo</h4>
-                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                            <ol>
                                 <li>On the same "Edit Settings" page, directly below where you upload your background image, you will find the section for uploading a logo.</li>
                                 <li>Similar to the background image, you can <strong>click to upload</strong> or <strong>drag and drop</strong> your logo image. If you don't have a logo yet, this area might appear as a gray box.</li>
                                 <li>Click <strong>"save"</strong> (or similar button) to apply the logo to your website.</li>
                             </ol>
-                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin-top: 15px;">
-                                <p style="margin: 0; color: #856404;"><strong>💡 Note:</strong> The video host did not remove her logo to demonstrate, as it would require finding and re-uploading it.</p>
+                            <div class="alert alert-warning">
+                                <p style="margin: 0;"><strong>💡 Note:</strong> The video host did not remove her logo to demonstrate, as it would require finding and re-uploading it.</p>
                             </div>
                         </div>
                     </div>
@@ -602,10 +466,10 @@
                         <div class="step-number">🎬</div>
                         <div class="step-content">
                             <h4>Adding a Background Video (YouTube)</h4>
-                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                            <ol>
                                 <li><strong>Create your video</strong>: You can create a slideshow video using a program like Canva, and then <strong>upload it to YouTube</strong>.</li>
                                 <li><strong>Obtain the YouTube Video ID</strong>:
-                                    <ul style="margin: 10px 0 10px 20px;">
+                                    <ul>
                                         <li>Go to the YouTube video you want to use.</li>
                                         <li>Look at the <strong>address bar</strong> in your browser.</li>
                                         <li>You need to <strong>copy <em>only</em> the characters that come <em>after</em> the equal sign (=)</strong> in the URL. Copying the entire link will not work.</li>
@@ -617,9 +481,9 @@
                                 <li>To see the video playing, <strong>refresh your website</strong>.</li>
                             </ol>
                             
-                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 15px; margin-top: 15px;">
-                                <h5 style="color: #721c24; margin-bottom: 10px;">⚠️ Important Considerations for Videos:</h5>
-                                <ul style="margin: 0 0 0 20px; color: #721c24;">
+                            <div class="alert alert-danger">
+                                <h5>⚠️ Important Considerations for Videos:</h5>
+                                <ul>
                                     <li>The video resolution might not be perfectly correct, leading to black bars on the sides. You may need to experiment with video settings.</li>
                                     <li>On <strong>mobile versions</strong>, the video will not play in the same way as on a computer; it will be a smaller, cropped version.</li>
                                     <li>Text on your website might be hidden or poorly formatted when a video background is present.</li>
@@ -632,7 +496,7 @@
                         <div class="step-number">🔄</div>
                         <div class="step-content">
                             <h4>Removing a Background Video and Reverting to a Picture</h4>
-                            <ol style="margin: 15px 0 15px 20px; color: #666; line-height: 1.8;">
+                            <ol>
                                 <li>Go back to the "Edit Settings" page in KvCore.</li>
                                 <li>In the "Background Video YouTube ID" field, <strong>delete the pasted YouTube ID</strong>.</li>
                                 <li>Click <strong>"Save"</strong>.</li>
@@ -643,9 +507,9 @@
                         </div>
                     </div>
 
-                    <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin-top: 30px; text-align: center;">
-                        <h4 style="color: #155724; margin-bottom: 10px;">✨ Final Tip</h4>
-                        <p style="color: #155724; margin: 0; font-style: italic;">
+                    <div class="alert alert-success" style="text-align: center;">
+                        <h4 style="margin-bottom: 10px;">✨ Final Tip</h4>
+                        <p style="margin: 0; font-style: italic;">
                             Customizing your KvCore website with these elements can make it look more professional and visually appealing.
                         </p>
                     </div>
@@ -654,87 +518,27 @@
         </div>
     </main>
 
-    <!-- JavaScript -->
+    <!-- Page-specific JavaScript -->
     <script>
-        // Navigation functionality
-        function toggleSphereMenu() {
-            console.log('Toggle menu function called');
-            const menu = document.getElementById('spherePopoutMenu');
-            const overlay = document.getElementById('sphereOverlay');
-            const menuBtn = document.querySelector('.sphere-menu-btn');
-            
-            if (menu && overlay && menuBtn) {
-                const isActive = menu.classList.contains('active');
-                
-                if (isActive) {
-                    menu.classList.remove('active');
-                    overlay.classList.remove('active');
-                    menuBtn.classList.remove('active');
-                    console.log('Menu closed');
-                } else {
-                    menu.classList.add('active');
-                    overlay.classList.add('active');
-                    menuBtn.classList.add('active');
-                    console.log('Menu opened');
-                }
-            } else {
-                console.error('One or more navigation elements not found');
+        // Add any page-specific JavaScript functionality here
+        
+        // Example: Video loading functionality (if needed for future features)
+        function loadVideo(videoId) {
+            const videoPlayer = document.getElementById('videoPlayer');
+            if (videoPlayer && videoId) {
+                const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+                videoPlayer.src = embedUrl;
+                console.log('Video loaded:', videoId);
             }
         }
 
-        function closeSphereMenu() {
-            console.log('Close menu function called');
-            const menu = document.getElementById('spherePopoutMenu');
-            const overlay = document.getElementById('sphereOverlay');
-            const menuBtn = document.querySelector('.sphere-menu-btn');
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Video player page loaded successfully');
             
-            if (menu && overlay && menuBtn) {
-                menu.classList.remove('active');
-                overlay.classList.remove('active');
-                menuBtn.classList.remove('active');
-                console.log('Menu closed');
-            }
-        }
-
-        // Initialize navigation when page loads
-        function initializeNavigation() {
-            console.log('Initializing navigation...');
-            
-            // Add event listeners
-            const overlay = document.getElementById('sphereOverlay');
-            if (overlay) {
-                overlay.addEventListener('click', closeSphereMenu);
-                console.log('Overlay click listener added');
-            }
-
-            // Close menu with Escape key
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    console.log('Escape key pressed');
-                    closeSphereMenu();
-                }
-            });
-
-            // Close menu when clicking on menu items
-            const menuItems = document.querySelectorAll('.sphere-menu-item');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    console.log('Menu item clicked');
-                    closeSphereMenu();
-                });
-            });
-
-            console.log('Navigation initialization complete');
-        }
-
-        // Wait for DOM to be ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeNavigation);
-        } else {
-            initializeNavigation();
-        }
-
-        console.log('Page scripts loaded successfully');
+            // Add any initialization code here
+            // For example, checking authentication status, loading data, etc.
+        });
     </script>
 </body>
 </html>
