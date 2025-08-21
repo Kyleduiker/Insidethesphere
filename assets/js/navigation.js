@@ -94,23 +94,23 @@ function initializeAuthentication() {
     }
 
     firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {
-            // User is authenticated - show logged in state
-            showLoggedInState(user);
-            showPage();
-            console.log('User authenticated:', user.email);
+    if (user) {
+        // User IS authenticated - always show logout button
+        showLoggedInState(user);
+        showPage();
+        console.log('User authenticated:', user.email);
+    } else {
+        // User is NOT authenticated
+        if (sphereNavConfig.requireAuth) {
+            // Redirect to login if auth is required (protected pages)
+            window.location.href = sphereNavConfig.loginRedirectUrl;
         } else {
-            // User is NOT authenticated
-            if (sphereNavConfig.requireAuth) {
-                // Redirect to login if auth is required
-                window.location.href = sphereNavConfig.loginRedirectUrl;
-            } else {
-                // Show logged out state if auth is not required
-                showLoggedOutState();
-                showPage();
-            }
+            // Show logged out state (public pages)
+            showLoggedOutState();
+            showPage();
         }
-    });
+    }
+});
 }
 
 // Show page function
