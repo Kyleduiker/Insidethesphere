@@ -3,31 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Page Title - Inside The Sphere</title>
     
-    <!-- Firebase Scripts (include if page needs authentication) -->
+    <!-- ===== CUSTOMIZE THESE ===== -->
+    <title>Your Page Title - Inside The Sphere</title>
+    <meta name="description" content="Your page description here">
+    
+    <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
     <script src="../js/firebase-config.js"></script>
     
-    <!-- Navigation CSS -->
+    <!-- Navigation Styles and Scripts -->
     <link rel="stylesheet" href="../assets/css/navigation.css">
+    <script src="../assets/js/navigation.js"></script>
     
-    <!-- Your Page CSS -->
-    <link rel="stylesheet" href="../assets/main.css">
-    
-    <!-- Additional page-specific styles if needed -->
-    <style>
-        /* Add any page-specific CSS here */
+    <!-- ENHANCED PROTECTION CONFIGURATION -->
+    <script>
+    // Configure for private page with enhanced protection
+    configureSphereNav({ 
+        requireAuth: true,
+        loginRedirectUrl: '/', // Fallback redirect if modal fails
+        homeUrl: '/'
+    });
+
+    // Additional client-side protection with preview mode
+    function initializePageProtection() {
+        // Show content immediately but make it non-interactive
+        document.body.style.visibility = 'visible';
+        document.body.classList.add('preview-mode');
         
+        // Add brief loading indicator that fades quickly
+        const loadingHTML = `
+            <div id="pageLoadingProtection" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(248, 249, 250, 0.95);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                transition: opacity 0.5s ease;
+            ">
+                <div style="
+                    border: 4px solid #e0e0e0;
+                    border-top: 4px solid #f39c12;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                "></div>
+                <div style="font-size: 16px; color: #666; font-weight: 500;">
+                    Loading ${getPageName()}...
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('afterbegin', loadingHTML);
+        
+        // Remove loading after a short time to reveal preview
+        setTimeout(() => {
+            const loadingElement = document.getElementById('pageLoadingProtection');
+            if (loadingElement) {
+                loadingElement.style.opacity = '0';
+                setTimeout(() => loadingElement.remove(), 500);
+            }
+        }, 1000);
+    }
+
+    // Enhanced protection check with preview mode
+    function verifyPageAccess() {
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase not loaded - showing preview and login modal');
+            setTimeout(() => {
+                if (typeof openLoginModal === 'function') {
+                    openLoginModal();
+                } else {
+                    window.location.href = '/';
+                }
+            }, 1500);
+            return;
+        }
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is authenticated - remove preview mode
+                console.log('User authenticated, enabling page access');
+                document.body.classList.remove('preview-mode');
+                document.body.classList.add('authenticated');
+                
+                // Optional: Track page access
+                logPageAccess(user);
+            } else {
+                // User not authenticated - show login modal over preview
+                console.log('User not authenticated, showing login modal over preview');
+                document.body.classList.add('preview-mode');
+                document.body.classList.remove('authenticated');
+                
+                // Show login modal after brief delay
+                setTimeout(() => {
+                    if (typeof openLoginModal === 'function') {
+                        openLoginModal();
+                    } else {
+                        // Fallback redirect if modal system fails
+                        alert('Please login to access this page');
+                        window.location.href = '/';
+                    }
+                }, 1500);
+            }
+        });
+    }
+
+    // CUSTOMIZE: Set your page name for loading message
+    function getPageName() {
+        return 'Premium Content'; // Test Newsletter Page
+    }
+
+    // Optional: Log page access for analytics
+    function logPageAccess(user) {
+        try {
+            if (typeof db !== 'undefined') {
+                db.collection('pageViews').add({
+                    userId: user.uid,
+                    userEmail: user.email,
+                    page: getPageSlug(), // CUSTOMIZE: Set page identifier
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+            }
+        } catch (error) {
+            console.log('Analytics logging failed (non-critical):', error);
+        }
+    }
+
+    // CUSTOMIZE: Set unique page identifier for analytics
+    function getPageSlug() {
+        return 'template-page'; // Test Newsletter Page
+    }
+
+    // Initialize protection immediately
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePageProtection();
+            verifyPageAccess();
+        });
+    } else {
+        initializePageProtection();
+        verifyPageAccess();
+    }
+    </script>
+    
+    <!-- ENHANCED SECURITY HEADERS -->
+    <script>
+    // Prevent page caching for security
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
+    
+    // Optional: Disable right-click context menu on sensitive content
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.protected-content')) {
+            e.preventDefault();
+        }
+    });
+    </script>
+    
+    <style>
+        /* ===== BASE STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* ===== PREVIEW MODE STYLING ===== */
+        
+        /* PREVIEW MODE: Show content but make it non-interactive */
+        body.preview-mode {
+            overflow: hidden;
+        }
+
+        body.preview-mode .main-container,
+        body.preview-mode .header {
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
+            transition: filter 0.5s ease;
+        }
+
+        /* Dark overlay for preview mode */
+        body.preview-mode::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        /* AUTHENTICATED: Full access */
+        body.authenticated .main-container,
+        body.authenticated .header {
+            filter: none;
+            pointer-events: auto;
+            user-select: auto;
+            opacity: 1;
+            transition: filter 0.5s ease;
+        }
+
+        /* Remove overlay when authenticated */
+        body.authenticated::before {
+            display: none;
+        }
+
+        /* Security Enhancement: Disable interactions in preview mode */
+        body.preview-mode .protected-content {
+            pointer-events: none;
+        }
+
+        body.preview-mode .protected-button {
+            pointer-events: none;
+        }
+
+        /* Enable interactions when authenticated */
+        body.authenticated .protected-content {
+            pointer-events: auto;
+        }
+
+        body.authenticated .protected-button {
+            pointer-events: auto;
+        }
+
+        /* ===== LOGIN MODAL STYLES ===== */
+
+        /* Enhanced Modal Overlay for Preview Mode */
+        .login-modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+            z-index: 10002 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+            backdrop-filter: blur(2px) !important;
+        }
+
+        .login-modal-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Modal Content */
+        .login-modal-content {
+            background: #1a1a1a !important;
+            padding: 40px !important;
+            border-radius: 12px !important;
+            width: 90% !important;
+            max-width: 400px !important;
+            position: relative !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid #333 !important;
+            transform: scale(0.9) !important;
+            transition: transform 0.3s ease !important;
+        }
+
+        .login-modal-overlay.active .login-modal-content {
+            transform: scale(1) !important;
+        }
+
+        /* Close Button */
+        .login-modal-close {
+            position: absolute !important;
+            top: 15px !important;
+            right: 20px !important;
+            background: none !important;
+            border: none !important;
+            font-size: 24px !important;
+            color: #888 !important;
+            cursor: pointer !important;
+            transition: color 0.3s ease !important;
+        }
+
+        .login-modal-close:hover {
+            color: #fff !important;
+        }
+
+        /* Error and Success Messages */
+        .login-error-message {
+            background: rgba(248, 113, 113, 0.2) !important;
+            border: 1px solid rgba(248, 113, 113, 0.3) !important;
+            color: #fca5a5 !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            margin-bottom: 16px !important;
+            font-size: 14px !important;
+            display: none !important;
+        }
+
+        .login-success-message {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border: 1px solid rgba(34, 197, 94, 0.3) !important;
+            color: #86efac !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            margin-bottom: 16px !important;
+            font-size: 14px !important;
+            display: none !important;
+        }
+
+        /* Login Tabs */
+        .login-tabs {
+            display: flex !important;
+            margin-bottom: 24px !important;
+            border-bottom: 1px solid #333 !important;
+        }
+
+        .login-tab {
+            flex: 1 !important;
+            background: none !important;
+            border: none !important;
+            padding: 12px 0 !important;
+            color: #888 !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            border-bottom: 2px solid transparent !important;
+        }
+
+        .login-tab.active {
+            color: #3498db !important;
+            border-bottom-color: #3498db !important;
+        }
+
+        .login-tab:hover {
+            color: #3498db !important;
+        }
+
+        /* Login Forms */
+        .login-form {
+            display: none !important;
+        }
+
+        .login-form.active {
+            display: block !important;
+        }
+
+        .form-group {
+            margin-bottom: 16px !important;
+        }
+
+        .form-group input {
+            width: 100% !important;
+            padding: 12px 16px !important;
+            background: #2a2a2a !important;
+            border: 1px solid #444 !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            font-size: 14px !important;
+            box-sizing: border-box !important;
+            transition: border-color 0.3s ease !important;
+        }
+
+        .form-group input:focus {
+            outline: none !important;
+            border-color: #3498db !important;
+        }
+
+        .form-group input::placeholder {
+            color: #888 !important;
+        }
+
+        /* Submit Button */
+        .login-submit-btn {
+            width: 100% !important;
+            background: #3498db !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-bottom: 16px !important;
+        }
+
+        .login-submit-btn:hover {
+            background: #2980b9 !important;
+        }
+
+        .login-submit-btn:disabled {
+            background: #555 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* Login Divider */
+        .login-divider {
+            text-align: center !important;
+            margin: 20px 0 10px !important;
+            color: #666 !important;
+            font-size: 14px !important;
+        }
+
+        /* Google Login Button */
+        .google-login-btn {
+            width: 100% !important;
+            background: #fff !important;
+            color: #333 !important;
+            border: 1px solid #ddd !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-top: 16px !important;
+        }
+
+        .google-login-btn:hover {
+            background: #f8f9fa !important;
+            border-color: #ccc !important;
+        }
+
+        /* ===== CUSTOMIZE YOUR PAGE STYLES BELOW ===== */
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .header p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 60vh;
+        }
+
+        /* Content Sections */
+        .content-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .section-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Protected Buttons */
+        .protected-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .protected-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 20px 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-container {
+                padding: 20px 15px;
+            }
+
+            .content-section {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            /* Modal Mobile Styles */
+            .login-modal-content {
+                padding: 30px 20px !important;
+                margin: 20px !important;
+                width: calc(100% - 40px) !important;
+            }
+
+            .login-tab {
+                font-size: 14px !important;
+            }
+
+            .form-group input {
+                padding: 10px 14px !important;
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+
+            .login-submit-btn {
+                padding: 12px !important;
+                font-size: 14px !important;
+            }
+
+            .google-login-btn {
+                padding: 12px !important;
+                font-size: 13px !important;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation will be automatically inserted here by navigation.js -->
-    
-    <!-- ========================================== -->
- <!DOCTYPE html>
+
+    <!-- Login Modal for This Page -->
+    <div id="loginModalOverlay" class="login-modal-overlay" onclick="closeLoginModalOnOverlay(event)">
+        <div class="login-modal-content">
+            <!-- Close Button -->
+            <button class="login-modal-close" onclick="closeLoginModal()">&times;</button>
+            
+            <!-- Error/Success Messages -->
+            <div id="loginError" class="login-error-message"></div>
+            <div id="loginSuccess" class="login-success-message"></div>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" onclick="switchTab('login')">Login</button>
+                <button class="login-tab" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form active" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <input type="email" placeholder="Email Address" required name="email">
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Password" required name="password">
+                </div>
+                <button type="submit" class="login-submit-btn">Login</button>
+            </form>
+            
+            <!-- Sign Up Form -->
+            <form id="signupForm" class="login-form" onsubmit="handleSignupSubmit(event)">
+                <div class="form-group">
+                    <input type="text" placeholder="Full Name" required name="name">
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="Email Address" required name="email">
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Password" required name="password">
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Confirm Password" required name="confirmPassword">
+                </div>
+                <button type="submit" class="login-submit-btn">Sign Up</button>
+            </form>
+            
+            <!-- Google Login -->
+            <div class="login-divider">or</div>
+            <button type="button" class="google-login-btn" onclick="handleGoogleLogin()">
+                <span>Continue with Google</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== CUSTOMIZE YOUR PAGE CONTENT BELOW ===== -->
+
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -695,6 +1308,80 @@
         .main-content {
             padding: 40px 20px;
         }
+
+        /* Print Styles */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+                background: white !important;
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            
+            /* Hide everything except newsletter content */
+            .sidebar,
+            .preview-header,
+            .preview-actions,
+            .toast-container,
+            .modal-overlay {
+                display: none !important;
+            }
+            
+            /* Show only newsletter content */
+            .newsletter-preview {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+                background: white !important;
+            }
+            
+            .preview-container {
+                position: static !important;
+                max-height: none !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: white !important;
+            }
+            
+            .dashboard-container {
+                display: block !important;
+            }
+            
+            /* Optimize fonts for print */
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            
+            /* Ensure images print */
+            img {
+                max-width: 100% !important;
+                height: auto !important;
+                page-break-inside: avoid;
+            }
+            
+            /* Page breaks */
+            .newsletter-preview > div {
+                page-break-inside: avoid;
+            }
+            
+            /* Set page margins for 8.5x11 */
+            @page {
+                size: letter;
+                margin: 0.5in;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1028,6 +1715,58 @@
         </div>
     </div>
 
+    <!-- RLP Sphere Instructions Modal -->
+    <div class="modal-overlay" id="rlpInstructionsModal">
+        <div class="modal">
+            <h3 style="margin-bottom: 20px; color: #EA002A; display: flex; align-items: center; gap: 10px;">
+                <img src="https://i.imgur.com/5q2V1qG.png" style="height: 24px; width: auto; object-fit: contain;" alt="Royal LePage Logo">
+                Royal LePage Sphere Integration
+            </h3>
+            
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #EA002A; border-radius: 6px;">
+                <h4 style="color: #EA002A; margin-bottom: 10px; font-size: 16px;">📧 How to Add Your Newsletter to RLP Sphere</h4>
+                <p style="margin-bottom: 15px; color: #4D4D4D; line-height: 1.5;">Follow these simple steps to paste your newsletter into Royal LePage Sphere:</p>
+                
+                <ol style="color: #4D4D4D; line-height: 1.6; padding-left: 20px;">
+                    <li style="margin-bottom: 10px;"><strong>Generate your newsletter:</strong> Click "Generate Newsletter" and then "Export Options" → "Copy Newsletter for email"</li>
+                    <li style="margin-bottom: 10px;"><strong>Login to RLP Sphere:</strong> Go to your Royal LePage Sphere dashboard</li>
+                    <li style="margin-bottom: 10px;"><strong>Create new email campaign:</strong> Navigate to Marketing → Email Campaigns → Create New</li>
+                    <li style="margin-bottom: 10px;"><strong>Select HTML editor:</strong> Choose the HTML/Code editor option</li>
+                    <li style="margin-bottom: 10px;"><strong>Paste your newsletter:</strong> Paste the copied HTML code into the editor</li>
+                    <li style="margin-bottom: 10px;"><strong>Preview & test:</strong> Use Sphere's preview function to check your newsletter</li>
+                    <li><strong>Send or schedule:</strong> Add your contacts and send or schedule your newsletter</li>
+                </ol>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                <h5 style="color: #856404; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    ⚠️ Important Notes
+                </h5>
+                <ul style="color: #856404; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.4;">
+                    <li>Always use "Copy Newsletter for email" option - this ensures email compatibility</li>
+                    <li>Test your newsletter by sending to yourself first</li>
+                    <li>Images are automatically hosted on Imgur for maximum compatibility</li>
+                    <li>Royal LePage branding colors are pre-configured in this builder</li>
+                </ul>
+            </div>
+            
+            <div style="background: #d1ecf1; border: 1px solid #17a2b8; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                <h5 style="color: #0c5460; margin-bottom: 8px;">💡 Pro Tips for RLP Sphere</h5>
+                <ul style="color: #0c5460; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.4;">
+                    <li>Use the Royal LePage color preset for brand consistency</li>
+                    <li>Keep subject lines under 50 characters for mobile optimization</li>
+                    <li>Schedule sends for Tuesday-Thursday, 10 AM - 2 PM for best open rates</li>
+                    <li>Include your MLS® data for the most current statistics</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn--primary" onclick="modalManager.close('rlpInstructionsModal')" style="flex: 1;">Got it!</button>
+                <button type="button" class="btn btn--secondary" onclick="exportManager.copyEmailSafeHTML(); modalManager.close('rlpInstructionsModal');" style="flex: 1;">Copy Newsletter Now</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <section class="main-content">
         <div class="content-container">
@@ -1038,7 +1777,7 @@
                         <h1>Newsletter Builder Pro</h1>
                         <p class="subtitle">Enhanced Real Estate Marketing</p>
                         <div class="edition-badge">
-                            <strong id="currentMonth">June 2025 Edition</strong><br>
+                            <strong id="currentMonth">August 2025 Edition</strong><br>
                             <small>🚀 Production Ready</small>
                         </div>
                     </div>
@@ -1055,9 +1794,9 @@
                                     <option value="march">March - Spring Prep</option>
                                     <option value="april">April - Spring Awakening</option>
                                     <option value="may">May - Blooming Season</option>
-                                    <option value="june" selected>June - Summer Starts</option>
+                                    <option value="june">June - Summer Starts</option>
                                     <option value="july">July - Summer Living</option>
-                                    <option value="august">August - Late Summer</option>
+                                    <option value="august" selected>August - Late Summer</option>
                                     <option value="september">September - Fall Prep</option>
                                     <option value="october">October - Autumn Comfort</option>
                                     <option value="november">November - Thanksgiving Season</option>
@@ -1195,15 +1934,15 @@
                             <h3 class="form-section__header">💬 Personal Message</h3>
                             <div class="form-group">
                                 <label class="form-group__label">Custom Subtitle</label>
-                                <input type="text" class="form-group__input" id="customSubtitle" value="SUMMER STARTS" placeholder="Enter custom subtitle...">
+                                <input type="text" class="form-group__input" id="customSubtitle" value="LATE SUMMER" placeholder="Enter custom subtitle...">
                                 <div class="validation-message" id="customSubtitle-validation"></div>
                                 <small>Leave blank to use default seasonal subtitle</small>
                             </div>
                             <div class="form-group">
                                 <label class="form-group__label required-field">Opening Message</label>
-                                <textarea class="form-group__textarea" id="personalMessage" rows="4" required>With school winding down and the sun heating up, June is a top month for real estate. Let's make your next move a smooth one.</textarea>
+                                <textarea class="form-group__textarea" id="personalMessage" rows="4" required>Before fall routines kick in, August is the perfect time to make a move or prep your home for sale. Let's chat about your next step!</textarea>
                                 <div class="validation-message" id="personalMessage-validation"></div>
-                                <small>Minimum 50 characters, maximum 500 characters</small>
+                                <small>Minimum 50 characters, maximum 1500 characters</small>
                             </div>
                         </div>
                         
@@ -1558,6 +2297,14 @@
                                 <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">Click "Generate Newsletter" to see your preview, then use "Export Options" to copy for email, download HTML, or print.</p>
                             </div>
                             
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--text-light); font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: #EA002A; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">6</span>
+                                    RLP Sphere Integration
+                                </h4>
+                                <p style="margin: 0 0 0 32px; font-size: 13px; color: var(--text-muted); line-height: 1.4;">For Royal LePage Sphere users: <a href="#" onclick="openRLPInstructions()" style="color: #EA002A; text-decoration: underline; font-weight: 500;">Click here for instructions</a> to paste your newsletter into RLP Sphere.</p>
+                            </div>
+                            
                             <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
                                 <p style="margin: 0; font-size: 12px; color: var(--text-muted); text-align: center; font-style: italic;">
                                     💡 Tip: Use Ctrl/Cmd + Enter to quickly generate your newsletter at any time!
@@ -1581,10 +2328,7 @@
                     </div>
                     
                     <div class="preview-actions" style="padding-bottom: 20px;">
-                        <button class="btn btn--secondary" onclick="quickPrint()">
-                            🖨️ Print
-                        </button>
-                        <button class="btn btn--primary" onclick="modalManager.show('exportModal')">
+                        <button class="btn btn--primary" onclick="modalManager.show('exportModal')" style="font-size: 14px; padding: 12px 24px;">
                             📧 Export Options
                         </button>
                     </div>
@@ -1739,20 +2483,20 @@
                 }
             },
             content: {
-                personalMessage: 'With school winding down and the sun heating up, June is a top month for real estate. Let\'s make your next move a smooth one.',
-                newsletterSeason: 'june',
-                customSubtitle: 'SUMMER STARTS',
+                personalMessage: 'Before fall routines kick in, August is the perfect time to make a move or prep your home for sale. Let\'s chat about your next step!',
+                newsletterSeason: 'august',
+                customSubtitle: 'LATE SUMMER',
                 marketButtonText: '',
                 marketButtonUrl: ''
             },
             customPropertyTypes: [],
             customEvents: [],
             maintenanceTips: [
-                '❄️ Test A/C and change filters',
-                '🌧️ Check eavestrough slope and extension', 
-                '🔧 Inspect fence posts for shifting',
-                '🪟 Wash windows and inspect screens',
-                '💨 Secure patio furniture before windstorms'
+                '🏠 Review roof for hail damage',
+                '🔥 Prep furnace for fall (early servicing)', 
+                '🧹 Deep clean garage or shed',
+                '📋 Plan fall landscaping or repairs',
+                '🎨 Touch up exterior paint'
             ]
         };
 
@@ -2713,7 +3457,7 @@
 
         // Month display update
         function updateMonthDisplay() {
-            const month = newsletterData.content.newsletterSeason || 'june';
+            const month = newsletterData.content.newsletterSeason || 'august';
             const monthName = month.charAt(0).toUpperCase() + month.slice(1);
             document.getElementById('currentMonth').textContent = `${monthName} 2025 Edition`;
         }
@@ -3201,7 +3945,7 @@
             const colors = newsletterData.design.colors;
             const propertyColors = newsletterData.design.propertyTypeColors;
             
-            const currentMonth = newsletterData.content.newsletterSeason || 'june';
+            const currentMonth = newsletterData.content.newsletterSeason || 'august';
             const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
             const currentIndex = monthNames.indexOf(currentMonth);
             const previousIndex = currentIndex === 0 ? 11 : currentIndex - 1;
@@ -3228,22 +3972,22 @@
                             <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                 <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Price'] || 'N/A'}</div>
                                 <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Price</div>
-                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'Change'] && ptStats[propertyType.id + 'Change'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'Change'] || 'N/A'}</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'Change'] && ptStats[propertyType.id + 'Change'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'Change'] || 'N/A'} Y/Y</div>
                             </div>
                             <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                 <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Sales'] || 'N/A'}</div>
                                 <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Sales</div>
-                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'SalesChange'] && ptStats[propertyType.id + 'SalesChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'SalesChange'] || 'N/A'}</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'SalesChange'] && ptStats[propertyType.id + 'SalesChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'SalesChange'] || 'N/A'} Y/Y</div>
                             </div>
                             <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                 <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Listings'] || 'N/A'}</div>
                                 <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Listings</div>
-                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'ListingsChange'] && ptStats[propertyType.id + 'ListingsChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'ListingsChange'] || 'N/A'}</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'ListingsChange'] && ptStats[propertyType.id + 'ListingsChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'ListingsChange'] || 'N/A'} Y/Y</div>
                             </div>
                             <div style="text-align: center; padding: 15px; background: white;">
                                 <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Supply'] || 'N/A'}</div>
                                 <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Months Supply</div>
-                                <div style="font-size: 12px; font-weight: 500; color: ${colors.bodyText};">mo</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${colors.bodyText};"></div>
                             </div>
                         </div>
                     </div>
@@ -3302,22 +4046,22 @@
                                 <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                     <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.price || 'N/A'}</div>
                                     <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Price</div>
-                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.priceChange && propertyType.stats.priceChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.priceChange || 'N/A'}</div>
+                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.priceChange && propertyType.stats.priceChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.priceChange || 'N/A'} Y/Y</div>
                                 </div>
                                 <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                     <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.sales || 'N/A'}</div>
                                     <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Sales</div>
-                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.salesChange && propertyType.stats.salesChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.salesChange || 'N/A'}</div>
+                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.salesChange && propertyType.stats.salesChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.salesChange || 'N/A'} Y/Y</div>
                                 </div>
                                 <div style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0; background: white;">
                                     <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.listings || 'N/A'}</div>
                                     <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Listings</div>
-                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.listingsChange && propertyType.stats.listingsChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.listingsChange || 'N/A'}</div>
+                                    <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.listingsChange && propertyType.stats.listingsChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.listingsChange || 'N/A'} Y/Y</div>
                                 </div>
                                 <div style="text-align: center; padding: 15px; background: white;">
                                     <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.supply || 'N/A'}</div>
                                     <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Months Supply</div>
-                                    <div style="font-size: 12px; font-weight: 500; color: ${colors.bodyText};">mo</div>
+                                    <div style="font-size: 12px; font-weight: 500; color: ${colors.bodyText};"></div>
                                 </div>
                             </div>
                         </div>
@@ -3501,6 +4245,14 @@
                 // Add a smooth slide-in animation
                 popup.style.animation = 'fadeInUp 0.3s ease forwards';
             }
+        }
+
+        // Open RLP Sphere instructions modal
+        function openRLPInstructions() {
+            // Close the main instructions popup first
+            document.getElementById('instructionsPopup').style.display = 'none';
+            // Show the RLP instructions modal
+            modalManager.show('rlpInstructionsModal');
         }
 
         // Update preview status
@@ -3852,24 +4604,296 @@
 </body>
 </html>
 
+        <!-- Content Section 3 -->
+        <div class="content-section protected-content">
+            <h2 class="section-title">Tools & Resources</h2>
+            <div class="section-content">
+                <p>You can add any type of content here - forms, videos, download links, etc. Everything will be protected automatically.</p>
+                <button class="protected-button" onclick="handleProtectedAction()">Launch Tool</button>
+                <button class="protected-button" onclick="handleProtectedAction()">View Analytics</button>
+            </div>
+        </div>
 
-    <!-- ========================================== -->
+    </div>
     
-    <!-- Navigation JavaScript -->
-    <script src="../assets/js/navigation.js"></script>
-    
-    <!-- Authentication is enabled by default for subfolder pages -->
-    <!-- To disable authentication, uncomment this: -->
-    <!--
+    <!-- ===== PAGE-SPECIFIC JAVASCRIPT ===== -->
     <script>
-    configureSphereNav({requireAuth: false});
-    </script>
-    -->
-    
-    <!-- Your page-specific JavaScript -->
-    <script>
-        // Add any page-specific JavaScript here
-        
+        // Handle authentication state changes
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.body.classList.remove('preview-mode');
+                document.body.classList.add('authenticated');
+            } else {
+                document.body.classList.add('preview-mode');
+                document.body.classList.remove('authenticated');
+            }
+        });
+
+        // CUSTOMIZE: Add your page-specific functions here
+        function handleProtectedAction() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    if (typeof openLoginModal === 'function') {
+                        openLoginModal();
+                    }
+                    return;
+                }
+                
+                // User is authenticated - perform the action
+                alert('Protected action executed! Replace this with your actual functionality.');
+            });
+        }
+
+        // Enhanced protected button/link handling
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('protected-button')) {
+                firebase.auth().onAuthStateChanged(function(user) {
+                    if (!user) {
+                        e.preventDefault();
+                        if (typeof openLoginModal === 'function') {
+                            openLoginModal();
+                        }
+                        return false;
+                    }
+                    // User is authenticated, allow the click to proceed
+                });
+            }
+        });
+
+        // ===== MODAL LOGIN FUNCTIONS =====
+
+        // Enhanced Modal functions with better error handling
+        function openLoginModal() {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                // Clear any previous messages
+                hideLoginMessages();
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModalOverlay');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                // Reset forms
+                const loginForm = document.getElementById('loginForm');
+                const signupForm = document.getElementById('signupForm');
+                if (loginForm) loginForm.reset();
+                if (signupForm) signupForm.reset();
+                hideLoginMessages();
+            }
+        }
+
+        // Close modal only when clicking overlay, not content
+        function closeLoginModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeLoginModal();
+            }
+        }
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const tabs = document.querySelectorAll('.login-tab');
+            
+            // Reset tabs and forms
+            tabs.forEach(t => t.classList.remove('active'));
+            if (loginForm) loginForm.classList.remove('active');
+            if (signupForm) signupForm.classList.remove('active');
+            hideLoginMessages();
+            
+            // Activate selected tab
+            if (tab === 'login') {
+                document.querySelector('.login-tab:first-child').classList.add('active');
+                if (loginForm) loginForm.classList.add('active');
+            } else {
+                document.querySelector('.login-tab:last-child').classList.add('active');
+                if (signupForm) signupForm.classList.add('active');
+            }
+        }
+
+        // Enhanced login with better error handling
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('.login-submit-btn');
+            const email = form.email.value;
+            const password = form.password.value;
+            
+            // Show loading state
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+            hideLoginMessages();
+            
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                showLoginSuccess('Welcome back! Loading your content...');
+                setTimeout(() => {
+                    closeLoginModal();
+                    // User state will be handled by onAuthStateChanged
+                }, 1000);
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginError(getLoginErrorMessage(error.code));
+                submitBtn.textContent = 'Login';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Enhanced signup with better logic
+        async function handleSignupSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = form.querySelector('.login-submit-btn');
+            const name = form.name.value;
+            const email = form.email.value;
+            const password = form.password.value;
+            const confirmPassword = form.confirmPassword.value;
+            
+            if (password !== confirmPassword) {
+                showLoginError('Passwords do not match');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showLoginError('Password must be at least 6 characters long');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.textContent = 'Creating account...';
+            submitBtn.disabled = true;
+            hideLoginMessages();
+            
+            try {
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                
+                // Update user profile with name
+                await userCredential.user.updateProfile({
+                    displayName: name
+                });
+                
+                // Create user profile in Firestore if available
+                if (typeof db !== 'undefined') {
+                    try {
+                        await db.collection('users').doc(userCredential.user.uid).set({
+                            name: name,
+                            email: email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            subscriptionStatus: 'free',
+                            profileComplete: true
+                        });
+                    } catch (dbError) {
+                        console.log('Firestore error (non-critical):', dbError);
+                    }
+                }
+                
+                showLoginSuccess('Account created! Welcome to Inside The Sphere!');
+                setTimeout(() => {
+                    closeLoginModal();
+                    // User state will be handled by onAuthStateChanged
+                }, 1000);
+            } catch (error) {
+                console.error('Signup error:', error);
+                showLoginError(getLoginErrorMessage(error.code));
+                submitBtn.textContent = 'Sign Up';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Add Google login function
+        async function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            hideLoginMessages();
+            
+            try {
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                
+                // Create user profile if first time (only if db exists)
+                if (typeof db !== 'undefined') {
+                    try {
+                        const doc = await db.collection('users').doc(user.uid).get();
+                        if (!doc.exists) {
+                            await db.collection('users').doc(user.uid).set({
+                                name: user.displayName || 'User',
+                                email: user.email,
+                                photoURL: user.photoURL || '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                subscriptionStatus: 'free',
+                                profileComplete: true
+                            });
+                        }
+                    } catch (dbError) {
+                        console.log('Firestore error (non-critical):', dbError);
+                    }
+                }
+                
+                showLoginSuccess('Welcome! Loading your content...');
+                setTimeout(() => {
+                    closeLoginModal();
+                }, 1000);
+            } catch (error) {
+                console.error('Google login error:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showLoginError('Sign-in was cancelled. Please try again.');
+                } else {
+                    showLoginError('Google sign-in failed. Please try again.');
+                }
+            }
+        }
+
+        // Message handling functions
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => errorDiv.style.display = 'none', 6000);
+            }
+        }
+
+        function showLoginSuccess(message) {
+            const successDiv = document.getElementById('loginSuccess');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+        }
+
+        function hideLoginMessages() {
+            const errorDiv = document.getElementById('loginError');
+            const successDiv = document.getElementById('loginSuccess');
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+        }
+
+        // Error message function
+        function getLoginErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email. Ready to create one?';
+                case 'auth/wrong-password':
+                    return 'Incorrect password. Please try again.';
+                case 'auth/invalid-email':
+                    return 'Please enter a valid email address.';
+                case 'auth/user-disabled':
+                    return 'This account has been disabled. Contact support.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please wait and try again.';
+                case 'auth/network-request-failed':
+                    return 'Network error. Please check your connection.';
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists.';
+                case 'auth/weak-password':
+                    return 'Password is too weak. Please choose a stronger password.';
+                default:
+                    return 'Authentication failed. Please try again.';
+            }
+        }
     </script>
 </body>
 </html>
