@@ -1,387 +1,3 @@
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Player - Inside The Sphere</title>
-    
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Your Firebase Config -->
-    <script src="../js/firebase-config.js"></script>
-    
-    <!-- Navigation Styles and Scripts -->
-    <link rel="stylesheet" href="../assets/css/navigation.css">
-    <script src="../assets/js/navigation.js"></script>
-    
-    <!-- Configuration for this page -->
-    <script>
-    // Configure for private page (login required) - set to false for public pages
-    configureSphereNav({ requireAuth: true });
-    </script>
-    
-    <style>
-        /* Main Page Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f8f9fa;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .section {
-            padding: 40px 0;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            font-weight: 700;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #f39c12;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background: #e67e22;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
-            text-decoration: none;
-            color: white;
-        }
-
-        /* Video Player Styles */
-        .video-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 40px;
-            margin-bottom: 40px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            margin-bottom: 30px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-
-        .video-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .video-controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .video-url-input {
-            flex: 1;
-            min-width: 300px;
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .video-url-input:focus {
-            outline: none;
-            border-color: #f39c12;
-            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
-        }
-
-        .load-video-btn {
-            padding: 12px 24px;
-            background: #f39c12;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .load-video-btn:hover {
-            background: #e67e22;
-            transform: translateY(-1px);
-        }
-
-        .instructions {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 40px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .instructions h3 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .instruction-step {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 4px solid #f39c12;
-        }
-
-        .step-number {
-            background: #f39c12;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 20px;
-            flex-shrink: 0;
-            font-size: 0.9rem;
-        }
-
-        .step-content h4 {
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .step-content p {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .step-content ol, .step-content ul {
-            margin: 15px 0 15px 20px;
-            color: #666;
-            line-height: 1.8;
-        }
-
-        .step-content ol li, .step-content ul li {
-            margin-bottom: 8px;
-        }
-
-        .step-content ul ul {
-            margin: 10px 0 10px 20px;
-        }
-
-        .example-urls {
-            background: #e8f4f8;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 15px;
-            border-left: 4px solid #3498db;
-        }
-
-        .example-urls h5 {
-            color: #2980b9;
-            margin-bottom: 10px;
-        }
-
-        .example-urls code {
-            background: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #2c3e50;
-            display: block;
-            margin: 5px 0;
-            word-break: break-all;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: transform 0.3s ease;
-            border: 1px solid #e0e0e0;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-            border-color: #f39c12;
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-
-        .feature-card h4 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .feature-card p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* Alert/Notice Boxes */
-        .alert {
-            border-radius: 6px;
-            padding: 15px;
-            margin: 15px 0;
-            border: 1px solid;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: #ffeaa7;
-            color: #856404;
-        }
-
-        .alert-danger {
-            background: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .alert-info {
-            background: #f8f9fa;
-            border-left: 4px solid #3498db;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .alert h4, .alert h5 {
-            margin-bottom: 10px;
-        }
-
-        .alert ul {
-            margin: 0 0 0 20px;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .section {
-                padding: 30px 0;
-            }
-
-            .video-container, .instructions {
-                padding: 25px;
-            }
-
-            .section-header h2 {
-                font-size: 2rem;
-            }
-
-            .video-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .video-url-input {
-                min-width: 100%;
-            }
-
-            .instruction-step {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .step-number {
-                margin-right: 0;
-                margin-bottom: 15px;
-                align-self: center;
-            }
-
-            .step-content {
-                text-align: left;
-            }
-
-            .instructions h3 {
-                font-size: 1.5rem;
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation will be automatically inserted here by navigation.js -->
-
-    <!-- Page Content -->
-    
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -563,6 +179,15 @@
         .form-group__select {
             background: var(--background-card);
             color: var(--text-light);
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f39c12' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
         }
 
         .form-group__select option {
@@ -971,27 +596,6 @@
             padding: 4px;
         }
 
-        /* Enhanced select dropdown styling for light theme */
-        .form-group__select {
-            cursor: pointer;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f39c12' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 16px;
-            padding-right: 40px;
-        }
-
-        /* Firefox specific select styling */
-        @-moz-document url-prefix() {
-            .form-group__select {
-                background: var(--background-card);
-                color: var(--text-light);
-            }
-        }
-
         /* Section headers in stats */
         .stats-section-header {
             font-size: 13px;
@@ -1044,11 +648,6 @@
 
         .emoji-btn:active {
             transform: scale(0.95);
-        }
-
-        /* Main content without navigation */
-        .main-content {
-            padding: 40px 20px;
         }
 
         /* Print Styles */
@@ -1601,7 +1200,7 @@
                             </div>
                             
                             <!-- Global Design Colors -->
-                            <div style="margin-top: 25px; padding: 20px; background: white; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <div style="margin-top: 25px; padding: 20px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 8px;">
                                 <h4 style="color: var(--primary-color); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                                     🎨 Color Themes
                                 </h4>
@@ -1748,7 +1347,7 @@
                             </div>
                             
                             <!-- Button Color Customization -->
-                           <div style="margin-top: 25px; padding: 20px; background: white; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <div style="margin-top: 25px; padding: 20px; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 8px;">
                                 <h4 style="color: var(--primary-color); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                                     🎨 Smart Button Colors
                                 </h4>
@@ -3400,6 +2999,332 @@
             }
         }
 
+        // Update events list
+        function updateEventsList() {
+            const container = document.getElementById('customEventsList');
+            
+            if (!newsletterData.customEvents || newsletterData.customEvents.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-muted); font-style: italic; font-size: 14px;">
+                        No events added yet
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedEvents = newsletterData.customEvents
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            container.innerHTML = sortedEvents.map(event => `
+                <div class="event-item" style="margin-top: 10px;">
+                    <button class="event-delete" onclick="deleteEvent('${event.id}')" title="Delete event">×</button>
+                    <div style="display: flex; gap: 15px; align-items: flex-start;">
+                        ${event.image ? `
+                        <div style="flex-shrink: 0;">
+                            <img src="${event.image}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);" alt="Event">
+                        </div>
+                        ` : ''}
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 5px 0; color: var(--text-light);">
+                                ${event.title}
+                                ${event.detailsLink ? '<span style="color: var(--primary-color); font-size: 12px; margin-left: 5px;">🔗</span>' : ''}
+                            </h4>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 3px 0;">📅 ${formatEventDate(event.date).month} ${formatEventDate(event.date).day}${event.startTime ? ` • ${formatEventTime(event.startTime, event.endTime)}` : ''}</p>
+                            ${event.location ? `<p style="font-size: 12px; color: var(--text-muted); margin: 0;">📍 ${event.location}</p>` : ''}
+                            ${event.description ? `<p style="font-size: 11px; color: var(--text-muted); margin: 5px 0 0 0; font-style: italic;">${event.description.length > 60 ? event.description.substring(0, 60) + '...' : event.description}</p>` : ''}
+                            ${event.detailsLink ? `<p style="font-size: 11px; color: var(--primary-color); margin: 3px 0 0 0;">🔗 Details link available</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteEvent(eventId) {
+            if (confirm('Are you sure you want to delete this event?')) {
+                newsletterData.customEvents = newsletterData.customEvents.filter(event => event.id !== eventId);
+                updateEventsList();
+                updatePreview();
+                showToast('✅ Event deleted successfully', 'success');
+            }
+        }
+
+        // Add custom property type functionality
+        function addCustomPropertyType(name, icon = '🏘️') {
+            const newPropertyType = {
+                id: Date.now().toString(),
+                name: name,
+                icon: icon || '🏘️',
+                stats: {
+                    price: '',
+                    priceChange: '',
+                    sales: '',
+                    salesChange: '',
+                    listings: '',
+                    listingsChange: '',
+                    supply: ''
+                }
+            };
+            
+            newsletterData.customPropertyTypes.push(newPropertyType);
+            renderCustomPropertyTypes();
+            updatePreview();
+            showToast('✅ Custom property type added!', 'success');
+        }
+
+        function renderCustomPropertyTypes() {
+            const container = document.getElementById('customPropertyTypesContainer');
+            
+            if (!newsletterData.customPropertyTypes || newsletterData.customPropertyTypes.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = newsletterData.customPropertyTypes.map(propertyType => `
+                <div style="margin-bottom: 25px;">
+                    <div class="stats-section-header" style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>${propertyType.icon} ${propertyType.name}</span>
+                        <button onclick="deleteCustomPropertyType('${propertyType.id}')" style="background: var(--danger-color); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer;">Delete</button>
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Price</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.price}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'price', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Price Change Y/Y</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.priceChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'priceChange', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Sales</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.sales}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'sales', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Sales Change Y/Y</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.salesChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'salesChange', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">New Listings</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.listings}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'listings', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Listings Change Y/Y</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.listingsChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'listingsChange', this.value)">
+                    </div>
+                    <div class="stat-item" style="margin-bottom: 8px;">
+                        <label class="stat-item__label">Months Supply</label>
+                        <input type="text" class="stat-item__input" value="${propertyType.stats.supply}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'supply', this.value)">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCustomPropertyTypeStat(propertyTypeId, statKey, value) {
+            const propertyType = newsletterData.customPropertyTypes.find(pt => pt.id === propertyTypeId);
+            if (propertyType) {
+                propertyType.stats[statKey] = value;
+                updatePreview();
+            }
+        }
+
+        function deleteCustomPropertyType(propertyTypeId) {
+            if (confirm('Are you sure you want to delete this custom property type?')) {
+                newsletterData.customPropertyTypes = newsletterData.customPropertyTypes.filter(pt => pt.id !== propertyTypeId);
+                renderCustomPropertyTypes();
+                updatePreview();
+                showToast('✅ Custom property type deleted', 'success');
+            }
+        }
+
+        // Custom Property Type emoji picker functions
+        function toggleCustomPropertyEmojiPicker() {
+            const picker = document.getElementById('customPropertyEmojiPicker');
+            const isVisible = picker.style.display !== 'none';
+            picker.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                // Focus the input field when opening emoji picker
+                document.getElementById('customPropertyTypeIcon').focus();
+            }
+        }
+
+        function insertCustomPropertyEmoji(emoji) {
+            const input = document.getElementById('customPropertyTypeIcon');
+            input.value = emoji;
+            input.focus();
+            
+            // Close emoji picker after selection
+            document.getElementById('customPropertyEmojiPicker').style.display = 'none';
+            
+            showToast(`Selected ${emoji} for property type`, 'success', 1500);
+        }
+
+        // Toggle instructions popup
+        function toggleInstructionsPopup() {
+            const popup = document.getElementById('instructionsPopup');
+            const isVisible = popup.style.display !== 'none';
+            popup.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                // Add a smooth slide-in animation
+                popup.style.animation = 'fadeInUp 0.3s ease forwards';
+            }
+        }
+
+        // Open RLP Sphere instructions modal
+        function openRLPInstructions() {
+            // Close the main instructions popup first
+            document.getElementById('instructionsPopup').style.display = 'none';
+            // Show the RLP instructions modal
+            modalManager.show('rlpInstructionsModal');
+        }
+
+        // Update preview status
+        function updatePreviewStatus() {
+            const statusEl = document.getElementById('previewStatus');
+            const hasName = newsletterData.agent.name.trim();
+            const hasMessage = newsletterData.content.personalMessage.trim();
+            const hasStats = newsletterData.stats.avgPrice || newsletterData.stats.homesSold;
+            
+            if (hasName && hasMessage && hasStats) {
+                statusEl.textContent = '✅ Your newsletter is ready! Use Export Options below to share it.';
+                statusEl.style.color = 'var(--success-color)';
+            } else if (hasMessage || hasName) {
+                statusEl.textContent = 'Instructions to build a custom Newsletter';
+                statusEl.style.color = 'var(--primary-color)';
+            } else {
+                statusEl.textContent = '📝 Start filling out the form to see your newsletter preview';
+                statusEl.style.color = 'var(--text-muted)';
+            }
+        }
+
+        // Quick print function
+        function quickPrint() {
+            window.scrollTo(0, 0);
+            showToast('🖨️ Opening print dialog...', 'info', 2000);
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        // Utility functions
+        function generateNewsletter() {
+            updatePreview();
+            showToast('✨ Newsletter generated successfully!', 'success');
+        }
+
+        function getFullHTML() {
+            const newsletterHtml = document.getElementById('newsletterPreview').innerHTML;
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Newsletter - ${newsletterData.content.newsletterSeason.charAt(0).toUpperCase() + newsletterData.content.newsletterSeason.slice(1)} 2025</title>
+</head>
+<body style="margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif;">
+    ${newsletterHtml}
+</body>
+</html>`;
+        }
+
+        // Export manager with email-safe HTML generation
+        const exportManager = {
+            copyEmailSafeHTML: () => {
+                const html = getEmailSafeHTML();
+                navigator.clipboard.writeText(html).then(() => {
+                    modalManager.close('exportModal');
+                    showToast('✅ Newsletter copied for email!', 'success', 6000);
+                }).catch(() => {
+                    showToast('❌ Failed to copy to clipboard', 'error');
+                });
+            },
+            
+            exportAsHTML: () => {
+                const html = getEmailSafeHTML();
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `newsletter-${newsletterData.content.newsletterSeason}-2025-email-safe.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+                modalManager.close('exportModal');
+                showToast('✅ Newsletter exported with email-safe tables!', 'success');
+            },
+
+            printNewsletter: () => {
+                modalManager.close('exportModal');
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    showToast('🖨️ Opening print dialog...', 'info', 2000);
+                    window.print();
+                }, 300);
+            }
+        };
+
+        // Email-safe HTML generation using tables
+        function getEmailSafeHTML() {
+            const season = newsletterData.content.newsletterSeason;
+            const config = SEASONS[season];
+            const colors = newsletterData.design.colors;
+            
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Newsletter - ${season.charAt(0).toUpperCase() + season.slice(1)} 2025</title>
+    <meta name="x-apple-disable-message-reformatting">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+        
+        body, table, td, div, p, a {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        .ReadMsgBody { width: 100%; }
+        .ExternalClass { width: 100%; }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+        
+        /* Custom colors */
+        .header-text { color: ${colors.headerText} !important; }
+        .body-text { color: ${colors.bodyText} !important; }
+        .accent-color { color: ${colors.accent} !important; }
+        .bg-accent { background-color: ${colors.background} !important; }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: ${newsletterData.design.bodyFont};">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="650" style="max-width: 650px; background-color: white; margin: 0 auto;">
+                    <tr>
+                        <td style="padding: 40px 20px; font-family: ${newsletterData.design.bodyFont}; color: ${colors.bodyText};">
+                            ${document.getElementById('newsletterPreview').innerHTML}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+        }
+
         // Preview generation
         function updatePreview() {
             const season = newsletterData.content.newsletterSeason;
@@ -3819,332 +3744,6 @@
             `;
         }
 
-        // Update events list
-        function updateEventsList() {
-            const container = document.getElementById('customEventsList');
-            
-            if (!newsletterData.customEvents || newsletterData.customEvents.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 20px; color: var(--text-muted); font-style: italic; font-size: 14px;">
-                        No events added yet
-                    </div>
-                `;
-                return;
-            }
-            
-            const sortedEvents = newsletterData.customEvents
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            container.innerHTML = sortedEvents.map(event => `
-                <div class="event-item" style="margin-top: 10px;">
-                    <button class="event-delete" onclick="deleteEvent('${event.id}')" title="Delete event">×</button>
-                    <div style="display: flex; gap: 15px; align-items: flex-start;">
-                        ${event.image ? `
-                        <div style="flex-shrink: 0;">
-                            <img src="${event.image}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);" alt="Event">
-                        </div>
-                        ` : ''}
-                        <div style="flex: 1; min-width: 0;">
-                            <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 5px 0; color: var(--text-light);">
-                                ${event.title}
-                                ${event.detailsLink ? '<span style="color: var(--primary-color); font-size: 12px; margin-left: 5px;">🔗</span>' : ''}
-                            </h4>
-                            <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 3px 0;">📅 ${formatEventDate(event.date).month} ${formatEventDate(event.date).day}${event.startTime ? ` • ${formatEventTime(event.startTime, event.endTime)}` : ''}</p>
-                            ${event.location ? `<p style="font-size: 12px; color: var(--text-muted); margin: 0;">📍 ${event.location}</p>` : ''}
-                            ${event.description ? `<p style="font-size: 11px; color: var(--text-muted); margin: 5px 0 0 0; font-style: italic;">${event.description.length > 60 ? event.description.substring(0, 60) + '...' : event.description}</p>` : ''}
-                            ${event.detailsLink ? `<p style="font-size: 11px; color: var(--primary-color); margin: 3px 0 0 0;">🔗 Details link available</p>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function deleteEvent(eventId) {
-            if (confirm('Are you sure you want to delete this event?')) {
-                newsletterData.customEvents = newsletterData.customEvents.filter(event => event.id !== eventId);
-                updateEventsList();
-                updatePreview();
-                showToast('✅ Event deleted successfully', 'success');
-            }
-        }
-
-        // Add custom property type functionality
-        function addCustomPropertyType(name, icon = '🏘️') {
-            const newPropertyType = {
-                id: Date.now().toString(),
-                name: name,
-                icon: icon || '🏘️',
-                stats: {
-                    price: '',
-                    priceChange: '',
-                    sales: '',
-                    salesChange: '',
-                    listings: '',
-                    listingsChange: '',
-                    supply: ''
-                }
-            };
-            
-            newsletterData.customPropertyTypes.push(newPropertyType);
-            renderCustomPropertyTypes();
-            updatePreview();
-            showToast('✅ Custom property type added!', 'success');
-        }
-
-        function renderCustomPropertyTypes() {
-            const container = document.getElementById('customPropertyTypesContainer');
-            
-            if (!newsletterData.customPropertyTypes || newsletterData.customPropertyTypes.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-            
-            container.innerHTML = newsletterData.customPropertyTypes.map(propertyType => `
-                <div style="margin-bottom: 25px;">
-                    <div class="stats-section-header" style="display: flex; align-items: center; justify-content: space-between;">
-                        <span>${propertyType.icon} ${propertyType.name}</span>
-                        <button onclick="deleteCustomPropertyType('${propertyType.id}')" style="background: var(--danger-color); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer;">Delete</button>
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Price</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.price}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'price', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Price Change Y/Y</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.priceChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'priceChange', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Sales</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.sales}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'sales', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Sales Change Y/Y</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.salesChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'salesChange', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">New Listings</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.listings}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'listings', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Listings Change Y/Y</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.listingsChange}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'listingsChange', this.value)">
-                    </div>
-                    <div class="stat-item" style="margin-bottom: 8px;">
-                        <label class="stat-item__label">Months Supply</label>
-                        <input type="text" class="stat-item__input" value="${propertyType.stats.supply}" oninput="updateCustomPropertyTypeStat('${propertyType.id}', 'supply', this.value)">
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function updateCustomPropertyTypeStat(propertyTypeId, statKey, value) {
-            const propertyType = newsletterData.customPropertyTypes.find(pt => pt.id === propertyTypeId);
-            if (propertyType) {
-                propertyType.stats[statKey] = value;
-                updatePreview();
-            }
-        }
-
-        function deleteCustomPropertyType(propertyTypeId) {
-            if (confirm('Are you sure you want to delete this custom property type?')) {
-                newsletterData.customPropertyTypes = newsletterData.customPropertyTypes.filter(pt => pt.id !== propertyTypeId);
-                renderCustomPropertyTypes();
-                updatePreview();
-                showToast('✅ Custom property type deleted', 'success');
-            }
-        }
-
-        // Custom Property Type emoji picker functions
-        function toggleCustomPropertyEmojiPicker() {
-            const picker = document.getElementById('customPropertyEmojiPicker');
-            const isVisible = picker.style.display !== 'none';
-            picker.style.display = isVisible ? 'none' : 'block';
-            
-            if (!isVisible) {
-                // Focus the input field when opening emoji picker
-                document.getElementById('customPropertyTypeIcon').focus();
-            }
-        }
-
-        function insertCustomPropertyEmoji(emoji) {
-            const input = document.getElementById('customPropertyTypeIcon');
-            input.value = emoji;
-            input.focus();
-            
-            // Close emoji picker after selection
-            document.getElementById('customPropertyEmojiPicker').style.display = 'none';
-            
-            showToast(`Selected ${emoji} for property type`, 'success', 1500);
-        }
-
-        // Toggle instructions popup
-        function toggleInstructionsPopup() {
-            const popup = document.getElementById('instructionsPopup');
-            const isVisible = popup.style.display !== 'none';
-            popup.style.display = isVisible ? 'none' : 'block';
-            
-            if (!isVisible) {
-                // Add a smooth slide-in animation
-                popup.style.animation = 'fadeInUp 0.3s ease forwards';
-            }
-        }
-
-        // Open RLP Sphere instructions modal
-        function openRLPInstructions() {
-            // Close the main instructions popup first
-            document.getElementById('instructionsPopup').style.display = 'none';
-            // Show the RLP instructions modal
-            modalManager.show('rlpInstructionsModal');
-        }
-
-        // Update preview status
-        function updatePreviewStatus() {
-            const statusEl = document.getElementById('previewStatus');
-            const hasName = newsletterData.agent.name.trim();
-            const hasMessage = newsletterData.content.personalMessage.trim();
-            const hasStats = newsletterData.stats.avgPrice || newsletterData.stats.homesSold;
-            
-            if (hasName && hasMessage && hasStats) {
-                statusEl.textContent = '✅ Your newsletter is ready! Use Export Options below to share it.';
-                statusEl.style.color = 'var(--success-color)';
-            } else if (hasMessage || hasName) {
-                statusEl.textContent = 'Instructions to build a custom Newsletter';
-                statusEl.style.color = 'var(--primary-color)';
-            } else {
-                statusEl.textContent = '📝 Start filling out the form to see your newsletter preview';
-                statusEl.style.color = 'var(--text-muted)';
-            }
-        }
-
-        // Quick print function
-        function quickPrint() {
-            window.scrollTo(0, 0);
-            showToast('🖨️ Opening print dialog...', 'info', 2000);
-            setTimeout(() => {
-                window.print();
-            }, 100);
-        }
-
-        // Utility functions
-        function generateNewsletter() {
-            updatePreview();
-            showToast('✨ Newsletter generated successfully!', 'success');
-        }
-
-        function getFullHTML() {
-            const newsletterHtml = document.getElementById('newsletterPreview').innerHTML;
-            return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Estate Newsletter - ${newsletterData.content.newsletterSeason.charAt(0).toUpperCase() + newsletterData.content.newsletterSeason.slice(1)} 2025</title>
-</head>
-<body style="margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif;">
-    ${newsletterHtml}
-</body>
-</html>`;
-        }
-
-        // Export manager with email-safe HTML generation
-        const exportManager = {
-            copyEmailSafeHTML: () => {
-                const html = getEmailSafeHTML();
-                navigator.clipboard.writeText(html).then(() => {
-                    modalManager.close('exportModal');
-                    showToast('✅ Newsletter copied for email!', 'success', 6000);
-                }).catch(() => {
-                    showToast('❌ Failed to copy to clipboard', 'error');
-                });
-            },
-            
-            exportAsHTML: () => {
-                const html = getEmailSafeHTML();
-                const blob = new Blob([html], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `newsletter-${newsletterData.content.newsletterSeason}-2025-email-safe.html`;
-                a.click();
-                URL.revokeObjectURL(url);
-                modalManager.close('exportModal');
-                showToast('✅ Newsletter exported with email-safe tables!', 'success');
-            },
-
-            printNewsletter: () => {
-                modalManager.close('exportModal');
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    showToast('🖨️ Opening print dialog...', 'info', 2000);
-                    window.print();
-                }, 300);
-            }
-        };
-
-        // Email-safe HTML generation using tables
-        function getEmailSafeHTML() {
-            const season = newsletterData.content.newsletterSeason;
-            const config = SEASONS[season];
-            const colors = newsletterData.design.colors;
-            
-            return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Estate Newsletter - ${season.charAt(0).toUpperCase() + season.slice(1)} 2025</title>
-    <meta name="x-apple-disable-message-reformatting">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
-        
-        body, table, td, div, p, a {
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-        }
-        
-        table, td {
-            mso-table-lspace: 0pt;
-            mso-table-rspace: 0pt;
-        }
-        
-        img {
-            -ms-interpolation-mode: bicubic;
-            border: 0;
-            height: auto;
-            line-height: 100%;
-            outline: none;
-            text-decoration: none;
-        }
-        
-        .ReadMsgBody { width: 100%; }
-        .ExternalClass { width: 100%; }
-        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
-        
-        /* Custom colors */
-        .header-text { color: ${colors.headerText} !important; }
-        .body-text { color: ${colors.bodyText} !important; }
-        .accent-color { color: ${colors.accent} !important; }
-        .bg-accent { background-color: ${colors.background} !important; }
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: ${newsletterData.design.bodyFont};">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
-        <tr>
-            <td align="center" style="padding: 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="650" style="max-width: 650px; background-color: white; margin: 0 auto;">
-                    <tr>
-                        <td style="padding: 40px 20px; font-family: ${newsletterData.design.bodyFont}; color: ${colors.bodyText};">
-                            ${document.getElementById('newsletterPreview').innerHTML}
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-        }
-
         // Setup event listeners
         function setupEventListeners() {
             // Text inputs
@@ -4343,8 +3942,5 @@
             }
         });
     </script>
-</body>
-</html>
-
 </body>
 </html>
