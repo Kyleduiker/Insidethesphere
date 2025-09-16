@@ -1,0 +1,565 @@
+/**
+ * Image Handler Module
+ * Manages image uploads, Imgur API integration, and image preview functionality
+ */
+
+class ImageHandler {
+    constructor() {
+        this.uploadQueue = new Map();
+        this.retryAttempts = new Map();
+        this.maxRetries = 2;
+        this.init();
+    }
+
+    /**
+     * Initialize image handler
+     */
+    init() {
+        this.setupFileInputHandlers();
+        this.setupDropZones();
+    }
+
+    /**
+     * Setup file input handlers throughout the application
+     */
+    setupFileInputHandlers() {
+        // Handle all file inputs with data-image-key attribute
+        document.addEventListener('change', (e) => {
+            if (e.target.type === 'file' && e.target.dataset.imageKey) {
+                this.handleFileInput(e.target);
+            }
+        });
+
+        // Handle remove image buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-remove-image')) {
+                const imageKey = e.target.dataset.imageKey;
+                if (imageKey) {
+                    this.removeImage(imageKey);
+                }
+            }
+        });
+    }
+
+    /**
+     * Setup drag and drop zones
+     */
+    setupDropZones() {
+        // Add drag and drop functionality to file inputs
+        document.addEventListener('dragover', (e) => {
+            if (e.target.type === 'file' || e.target.classList.contains('drop-zone')) {
+                e.preventDefault();
+                e.target.classList.add('drag-over');
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.target.classList.remove('drag-over');
+        });
+
+        document.addEventListener('drop', (e) => {
+            if (e.target.type === 'file' || e.target.classList.contains('drop-zone')) {
+                e.preventDefault();
+                e.target.classList.remove('drag-over');
+                
+                const files = Array.from(e.dataTransfer.files);
+                const imageKey = e.target.dataset.imageKey;
+                
+                if (files.length > 0 && imageKey) {
+                    this.processFile(files[0], imageKey);
+                }
+            }
+        });
+    }
+
+    /**
+     * Handle file input change
+     */
+    handleFileInput(input) {
+        const file = input.files[0];
+        const imageKey = input.dataset.imageKey;
+        
+        if (!file || !imageKey) return;
+
+        this.processFile(file, imageKey, input);
+    }
+
+    /**
+     * Process uploaded file
+     */
+    async processFile(file, imageKey, inputElement = null) {
+        // Validate file
+        const validation = this.validateFile(file);
+        if (!validation.valid) {
+            validation.errors.forEach(error => 
+                DOMHelpers.showToast(error, 'error')
+            );
+            if (inputElement) inputElement.value = '';
+            return false;
+        }
+
+        // Show loading state
+        this.showImagePreview(imageKey, null, 'uploading');
+        
+        try {
+            // Upload to Imgur
+            const imgurUrl = await this.uploadToImgur(file, imageKey);
+            
+            if (imgurUrl) {
+                // Update data
+                window.newsletterData.setImage(imageKey, imgurUrl);
+                
+                // Show success state
+                this.showImagePreview(imageKey, imgurUrl, 'success');
+                
+                DOMHelpers.showToast('Image uploaded successfully!', 'success', 3000);
+                return imgurUrl;
+            } else {
+                throw new Error('Upload failed - no URL returned');
+            }
+            
+        } catch (error) {
+            console.error('Image upload error:', error);
+            
+            // Try fallback or show error
+            const fallbackUrl = await this.handleUploadFailure(file, imageKey, error);
+            
+            if (fallbackUrl) {
+                window.newsletterData.setImage(imageKey, fallbackUrl);
+                this.showImagePreview(imageKey, fallbackUrl, 'warning');
+                DOMHelpers.showToast('Using local preview - image may not work in email', 'warning', 4000);
+                return fallbackUrl;
+            } else {
+                this.hideImagePreview(imageKey);
+                if (inputElement) inputElement.value = '';
+                DOMHelpers.showToast('Image upload failed', 'error');
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Upload file to Imgur
+     */
+    async uploadToImgur(file, imageKey) {
+        const config = window.NewsletterConfig.IMGUR_CONFIG;
+        
+        try {
+            DOMHelpers.showToast('Uploading image to Imgur...', 'info', 2000);
+            
+            // Convert file to base64
+            const base64 = await this.fileToBase64(file);
+            const base64Data = base64.split(',')[1]; // Remove data URL prefix
+            
+            // Try primary client ID
+            let response = await this.makeImgurRequest(base64Data, config.CLIENT_ID);
+            
+            if (!response.ok) {
+                console.log('Primary client ID failed, trying alternative...');
+                response = await this.makeImgurRequest(base64Data, config.ALTERNATIVE_CLIENT_ID);
+            }
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Imgur API error: ${response.status} - ${errorText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.link) {
+                console.log('Imgur upload successful:', data.data.link);
+                return data.data.link;
+            } else {
+                throw new Error('Imgur upload failed: ' + JSON.stringify(data));
+            }
+            
+        } catch (error) {
+            console.error('Imgur upload error:', error);
+            
+            // Retry logic
+            const retryCount = this.retryAttempts.get(imageKey) || 0;
+            if (retryCount < this.maxRetries) {
+                this.retryAttempts.set(imageKey, retryCount + 1);
+                console.log(`Retrying upload (${retryCount + 1}/${this.maxRetries})...`);
+                
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                return this.uploadToImgur(file, imageKey);
+            }
+            
+            throw error;
+        }
+    }
+
+    /**
+     * Make request to Imgur API
+     */
+    async makeImgurRequest(base64Data, clientId) {
+        const config = window.NewsletterConfig.IMGUR_CONFIG;
+        
+        return fetch(config.API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Client-ID ${clientId}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image: base64Data,
+                type: 'base64'
+            })
+        });
+    }
+
+    /**
+     * Convert file to base64
+     */
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /**
+     * Handle upload failure with fallback options
+     */
+    async handleUploadFailure(file, imageKey, error) {
+        console.warn('Upload failed, attempting fallback...', error);
+        
+        // For development/preview purposes, create a local object URL
+        try {
+            const localUrl = URL.createObjectURL(file);
+            console.log('Using local object URL as fallback:', localUrl);
+            return localUrl;
+        } catch (localError) {
+            console.error('Local URL creation failed:', localError);
+            return null;
+        }
+    }
+
+    /**
+     * Validate uploaded file
+     */
+    validateFile(file) {
+        const config = window.NewsletterConfig.APP_SETTINGS;
+        const maxSize = config.MAX_IMAGE_SIZE;
+        const allowedTypes = config.SUPPORTED_IMAGE_TYPES;
+        
+        const errors = [];
+        
+        // Check file size
+        if (file.size > maxSize) {
+            errors.push(`File size (${DOMHelpers.formatFileSize(file.size)}) exceeds maximum allowed size (${DOMHelpers.formatFileSize(maxSize)})`);
+        }
+        
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+            errors.push(`File type (${file.type}) is not supported. Allowed types: ${allowedTypes.join(', ')}`);
+        }
+        
+        // Check if file is corrupted (basic check)
+        if (file.size === 0) {
+            errors.push('File appears to be empty or corrupted');
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors
+        };
+    }
+
+    /**
+     * Show image preview
+     */
+    showImagePreview(imageKey, imageSrc, status = 'success') {
+        const preview = this.getPreviewElement(imageKey);
+        if (!preview) return;
+
+        const img = preview.querySelector('img');
+        const statusDiv = preview.querySelector('.upload-status') || this.createStatusDiv();
+        
+        // Show preview container
+        preview.style.display = 'flex';
+        
+        // Update image
+        if (status === 'uploading') {
+            img.style.opacity = '0.5';
+            img.src = this.getLoadingImageSrc(imageKey);
+            statusDiv.textContent = '⏳ Uploading...';
+            statusDiv.className = 'upload-status upload-status--loading';
+        } else if (status === 'success' && imageSrc) {
+            img.style.opacity = '1';
+            img.src = imageSrc;
+            statusDiv.textContent = '✅ Image loaded';
+            statusDiv.className = 'upload-status upload-status--success';
+        } else if (status === 'warning' && imageSrc) {
+            img.style.opacity = '1';
+            img.src = imageSrc;
+            statusDiv.textContent = '⚠️ Local preview only';
+            statusDiv.className = 'upload-status upload-status--warning';
+        }
+        
+        // Add status div if not present
+        if (!preview.querySelector('.upload-status')) {
+            preview.appendChild(statusDiv);
+        }
+        
+        // Setup remove button
+        const removeBtn = preview.querySelector('.btn-remove-image');
+        if (removeBtn) {
+            removeBtn.dataset.imageKey = imageKey;
+        }
+    }
+
+    /**
+     * Hide image preview
+     */
+    hideImagePreview(imageKey) {
+        const preview = this.getPreviewElement(imageKey);
+        if (preview) {
+            preview.style.display = 'none';
+        }
+    }
+
+    /**
+     * Get preview element for image key
+     */
+    getPreviewElement(imageKey) {
+        return document.querySelector(`[data-preview="${imageKey}"]`) || 
+               document.querySelector(`#${imageKey}Preview`) ||
+               document.querySelector(`#${imageKey}-preview`);
+    }
+
+    /**
+     * Create status div for upload status
+     */
+    createStatusDiv() {
+        return DOMHelpers.createElement('div', {
+            className: 'upload-status',
+            style: {
+                fontSize: '11px',
+                marginTop: '5px',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                textAlign: 'center'
+            }
+        });
+    }
+
+    /**
+     * Get loading image source based on image type
+     */
+    getLoadingImageSrc(imageKey) {
+        const loadingImages = {
+            agentPhoto: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzAiIHN0cm9rZT0iI2RkZCIgc3Ryb2tlLXdpZHRoPSI0Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSI+Loading...</dGV4dD4KPC9zdmc+',
+            default: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMTIwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZjBmMGYwIiByeD0iNCIvPgo8dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTkiPkxvYWRpbmcuLi48L3RleHQ+Cjwvc3ZnPg=='
+        };
+        
+        return loadingImages[imageKey] || loadingImages.default;
+    }
+
+    /**
+     * Remove image
+     */
+    removeImage(imageKey) {
+        // Clear from data
+        window.newsletterData.removeImage(imageKey);
+        
+        // Hide preview
+        this.hideImagePreview(imageKey);
+        
+        // Clear file input
+        const input = document.querySelector(`input[data-image-key="${imageKey}"]`);
+        if (input) {
+            input.value = '';
+        }
+        
+        // Clear retry attempts
+        this.retryAttempts.delete(imageKey);
+        
+        DOMHelpers.showToast('Image removed', 'info');
+    }
+
+    /**
+     * Create image upload component
+     */
+    createImageUpload(options = {}) {
+        const {
+            imageKey,
+            label = 'Upload Image',
+            accept = 'image/*',
+            preview = true,
+            previewSize = { width: 120, height: 80 }
+        } = options;
+
+        const container = DOMHelpers.createElement('div', {
+            className: 'image-upload-component'
+        });
+
+        // File input
+        const input = DOMHelpers.createElement('input', {
+            type: 'file',
+            accept,
+            'data-image-key': imageKey,
+            className: 'form-input'
+        });
+
+        // Label
+        const labelElement = DOMHelpers.createElement('label', {
+            className: 'form-label'
+        }, label);
+
+        // Preview container
+        const previewContainer = preview ? DOMHelpers.createElement('div', {
+            className: 'image-preview',
+            'data-preview': imageKey,
+            style: { display: 'none' }
+        }, [
+            DOMHelpers.createElement('img', {
+                style: {
+                    width: `${previewSize.width}px`,
+                    height: `${previewSize.height}px`,
+                    objectFit: 'cover',
+                    borderRadius: '4px',
+                    border: '2px solid #ddd'
+                }
+            }),
+            DOMHelpers.createElement('button', {
+                type: 'button',
+                className: 'btn-remove-image',
+                'data-image-key': imageKey
+            }, 'Remove')
+        ]) : null;
+
+        // Assemble component
+        container.appendChild(labelElement);
+        container.appendChild(input);
+        if (previewContainer) {
+            container.appendChild(previewContainer);
+        }
+
+        return container;
+    }
+
+    /**
+     * Batch upload multiple images
+     */
+    async batchUpload(files, imageKeys) {
+        const results = [];
+        
+        for (let i = 0; i < files.length && i < imageKeys.length; i++) {
+            try {
+                const result = await this.processFile(files[i], imageKeys[i]);
+                results.push({ imageKey: imageKeys[i], success: !!result, url: result });
+            } catch (error) {
+                results.push({ imageKey: imageKeys[i], success: false, error: error.message });
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * Compress image before upload (optional enhancement)
+     */
+    async compressImage(file, maxWidth = 1200, maxHeight = 800, quality = 0.8) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Calculate new dimensions
+                let { width, height } = img;
+                
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw and compress
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    resolve(blob || file);
+                }, file.type, quality);
+            };
+            
+            img.onerror = () => resolve(file);
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    /**
+     * Get upload progress for UI updates
+     */
+    getUploadProgress(imageKey) {
+        return this.uploadQueue.get(imageKey) || null;
+    }
+
+    /**
+     * Cancel upload
+     */
+    cancelUpload(imageKey) {
+        const uploadData = this.uploadQueue.get(imageKey);
+        if (uploadData && uploadData.controller) {
+            uploadData.controller.abort();
+            this.uploadQueue.delete(imageKey);
+            this.hideImagePreview(imageKey);
+            DOMHelpers.showToast('Upload cancelled', 'info');
+        }
+    }
+
+    /**
+     * Clear all uploads
+     */
+    clearAllUploads() {
+        this.uploadQueue.forEach((uploadData, imageKey) => {
+            if (uploadData.controller) {
+                uploadData.controller.abort();
+            }
+            this.hideImagePreview(imageKey);
+        });
+        
+        this.uploadQueue.clear();
+        this.retryAttempts.clear();
+    }
+
+    /**
+     * Get image data URL for email export
+     */
+    async getImageDataUrl(imageUrl) {
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.warn('Failed to convert image to data URL:', error);
+            return imageUrl; // Return original URL as fallback
+        }
+    }
+}
+
+// Create global instance
+window.imageHandler = new ImageHandler();
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ImageHandler;
+}
