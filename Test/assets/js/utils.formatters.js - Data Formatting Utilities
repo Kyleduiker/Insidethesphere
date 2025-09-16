@@ -1,0 +1,607 @@
+/**
+ * Formatting Utilities
+ * Common formatting functions for dates, numbers, currencies, and other data
+ */
+
+class Formatters {
+    /**
+     * Format date for display
+     */
+    static formatDate(dateString, format = 'long') {
+        if (!dateString) return '';
+        
+        try {
+            const date = new Date(dateString);
+            
+            if (isNaN(date.getTime())) {
+                return dateString; // Return original if invalid
+            }
+            
+            const options = {
+                short: { month: 'short', day: 'numeric' },
+                medium: { month: 'short', day: 'numeric', year: 'numeric' },
+                long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+                numeric: { year: 'numeric', month: '2-digit', day: '2-digit' }
+            };
+            
+            return date.toLocaleDateString('en-US', options[format] || options.medium);
+        } catch (error) {
+            console.warn('Date formatting error:', error);
+            return dateString;
+        }
+    }
+
+    /**
+     * Format event date for newsletter display
+     */
+    static formatEventDate(dateString) {
+        if (!dateString) return { month: '', day: '' };
+        
+        try {
+            const [year, month, day] = dateString.split('-');
+            const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
+                               'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+            
+            return {
+                month: monthNames[parseInt(month) - 1] || '',
+                day: parseInt(day) || ''
+            };
+        } catch (error) {
+            console.warn('Event date formatting error:', error);
+            return { month: '', day: '' };
+        }
+    }
+
+    /**
+     * Format time for display (12-hour format)
+     */
+    static formatTime(timeString) {
+        if (!timeString) return '';
+        
+        try {
+            const [hours, minutes] = timeString.split(':');
+            const hour12 = hours % 12 || 12;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            return `${hour12}:${minutes} ${ampm}`;
+        } catch (error) {
+            console.warn('Time formatting error:', error);
+            return timeString;
+        }
+    }
+
+    /**
+     * Format time range
+     */
+    static formatTimeRange(startTime, endTime) {
+        if (!startTime) return '';
+        
+        const formattedStart = this.formatTime(startTime);
+        
+        if (endTime) {
+            const formattedEnd = this.formatTime(endTime);
+            return `${formattedStart} - ${formattedEnd}`;
+        }
+        
+        return formattedStart;
+    }
+
+    /**
+     * Format currency (Canadian/US dollars)
+     */
+    static formatCurrency(amount, options = {}) {
+        const {
+            currency = 'CAD',
+            locale = 'en-CA',
+            minimumFractionDigits = 0,
+            maximumFractionDigits = 2,
+            compact = false
+        } = options;
+        
+        if (amount === null || amount === undefined || amount === '') {
+            return '';
+        }
+        
+        // Handle string inputs with currency symbols and formatting
+        let numericAmount = amount;
+        if (typeof amount === 'string') {
+            numericAmount = this.parseNumericValue(amount);
+            if (numericAmount === null) return amount; // Return original if can't parse
+        }
+        
+        try {
+            if (compact && Math.abs(numericAmount) >= 1000) {
+                return this.formatCompactCurrency(numericAmount, currency);
+            }
+            
+            return new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits,
+                maximumFractionDigits
+            }).format(numericAmount);
+        } catch (error) {
+            console.warn('Currency formatting error:', error);
+            return amount.toString();
+        }
+    }
+
+    /**
+     * Format compact currency (e.g., $1.2M, $500K)
+     */
+    static formatCompactCurrency(amount, currency = 'CAD') {
+        const absAmount = Math.abs(amount);
+        const sign = amount < 0 ? '-' : '';
+        const symbol = currency === 'USD' ? '$' : '$';
+        
+        if (absAmount >= 1000000000) {
+            return `${sign}${symbol}${(absAmount / 1000000000).toFixed(1)}B`;
+        } else if (absAmount >= 1000000) {
+            return `${sign}${symbol}${(absAmount / 1000000).toFixed(1)}M`;
+        } else if (absAmount >= 1000) {
+            return `${sign}${symbol}${(absAmount / 1000).toFixed(0)}K`;
+        } else {
+            return `${sign}${symbol}${absAmount.toLocaleString()}`;
+        }
+    }
+
+    /**
+     * Parse numeric value from formatted strings
+     */
+    static parseNumericValue(value) {
+        if (typeof value !== 'string') return value;
+        
+        // Remove currency symbols, commas, and spaces
+        const cleaned = value.replace(/[\$,\s]/g, '');
+        
+        // Handle K, M, B suffixes
+        const suffixes = { K: 1000, M: 1000000, B: 1000000000 };
+        const suffix = cleaned.slice(-1).toUpperCase();
+        
+        if (suffixes[suffix]) {
+            const numeric = parseFloat(cleaned.slice(0, -1));
+            return isNaN(numeric) ? null : numeric * suffixes[suffix];
+        }
+        
+        const numeric = parseFloat(cleaned);
+        return isNaN(numeric) ? null : numeric;
+    }
+
+    /**
+     * Format percentage
+     */
+    static formatPercentage(value, options = {}) {
+        const {
+            decimals = 1,
+            showSign = true,
+            compact = false
+        } = options;
+        
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+        
+        // Parse percentage if it's a string
+        let numericValue = value;
+        if (typeof value === 'string') {
+            const match = value.match(/([+-]?\d+(?:\.\d+)?)%?/);
+            if (match) {
+                numericValue = parseFloat(match[1]);
+            } else {
+                return value; // Return original if can't parse
+            }
+        }
+        
+        if (isNaN(numericValue)) return value.toString();
+        
+        const sign = showSign && numericValue > 0 ? '+' : '';
+        const formatted = numericValue.toFixed(decimals);
+        
+        return `${sign}${formatted}%`;
+    }
+
+    /**
+     * Format large numbers with abbreviations
+     */
+    static formatNumber(number, options = {}) {
+        const {
+            compact = false,
+            decimals = 0,
+            locale = 'en-US'
+        } = options;
+        
+        if (number === null || number === undefined || number === '') {
+            return '';
+        }
+        
+        let numericValue = number;
+        if (typeof number === 'string') {
+            numericValue = this.parseNumericValue(number);
+            if (numericValue === null) return number;
+        }
+        
+        if (compact) {
+            return this.formatCompactNumber(numericValue, decimals);
+        }
+        
+        try {
+            return new Intl.NumberFormat(locale, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(numericValue);
+        } catch (error) {
+            console.warn('Number formatting error:', error);
+            return numericValue.toString();
+        }
+    }
+
+    /**
+     * Format compact numbers (e.g., 1.2K, 500M)
+     */
+    static formatCompactNumber(number, decimals = 1) {
+        const absNumber = Math.abs(number);
+        const sign = number < 0 ? '-' : '';
+        
+        if (absNumber >= 1000000000) {
+            return `${sign}${(absNumber / 1000000000).toFixed(decimals)}B`;
+        } else if (absNumber >= 1000000) {
+            return `${sign}${(absNumber / 1000000).toFixed(decimals)}M`;
+        } else if (absNumber >= 1000) {
+            return `${sign}${(absNumber / 1000).toFixed(decimals)}K`;
+        } else {
+            return `${sign}${absNumber.toLocaleString()}`;
+        }
+    }
+
+    /**
+     * Format phone number for display
+     */
+    static formatPhoneNumber(phone, format = 'standard') {
+        if (!phone) return '';
+        
+        // Remove all non-numeric characters
+        const digitsOnly = phone.replace(/\D/g, '');
+        
+        if (digitsOnly.length === 10) {
+            // Standard North American format
+            switch (format) {
+                case 'dots':
+                    return `${digitsOnly.slice(0, 3)}.${digitsOnly.slice(3, 6)}.${digitsOnly.slice(6)}`;
+                case 'spaces':
+                    return `${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`;
+                case 'international':
+                    return `+1 (${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+                default: // standard
+                    return `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+            }
+        } else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+            // Remove leading 1 and format as 10-digit
+            return this.formatPhoneNumber(digitsOnly.slice(1), format);
+        }
+        
+        // Return original if can't format
+        return phone;
+    }
+
+    /**
+     * Format website URL for display
+     */
+    static formatWebsiteURL(url, options = {}) {
+        const {
+            includeProtocol = false,
+            removeWWW = true
+        } = options;
+        
+        if (!url) return '';
+        
+        let formatted = url.trim();
+        
+        // Add protocol if missing and requested
+        if (includeProtocol && !formatted.startsWith('http')) {
+            formatted = `https://${formatted}`;
+        }
+        
+        // Remove protocol if not requested
+        if (!includeProtocol) {
+            formatted = formatted.replace(/^https?:\/\//, '');
+        }
+        
+        // Remove www if requested
+        if (removeWWW) {
+            formatted = formatted.replace(/^www\./, '');
+        }
+        
+        return formatted;
+    }
+
+    /**
+     * Format file size
+     */
+    static formatFileSize(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        if (!bytes) return '';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        const formattedSize = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals));
+        return `${formattedSize} ${sizes[i]}`;
+    }
+
+    /**
+     * Format text for display (trim, capitalize, etc.)
+     */
+    static formatText(text, options = {}) {
+        const {
+            trim = true,
+            capitalize = false,
+            titleCase = false,
+            maxLength = null,
+            ellipsis = '...'
+        } = options;
+        
+        if (!text || typeof text !== 'string') return text || '';
+        
+        let formatted = text;
+        
+        if (trim) {
+            formatted = formatted.trim();
+        }
+        
+        if (capitalize) {
+            formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1).toLowerCase();
+        }
+        
+        if (titleCase) {
+            formatted = formatted.replace(/\w\S*/g, (txt) =>
+                txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+            );
+        }
+        
+        if (maxLength && formatted.length > maxLength) {
+            formatted = formatted.substring(0, maxLength - ellipsis.length) + ellipsis;
+        }
+        
+        return formatted;
+    }
+
+    /**
+     * Format season/month name
+     */
+    static formatSeasonName(seasonKey) {
+        if (!seasonKey) return '';
+        
+        const seasonNames = {
+            january: 'January',
+            february: 'February',
+            march: 'March',
+            april: 'April',
+            may: 'May',
+            june: 'June',
+            july: 'July',
+            august: 'August',
+            september: 'September',
+            october: 'October',
+            november: 'November',
+            december: 'December'
+        };
+        
+        return seasonNames[seasonKey.toLowerCase()] || this.formatText(seasonKey, { capitalize: true });
+    }
+
+    /**
+     * Format color value (ensure proper hex format)
+     */
+    static formatColor(color) {
+        if (!color || typeof color !== 'string') return color;
+        
+        // Remove any whitespace
+        let formatted = color.trim();
+        
+        // Add # if missing
+        if (!formatted.startsWith('#')) {
+            formatted = `#${formatted}`;
+        }
+        
+        // Ensure uppercase
+        formatted = formatted.toUpperCase();
+        
+        // Validate hex format
+        if (!/^#[0-9A-F]{6}$/i.test(formatted)) {
+            console.warn('Invalid color format:', color);
+            return color; // Return original if invalid
+        }
+        
+        return formatted;
+    }
+
+    /**
+     * Format agent information for display
+     */
+    static formatAgentInfo(agent) {
+        return {
+            name: this.formatText(agent.name, { trim: true, titleCase: true }),
+            company: this.formatText(agent.company, { trim: true }),
+            phone: this.formatPhoneNumber(agent.phone),
+            email: (agent.email || '').trim().toLowerCase(),
+            website: this.formatWebsiteURL(agent.website)
+        };
+    }
+
+    /**
+     * Format market statistics for display
+     */
+    static formatMarketStats(stats) {
+        const formatted = {};
+        
+        Object.entries(stats).forEach(([key, value]) => {
+            if (key.includes('Price') && key !== 'priceChange') {
+                formatted[key] = this.formatCurrency(value, { compact: true });
+            } else if (key.includes('Change') && key !== 'supplyChange') {
+                formatted[key] = this.formatPercentage(value);
+            } else if (key.includes('Supply')) {
+                formatted[key] = this.formatNumber(value, { decimals: 2 });
+            } else {
+                formatted[key] = this.formatNumber(value, { compact: true });
+            }
+        });
+        
+        return formatted;
+    }
+
+    /**
+     * Format maintenance tip with emoji
+     */
+    static formatMaintenanceTip(tip) {
+        if (!tip || typeof tip !== 'string') return tip;
+        
+        const trimmed = tip.trim();
+        
+        // Check if tip already starts with an emoji
+        const emojiRegex = /^[\u{1F300}-\u{1F9FF}]|^[\u{2600}-\u{27BF}]/u;
+        
+        if (emojiRegex.test(trimmed)) {
+            return trimmed;
+        }
+        
+        // Add a default emoji if none present
+        return `🔧 ${trimmed}`;
+    }
+
+    /**
+     * Format content for HTML display (escape HTML entities)
+     */
+    static formatForHTML(content) {
+        if (!content || typeof content !== 'string') return content;
+        
+        return content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;');
+    }
+
+    /**
+     * Format content for email (additional safety)
+     */
+    static formatForEmail(content) {
+        if (!content) return content;
+        
+        // First escape HTML entities
+        let formatted = this.formatForHTML(content);
+        
+        // Replace line breaks with <br> tags
+        formatted = formatted.replace(/\n/g, '<br>');
+        
+        // Remove any remaining script tags or javascript
+        formatted = formatted.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        formatted = formatted.replace(/javascript:/gi, '');
+        formatted = formatted.replace(/on\w+\s*=/gi, '');
+        
+        return formatted;
+    }
+
+    /**
+     * Truncate text with ellipsis
+     */
+    static truncate(text, maxLength, options = {}) {
+        const {
+            ellipsis = '...',
+            wordBoundary = true
+        } = options;
+        
+        if (!text || typeof text !== 'string' || text.length <= maxLength) {
+            return text;
+        }
+        
+        let truncated = text.substring(0, maxLength - ellipsis.length);
+        
+        if (wordBoundary) {
+            // Try to break at word boundary
+            const lastSpaceIndex = truncated.lastIndexOf(' ');
+            if (lastSpaceIndex > maxLength * 0.8) { // Don't break too early
+                truncated = truncated.substring(0, lastSpaceIndex);
+            }
+        }
+        
+        return truncated + ellipsis;
+    }
+
+    /**
+     * Format duration (e.g., for processing times)
+     */
+    static formatDuration(milliseconds) {
+        if (!milliseconds || milliseconds < 0) return '0ms';
+        
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes % 60}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        } else if (seconds > 0) {
+            return `${seconds}s`;
+        } else {
+            return `${milliseconds}ms`;
+        }
+    }
+
+    /**
+     * Format relative time (e.g., "2 minutes ago")
+     */
+    static formatRelativeTime(date) {
+        if (!date) return '';
+        
+        const now = new Date();
+        const diffMs = now - new Date(date);
+        const diffSeconds = Math.floor(diffMs / 1000);
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        
+        if (diffSeconds < 60) {
+            return 'Just now';
+        } else if (diffMinutes < 60) {
+            return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+            return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 7) {
+            return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+        } else {
+            return this.formatDate(date, 'medium');
+        }
+    }
+
+    /**
+     * Format validation error messages
+     */
+    static formatValidationError(field, error) {
+        const fieldLabels = {
+            agentName: 'Agent Name',
+            companyName: 'Company Name',
+            agentPhone: 'Phone Number',
+            agentEmail: 'Email Address',
+            agentWebsite: 'Website',
+            personalMessage: 'Personal Message'
+        };
+        
+        const label = fieldLabels[field] || field;
+        
+        if (typeof error === 'string') {
+            return error.replace(field, label);
+        }
+        
+        return `${label}: ${error}`;
+    }
+}
+
+// Export for global use
+window.Formatters = Formatters;
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Formatters;
+}
