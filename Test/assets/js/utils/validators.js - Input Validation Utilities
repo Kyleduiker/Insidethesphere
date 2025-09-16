@@ -1,0 +1,605 @@
+/**
+ * Validation Utilities
+ * Common validation functions for form inputs and data
+ */
+
+class Validators {
+    /**
+     * Validate email address
+     */
+    static isValidEmail(email) {
+        if (!email || typeof email !== 'string') return false;
+        
+        // RFC 5322 compliant email regex (simplified)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    }
+
+    /**
+     * Validate URL
+     */
+    static isValidURL(url) {
+        if (!url || typeof url !== 'string') return false;
+        
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            // Try with http:// prefix if missing
+            try {
+                new URL(`http://${url}`);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Validate phone number (flexible format)
+     */
+    static isValidPhone(phone) {
+        if (!phone || typeof phone !== 'string') return false;
+        
+        // Remove all non-numeric characters
+        const digitsOnly = phone.replace(/\D/g, '');
+        
+        // Should have 10-15 digits (international format)
+        return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    }
+
+    /**
+     * Validate required field
+     */
+    static isRequired(value) {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') return value.trim().length > 0;
+        if (typeof value === 'number') return !isNaN(value);
+        if (Array.isArray(value)) return value.length > 0;
+        return !!value;
+    }
+
+    /**
+     * Validate string length
+     */
+    static isValidLength(str, minLength = 0, maxLength = Infinity) {
+        if (!str || typeof str !== 'string') return false;
+        const length = str.trim().length;
+        return length >= minLength && length <= maxLength;
+    }
+
+    /**
+     * Validate personal message
+     */
+    static isValidPersonalMessage(message) {
+        if (!message || typeof message !== 'string') {
+            return { valid: false, error: 'Personal message is required' };
+        }
+        
+        const trimmed = message.trim();
+        const minLength = 50;
+        const maxLength = 1500;
+        
+        if (trimmed.length < minLength) {
+            return { 
+                valid: false, 
+                error: `Personal message must be at least ${minLength} characters (currently ${trimmed.length})` 
+            };
+        }
+        
+        if (trimmed.length > maxLength) {
+            return { 
+                valid: false, 
+                error: `Personal message must be no more than ${maxLength} characters (currently ${trimmed.length})` 
+            };
+        }
+        
+        return { valid: true };
+    }
+
+    /**
+     * Validate website URL and format it
+     */
+    static validateAndFormatWebsite(website) {
+        if (!website || typeof website !== 'string') {
+            return { valid: false, error: 'Website is required' };
+        }
+        
+        let formatted = website.trim();
+        
+        // Remove protocol if present for storage
+        formatted = formatted.replace(/^https?:\/\//, '');
+        
+        // Remove www. if present
+        formatted = formatted.replace(/^www\./, '');
+        
+        // Basic domain validation
+        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+        
+        if (!domainRegex.test(formatted)) {
+            return { valid: false, error: 'Please enter a valid website domain' };
+        }
+        
+        return { valid: true, formatted };
+    }
+
+    /**
+     * Validate hex color code
+     */
+    static isValidHexColor(color) {
+        if (!color || typeof color !== 'string') return false;
+        return /^#[0-9A-F]{6}$/i.test(color);
+    }
+
+    /**
+     * Validate event data
+     */
+    static validateEvent(eventData) {
+        const errors = [];
+        
+        // Required fields
+        if (!this.isRequired(eventData.title)) {
+            errors.push('Event title is required');
+        }
+        
+        if (!this.isRequired(eventData.date)) {
+            errors.push('Event date is required');
+        } else if (!this.isValidDate(eventData.date)) {
+            errors.push('Event date is invalid');
+        }
+        
+        // Optional URL validation
+        if (eventData.detailsLink && !this.isValidURL(eventData.detailsLink)) {
+            errors.push('Event details link must be a valid URL');
+        }
+        
+        // Time validation
+        if (eventData.startTime && eventData.endTime) {
+            if (eventData.endTime <= eventData.startTime) {
+                errors.push('End time must be after start time');
+            }
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors
+        };
+    }
+
+    /**
+     * Validate date string (YYYY-MM-DD format)
+     */
+    static isValidDate(dateString) {
+        if (!dateString || typeof dateString !== 'string') return false;
+        
+        const date = new Date(dateString);
+        return date instanceof Date && !isNaN(date) && dateString === date.toISOString().split('T')[0];
+    }
+
+    /**
+     * Validate time string (HH:MM format)
+     */
+    static isValidTime(timeString) {
+        if (!timeString || typeof timeString !== 'string') return false;
+        
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        return timeRegex.test(timeString);
+    }
+
+    /**
+     * Validate numeric input
+     */
+    static isValidNumeric(value, min = -Infinity, max = Infinity) {
+        if (value === null || value === undefined || value === '') return false;
+        
+        const num = parseFloat(value);
+        return !isNaN(num) && num >= min && num <= max;
+    }
+
+    /**
+     * Validate percentage string (e.g., "+5.2%", "-1.8%")
+     */
+    static isValidPercentage(percentage) {
+        if (!percentage || typeof percentage !== 'string') return false;
+        
+        const percentRegex = /^[+-]?\d+(?:\.\d+)?%$/;
+        return percentRegex.test(percentage.trim());
+    }
+
+    /**
+     * Validate price string (e.g., "$500,000", "$1.2M")
+     */
+    static isValidPrice(price) {
+        if (!price || typeof price !== 'string') return false;
+        
+        const priceRegex = /^\$[\d,]+(?:\.\d{2})?[KMB]?$/;
+        return priceRegex.test(price.trim());
+    }
+
+    /**
+     * Validate maintenance tip
+     */
+    static validateMaintenanceTip(tip) {
+        if (!tip || typeof tip !== 'string') {
+            return { valid: false, error: 'Maintenance tip cannot be empty' };
+        }
+        
+        const trimmed = tip.trim();
+        
+        if (trimmed.length < 5) {
+            return { valid: false, error: 'Maintenance tip is too short' };
+        }
+        
+        if (trimmed.length > 200) {
+            return { valid: false, error: 'Maintenance tip is too long (max 200 characters)' };
+        }
+        
+        return { valid: true };
+    }
+
+    /**
+     * Validate property type name
+     */
+    static validatePropertyTypeName(name) {
+        if (!name || typeof name !== 'string') {
+            return { valid: false, error: 'Property type name is required' };
+        }
+        
+        const trimmed = name.trim();
+        
+        if (trimmed.length < 2) {
+            return { valid: false, error: 'Property type name is too short' };
+        }
+        
+        if (trimmed.length > 50) {
+            return { valid: false, error: 'Property type name is too long (max 50 characters)' };
+        }
+        
+        // Check for valid characters (letters, numbers, spaces, common punctuation)
+        const validChars = /^[a-zA-Z0-9\s\-\/&,.()]+$/;
+        if (!validChars.test(trimmed)) {
+            return { valid: false, error: 'Property type name contains invalid characters' };
+        }
+        
+        return { valid: true, formatted: trimmed };
+    }
+
+    /**
+     * Validate form data based on field rules
+     */
+    static validateFormData(formData, validationRules) {
+        const errors = {};
+        const warnings = {};
+        
+        Object.entries(validationRules).forEach(([fieldName, rules]) => {
+            const value = formData[fieldName];
+            const fieldErrors = [];
+            const fieldWarnings = [];
+            
+            // Required validation
+            if (rules.required && !this.isRequired(value)) {
+                fieldErrors.push(`${rules.label || fieldName} is required`);
+            }
+            
+            // Skip other validations if field is empty and not required
+            if (!this.isRequired(value) && !rules.required) {
+                return;
+            }
+            
+            // Type-specific validations
+            if (rules.type === 'email' && !this.isValidEmail(value)) {
+                fieldErrors.push('Please enter a valid email address');
+            }
+            
+            if (rules.type === 'url' && !this.isValidURL(value)) {
+                fieldErrors.push('Please enter a valid URL');
+            }
+            
+            if (rules.type === 'phone' && !this.isValidPhone(value)) {
+                fieldErrors.push('Please enter a valid phone number');
+            }
+            
+            if (rules.type === 'color' && !this.isValidHexColor(value)) {
+                fieldErrors.push('Please enter a valid hex color code');
+            }
+            
+            // Length validation
+            if (rules.minLength && (!value || value.length < rules.minLength)) {
+                fieldErrors.push(`Must be at least ${rules.minLength} characters long`);
+            }
+            
+            if (rules.maxLength && value && value.length > rules.maxLength) {
+                fieldErrors.push(`Must be no more than ${rules.maxLength} characters long`);
+            }
+            
+            // Custom validation function
+            if (rules.customValidator && typeof rules.customValidator === 'function') {
+                const customResult = rules.customValidator(value);
+                if (customResult && !customResult.valid) {
+                    fieldErrors.push(customResult.error);
+                }
+                if (customResult && customResult.warning) {
+                    fieldWarnings.push(customResult.warning);
+                }
+            }
+            
+            // Store errors and warnings
+            if (fieldErrors.length > 0) {
+                errors[fieldName] = fieldErrors;
+            }
+            if (fieldWarnings.length > 0) {
+                warnings[fieldName] = fieldWarnings;
+            }
+        });
+        
+        return {
+            valid: Object.keys(errors).length === 0,
+            errors,
+            warnings
+        };
+    }
+
+    /**
+     * Get validation rules for newsletter form fields
+     */
+    static getNewsletterValidationRules() {
+        return {
+            agentName: {
+                required: true,
+                label: 'Agent Name',
+                minLength: 2,
+                maxLength: 100
+            },
+            companyName: {
+                required: true,
+                label: 'Company Name',
+                minLength: 2,
+                maxLength: 100
+            },
+            agentPhone: {
+                required: true,
+                type: 'phone',
+                label: 'Phone Number'
+            },
+            agentEmail: {
+                required: true,
+                type: 'email',
+                label: 'Email Address'
+            },
+            agentWebsite: {
+                required: true,
+                type: 'url',
+                label: 'Website',
+                customValidator: this.validateAndFormatWebsite
+            },
+            personalMessage: {
+                required: true,
+                label: 'Personal Message',
+                customValidator: this.validatePersonalMessage
+            },
+            customSubtitle: {
+                required: false,
+                maxLength: 50,
+                label: 'Custom Subtitle'
+            },
+            marketButtonText: {
+                required: false,
+                maxLength: 50,
+                label: 'Market Button Text'
+            },
+            marketButtonUrl: {
+                required: false,
+                type: 'url',
+                label: 'Market Button URL'
+            }
+        };
+    }
+
+    /**
+     * Sanitize input to prevent XSS
+     */
+    static sanitizeInput(input) {
+        if (typeof input !== 'string') return input;
+        
+        return input
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;')
+            .replace(/\//g, '&#x2F;');
+    }
+
+    /**
+     * Validate and sanitize all form inputs
+     */
+    static sanitizeFormData(formData) {
+        const sanitized = {};
+        
+        Object.entries(formData).forEach(([key, value]) => {
+            if (typeof value === 'string') {
+                sanitized[key] = this.sanitizeInput(value);
+            } else {
+                sanitized[key] = value;
+            }
+        });
+        
+        return sanitized;
+    }
+
+    /**
+     * Check if input contains potentially harmful content
+     */
+    static containsMaliciousContent(input) {
+        if (typeof input !== 'string') return false;
+        
+        const maliciousPatterns = [
+            /<script/i,
+            /javascript:/i,
+            /on\w+\s*=/i,
+            /<iframe/i,
+            /<object/i,
+            /<embed/i,
+            /data:text\/html/i,
+            /vbscript:/i
+        ];
+        
+        return maliciousPatterns.some(pattern => pattern.test(input));
+    }
+
+    /**
+     * Validate file upload
+     */
+    static validateFileUpload(file, options = {}) {
+        const {
+            maxSize = 5 * 1024 * 1024, // 5MB
+            allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+            minWidth = 100,
+            maxWidth = 4000,
+            minHeight = 100,
+            maxHeight = 4000
+        } = options;
+        
+        const errors = [];
+        
+        if (!file) {
+            errors.push('No file selected');
+            return { valid: false, errors };
+        }
+        
+        // File size validation
+        if (file.size > maxSize) {
+            errors.push(`File size (${this.formatFileSize(file.size)}) exceeds maximum allowed size (${this.formatFileSize(maxSize)})`);
+        }
+        
+        // File type validation
+        if (!allowedTypes.includes(file.type)) {
+            errors.push(`File type (${file.type}) is not allowed. Allowed types: ${allowedTypes.join(', ')}`);
+        }
+        
+        // File name validation
+        if (file.name.length > 255) {
+            errors.push('File name is too long');
+        }
+        
+        if (this.containsMaliciousContent(file.name)) {
+            errors.push('File name contains potentially harmful content');
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors
+        };
+    }
+
+    /**
+     * Format file size for display
+     */
+    static formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    /**
+     * Real-time validation for input fields
+     */
+    static createRealTimeValidator(field, validationRules) {
+        const validator = (event) => {
+            const value = event.target.value;
+            const rules = validationRules[field.name] || validationRules[field.id];
+            
+            if (!rules) return;
+            
+            // Clear previous validation state
+            field.classList.remove('valid', 'invalid');
+            
+            // Find existing error message
+            let errorElement = field.parentNode.querySelector('.validation-message');
+            
+            // Validate the field
+            const result = this.validateFormData({ [field.name || field.id]: value }, { [field.name || field.id]: rules });
+            
+            if (result.valid) {
+                field.classList.add('valid');
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+            } else {
+                field.classList.add('invalid');
+                
+                // Show error message
+                const errors = result.errors[field.name || field.id];
+                if (errors && errors.length > 0) {
+                    if (!errorElement) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'validation-message error';
+                        field.parentNode.appendChild(errorElement);
+                    }
+                    
+                    errorElement.textContent = errors[0];
+                    errorElement.style.display = 'block';
+                }
+            }
+        };
+        
+        // Debounce the validator
+        return this.debounce(validator, 300);
+    }
+
+    /**
+     * Debounce utility for validators
+     */
+    static debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func.apply(this, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * Batch validate multiple fields
+     */
+    static batchValidate(formData, validationRules) {
+        return this.validateFormData(formData, validationRules);
+    }
+
+    /**
+     * Check if all required fields are filled
+     */
+    static areRequiredFieldsFilled(formData, validationRules) {
+        const requiredFields = Object.entries(validationRules)
+            .filter(([fieldName, rules]) => rules.required)
+            .map(([fieldName]) => fieldName);
+        
+        return requiredFields.every(fieldName => this.isRequired(formData[fieldName]));
+    }
+
+    /**
+     * Get completion percentage for form
+     */
+    static getFormCompletionPercentage(formData, validationRules) {
+        const totalFields = Object.keys(validationRules).length;
+        const filledFields = Object.keys(validationRules).filter(fieldName => 
+            this.isRequired(formData[fieldName])
+        ).length;
+        
+        return Math.round((filledFields / totalFields) * 100);
+    }
+}
+
+// Export for global use
+window.Validators = Validators;
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Validators;
+}
