@@ -1,0 +1,754 @@
+/**
+ * Export Manager Module
+ * Handles newsletter export in various formats (HTML, Email, Print)
+ */
+
+class ExportManager {
+    constructor() {
+        this.emailTemplate = null;
+        this.printTemplate = null;
+        this.init();
+    }
+
+    /**
+     * Initialize export manager
+     */
+    init() {
+        this.setupEmailTemplate();
+        this.setupPrintStyles();
+    }
+
+    /**
+     * Copy email-safe HTML to clipboard
+     */
+    async copyEmailSafeHTML() {
+        try {
+            const html = await this.generateEmailSafeHTML();
+            const success = await DOMHelpers.copyToClipboard(html);
+            
+            if (success) {
+                DOMHelpers.showToast('Newsletter copied for email!', 'success', 6000);
+                return true;
+            } else {
+                throw new Error('Clipboard API failed');
+            }
+        } catch (error) {
+            console.error('Failed to copy to clipboard:', error);
+            
+            // Fallback: show modal with HTML for manual copy
+            this.showCopyModal(await this.generateEmailSafeHTML());
+            DOMHelpers.showToast('Please copy the HTML manually', 'warning');
+            return false;
+        }
+    }
+
+    /**
+     * Export as HTML file
+     */
+    async exportAsHTML() {
+        try {
+            const html = await this.generateEmailSafeHTML();
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            
+            const data = window.newsletterData.getData();
+            const season = data.content.newsletterSeason || 'newsletter';
+            const filename = `newsletter-${season}-2025-email-safe.html`;
+            
+            this.downloadBlob(blob, filename);
+            DOMHelpers.showToast('Newsletter exported successfully!', 'success');
+            
+            return true;
+        } catch (error) {
+            console.error('Export failed:', error);
+            DOMHelpers.showToast('Export failed. Please try again.', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Print newsletter
+     */
+    printNewsletter() {
+        try {
+            // Scroll to top for better print layout
+            window.scrollTo(0, 0);
+            
+            // Add print-specific styles
+            this.addPrintStyles();
+            
+            // Show loading message
+            DOMHelpers.showToast('Opening print dialog...', 'info', 2000);
+            
+            // Small delay to ensure styles are applied
+            setTimeout(() => {
+                window.print();
+                this.removePrintStyles();
+            }, 100);
+            
+            return true;
+        } catch (error) {
+            console.error('Print failed:', error);
+            DOMHelpers.showToast('Print dialog failed to open', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Generate email-safe HTML with table layouts
+     */
+    async generateEmailSafeHTML() {
+        const data = window.newsletterData.getData();
+        const config = window.NewsletterConfig;
+        const season = data.content.newsletterSeason || 'august';
+        const seasonConfig = config.SEASONS[season];
+        const colors = data.design.colors;
+
+        // Get newsletter content
+        const newsletterContent = await this.generateNewsletterContent(data, seasonConfig, colors);
+        
+        // Wrap in email-safe template
+        return this.wrapInEmailTemplate(newsletterContent, seasonConfig, colors);
+    }
+
+    /**
+     * Generate newsletter content
+     */
+    async generateNewsletterContent(data, seasonConfig, colors) {
+        const smartButtonsHtml = await this.generateSmartButtonsHTML(data, colors);
+        const marketStatsHtml = await this.generateMarketStatsHTML(data, colors);
+        const eventsHtml = await this.generateEventsHTML(data, colors);
+        const maintenanceTipsHtml = await this.generateMaintenanceTipsHTML(data, seasonConfig, colors);
+        const footerHtml = await this.generateFooterHTML(data, colors);
+        const bannerHtml = await this.generateBannerHTML(data, seasonConfig, colors);
+
+        return `
+            ${bannerHtml}
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td align="center" style="padding: 30px 0;">
+                        <div style="font-family: ${data.design.headerFont}; font-size: 28px; font-weight: 300; color: ${colors.headerText};">
+                            ${data.content.customSubtitle || seasonConfig.subtitle}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 0 20px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" 
+                               style="max-width: 500px; margin: 0 auto; background: ${colors.background}; 
+                                      border-left: 4px solid ${colors.accent}; border-radius: 8px;">
+                            <tr>
+                                <td style="padding: 25px;">
+                                    <p style="font-size: 16px; line-height: 1.8; color: ${colors.bodyText}; 
+                                             margin: 0; font-weight: 400; font-style: italic; text-align: center;">
+                                        ${data.content.personalMessage}
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            
+            ${smartButtonsHtml}
+            ${marketStatsHtml}
+            ${eventsHtml}
+            ${maintenanceTipsHtml}
+            ${footerHtml}
+        `;
+    }
+
+    /**
+     * Generate banner HTML for email
+     */
+    async generateBannerHTML(data, seasonConfig, colors) {
+        const bannerStyle = data.design.bannerStyle;
+        
+        if (bannerStyle === 'none') {
+            return `
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                        <td align="center" style="padding: 40px 20px;">
+                            <h1 style="font-family: ${data.design.headerFont}; font-size: 36px; 
+                                     font-weight: 400; letter-spacing: 3px; margin: 0; color: ${colors.headerText};">
+                                ${seasonConfig.title}
+                            </h1>
+                        </td>
+                    </tr>
+                </table>
+            `;
+        }
+
+        const bannerImages = {
+            mountains: 'https://i.imgur.com/0dARtuj.png',
+            cityscape: 'https://i.imgur.com/qok5dLZ.jpg',
+            blueprint: 'https://i.imgur.com/W24OelN.jpg',
+            custom: data.images.customBanner
+        };
+
+        const bannerUrl = bannerImages[bannerStyle] || bannerImages.mountains;
+        const showText = bannerStyle !== 'custom' || !data.design.hideCustomBannerText;
+
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td align="center" style="padding: 40px 20px 60px;">
+                        <div style="position: relative; max-width: 600px; margin: 0 auto;">
+                            <img src="${bannerUrl}" alt="${seasonConfig.title}" 
+                                 style="width: 100%; max-width: 600px; height: 300px; object-fit: cover; 
+                                        border-radius: 20px; display: block;">
+                            ${showText ? `
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                        text-align: center; width: 100%;">
+                                <h1 style="font-family: ${data.design.headerFont}; font-size: 42px; 
+                                         font-weight: 400; letter-spacing: 4px; margin: 0; color: white; 
+                                         text-shadow: 0 4px 20px rgba(0,0,0,0.7);">
+                                    ${seasonConfig.title}
+                                </h1>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Generate smart buttons HTML for email
+     */
+    async generateSmartButtonsHTML(data, colors) {
+        const enabledButtons = this.getEnabledSmartButtons(data);
+        
+        if (enabledButtons.length === 0) return '';
+
+        const buttonsPerRow = enabledButtons.length > 4 ? 2 : Math.min(enabledButtons.length, 3);
+        const buttonRows = this.chunkArray(enabledButtons, buttonsPerRow);
+        
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 40px 20px 0;">
+                        ${buttonRows.map(row => `
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 15px;">
+                                <tr>
+                                    ${row.map(button => `
+                                        <td align="center" style="padding: 0 8px;">
+                                            <a href="${button.url}" 
+                                               style="display: block; background: ${button.color}; color: white; 
+                                                      padding: 12px 16px; text-decoration: none; border-radius: 6px; 
+                                                      font-weight: 600; font-size: 13px; text-align: center; 
+                                                      text-transform: uppercase; letter-spacing: 0.5px;"
+                                               target="_blank">
+                                                ${button.icon} ${button.name}
+                                            </a>
+                                        </td>
+                                    `).join('')}
+                                    ${row.length < buttonsPerRow ? '<td></td>'.repeat(buttonsPerRow - row.length) : ''}
+                                </tr>
+                            </table>
+                        `).join('')}
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Generate market stats HTML for email
+     */
+    async generateMarketStatsHTML(data, colors) {
+        const stats = data.stats;
+        const propertyColors = data.design.propertyTypeColors;
+        
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 40px 20px; border-top: 1px solid #e0e0e0;">
+                        <h2 style="font-family: ${data.design.headerFont}; font-size: 24px; font-weight: 400; 
+                                 text-align: center; margin-bottom: 30px; color: ${colors.headerText};">
+                            Market Statistics
+                        </h2>
+                        
+                        <!-- Main Stats Grid -->
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
+                            <tr>
+                                <td width="33%" align="center" style="padding: 20px; background: ${colors.background}; border-radius: 8px;">
+                                    <div style="font-size: 24px; font-weight: 600; color: ${colors.accent}; margin-bottom: 5px;">
+                                        ${stats.avgPrice}
+                                    </div>
+                                    <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">
+                                        Total Residential Price
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 500; color: ${this.getChangeColor(stats.priceChange)};">
+                                        ${stats.priceChange} Y/Y
+                                    </div>
+                                </td>
+                                <td width="33%" align="center" style="padding: 20px;">
+                                    <div style="font-size: 24px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 5px;">
+                                        ${stats.homesSold}
+                                    </div>
+                                    <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">
+                                        Sales
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 500; color: ${this.getChangeColor(stats.salesChange)};">
+                                        ${stats.salesChange || 'N/A'} Y/Y
+                                    </div>
+                                </td>
+                                <td width="33%" align="center" style="padding: 20px; background: ${colors.background}; border-radius: 8px;">
+                                    <div style="font-size: 24px; font-weight: 600; color: ${propertyColors.row}; margin-bottom: 5px;">
+                                        ${stats.newListings}
+                                    </div>
+                                    <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">
+                                        New Listings
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 500; color: ${this.getChangeColor(stats.listingsChange)};">
+                                        ${stats.listingsChange || 'N/A'} Y/Y
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        ${data.content.marketButtonText ? `
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                                <td align="center" style="padding-top: 30px;">
+                                    <a href="${data.content.marketButtonUrl || '#'}" 
+                                       style="display: inline-block; background: ${data.design.buttonColors.marketReport}; 
+                                              color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; 
+                                              font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;"
+                                       target="_blank">
+                                        ${data.content.marketButtonText}
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        ` : ''}
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Generate events HTML for email
+     */
+    async generateEventsHTML(data, colors) {
+        const events = data.customEvents || [];
+        
+        if (events.length === 0) return '';
+
+        const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 40px 20px; border-top: 1px solid #e0e0e0;">
+                        <h2 style="font-family: ${data.design.headerFont}; font-size: 24px; font-weight: 400; 
+                                 text-align: center; margin-bottom: 30px; color: ${colors.headerText};">
+                            Community Calendar
+                        </h2>
+                        
+                        ${sortedEvents.map(event => {
+                            const eventDate = this.formatEventDate(event.date);
+                            const eventTime = this.formatEventTime(event.startTime, event.endTime);
+                            
+                            return `
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" 
+                                       style="margin-bottom: 20px; border: 1px solid #f0f0f0; border-radius: 8px; background: #fafafa;">
+                                    <tr>
+                                        <td width="100" align="center" style="padding: 20px;">
+                                            <div style="background: ${colors.accent}; color: white; padding: 8px; 
+                                                      font-size: 11px; text-transform: uppercase; margin-bottom: 5px; 
+                                                      border-radius: 4px;">
+                                                ${eventDate.month}
+                                            </div>
+                                            <div style="font-size: 24px; font-weight: 300; color: ${colors.headerText};">
+                                                ${eventDate.day}
+                                            </div>
+                                            ${eventTime ? `
+                                            <div style="font-size: 10px; color: ${colors.bodyText}; margin-top: 5px;">
+                                                ${eventTime}
+                                            </div>
+                                            ` : ''}
+                                        </td>
+                                        <td style="padding: 20px;">
+                                            <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 5px; color: ${colors.headerText};">
+                                                ${event.title}
+                                            </h3>
+                                            ${event.location ? `
+                                            <p style="font-size: 13px; color: ${colors.bodyText}; margin: 0 0 5px 0;">
+                                                📍 ${event.location}
+                                            </p>
+                                            ` : ''}
+                                            ${event.description ? `
+                                            <p style="font-size: 12px; color: #999; margin: 5px 0 0 0; font-style: italic;">
+                                                ${event.description}
+                                            </p>
+                                            ` : ''}
+                                            ${event.detailsLink ? `
+                                            <div style="margin-top: 15px;">
+                                                <a href="${event.detailsLink}" 
+                                                   style="display: inline-block; background: ${colors.accent}; color: white; 
+                                                          padding: 8px 16px; text-decoration: none; border-radius: 5px; 
+                                                          font-size: 12px; font-weight: 600; text-transform: uppercase;"
+                                                   target="_blank">
+                                                    Event Details
+                                                </a>
+                                            </div>
+                                            ` : ''}
+                                        </td>
+                                        ${event.image ? `
+                                        <td width="150" style="padding: 20px;">
+                                            <img src="${event.image}" alt="Event" 
+                                                 style="width: 140px; height: 100px; object-fit: cover; 
+                                                        border-radius: 6px; border: 2px solid #e0e0e0;">
+                                        </td>
+                                        ` : ''}
+                                    </tr>
+                                </table>
+                            `;
+                        }).join('')}
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Generate maintenance tips HTML for email
+     */
+    async generateMaintenanceTipsHTML(data, seasonConfig, colors) {
+        const tips = data.maintenanceTips || seasonConfig.tips || [];
+        const month = data.content.newsletterSeason || 'august';
+        
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 40px 20px; border-top: 1px solid #e0e0e0;">
+                        <h2 style="font-family: ${data.design.headerFont}; font-size: 24px; font-weight: 400; 
+                                 text-align: center; margin-bottom: 30px; color: ${colors.headerText};">
+                            ${month.charAt(0).toUpperCase() + month.slice(1)} Maintenance Tips
+                        </h2>
+                        
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                                <td style="background: ${colors.background}; padding: 30px; border-radius: 8px;">
+                                    ${tips.map(tip => `
+                                        <div style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; 
+                                                  font-size: 14px; color: ${colors.bodyText};">
+                                            ${tip}
+                                        </div>
+                                    `).join('')}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Generate footer HTML for email
+     */
+    async generateFooterHTML(data, colors) {
+        return `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="background: ${colors.background}; padding: 40px 20px; text-align: center;">
+                        ${data.images.brokerageLogo ? `
+                        <div style="margin-bottom: 30px;">
+                            <img src="${data.images.brokerageLogo}" alt="Brokerage Logo" 
+                                 style="max-width: 200px; max-height: 80px; object-fit: contain;">
+                        </div>
+                        ` : ''}
+                        
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                            <tr>
+                                <td style="padding-right: 30px;">
+                                    <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; background: #e0e0e0;">
+                                        ${data.images.agentPhoto ? 
+                                            `<img src="${data.images.agentPhoto}" alt="Agent Photo" 
+                                                  style="width: 100%; height: 100%; object-fit: cover;">` :
+                                            `<div style="width: 100%; height: 100%; display: flex; align-items: center; 
+                                                       justify-content: center; color: #999; font-size: 12px;">
+                                                Agent Photo
+                                             </div>`
+                                        }
+                                    </div>
+                                </td>
+                                <td style="text-align: left;">
+                                    <h3 style="font-family: ${data.design.headerFont}; font-size: 22px; 
+                                             font-weight: 400; margin-bottom: 5px; color: ${colors.headerText};">
+                                        ${data.agent.name || 'Your Name'}
+                                    </h3>
+                                    <p style="font-size: 13px; color: ${colors.bodyText}; text-transform: uppercase; 
+                                             letter-spacing: 0.5px; margin-bottom: 10px;">
+                                        ${data.agent.company || 'Your Company'}
+                                    </p>
+                                    <p style="font-size: 14px; margin: 5px 0; color: ${colors.bodyText};">
+                                        📱 ${data.agent.phone || '(000) 000-0000'}
+                                    </p>
+                                    <p style="font-size: 14px; margin: 5px 0; color: ${colors.bodyText};">
+                                        ✉️ ${data.agent.email || 'your@email.com'}
+                                    </p>
+                                </td>
+                                ${data.images.agentLogo ? `
+                                <td style="padding-left: 20px;">
+                                    <img src="${data.images.agentLogo}" alt="Agent Logo" 
+                                         style="max-width: 120px; max-height: 80px; object-fit: contain;">
+                                </td>
+                                ` : ''}
+                            </tr>
+                        </table>
+                        
+                        <div style="margin-top: 20px;">
+                            <a href="http://${data.agent.website || 'www.yourwebsite.com'}" 
+                               style="color: ${colors.accent}; text-decoration: none; font-size: 14px;">
+                                ${data.agent.website || 'www.yourwebsite.com'}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        `;
+    }
+
+    /**
+     * Wrap content in email-safe template
+     */
+    wrapInEmailTemplate(content, seasonConfig, colors) {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Newsletter - ${seasonConfig.title}</title>
+    <meta name="x-apple-disable-message-reformatting">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+        
+        body, table, td, div, p, a {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        .ReadMsgBody { width: 100%; }
+        .ExternalClass { width: 100%; }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Montserrat', sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="650" style="max-width: 650px; background-color: white; margin: 0 auto; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="font-family: 'Montserrat', sans-serif; color: ${colors.bodyText};">
+                            ${content}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+    }
+
+    /**
+     * Show manual copy modal
+     */
+    showCopyModal(html) {
+        const modal = DOMHelpers.createElement('div', {
+            className: 'modal-overlay modal-overlay--show',
+            style: { zIndex: 10001 }
+        });
+
+        const modalContent = DOMHelpers.createElement('div', {
+            className: 'modal',
+            style: { maxWidth: '800px', width: '90%' }
+        }, `
+            <h3>Manual Copy Required</h3>
+            <p>Please select all text below and copy it manually:</p>
+            <textarea readonly style="width: 100%; height: 300px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">${html}</textarea>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn--primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            </div>
+        `);
+
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Auto-select text
+        const textarea = modal.querySelector('textarea');
+        textarea.focus();
+        textarea.select();
+    }
+
+    /**
+     * Helper functions
+     */
+    getEnabledSmartButtons(data) {
+        const buttons = data.agent.smartButtons;
+        const buttonColors = data.design.buttonColors;
+        const enabled = [];
+
+        if (buttons.buyersGuide.url) {
+            enabled.push({
+                name: buttons.buyersGuide.name || 'Button 1',
+                url: buttons.buyersGuide.url,
+                color: buttonColors.buyersGuide,
+                icon: '🔘'
+            });
+        }
+
+        if (buttons.sellersGuide.url) {
+            enabled.push({
+                name: buttons.sellersGuide.name || 'Button 2',
+                url: buttons.sellersGuide.url,
+                color: buttonColors.sellersGuide,
+                icon: '🔘'
+            });
+        }
+
+        if (buttons.website.url) {
+            enabled.push({
+                name: buttons.website.name || 'Button 3',
+                url: buttons.website.url,
+                color: buttonColors.website,
+                icon: '🔘'
+            });
+        }
+
+        if (buttons.blog.url) {
+            enabled.push({
+                name: buttons.blog.name || 'Button 4',
+                url: buttons.blog.url,
+                color: buttonColors.blog,
+                icon: '🔘'
+            });
+        }
+
+        return enabled;
+    }
+
+    chunkArray(array, size) {
+        const chunks = [];
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+        }
+        return chunks;
+    }
+
+    getChangeColor(change) {
+        if (!change) return '#666';
+        return change.startsWith('-') ? '#dc3545' : '#27ae60';
+    }
+
+    formatEventDate(dateString) {
+        const [year, month, day] = dateString.split('-');
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
+                           'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        return {
+            month: monthNames[parseInt(month) - 1],
+            day: parseInt(day)
+        };
+    }
+
+    formatEventTime(startTime, endTime) {
+        if (!startTime) return '';
+        
+        const formatTime = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':');
+            const hour12 = hours % 12 || 12;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            return `${hour12}:${minutes} ${ampm}`;
+        };
+        
+        const formattedStart = formatTime(startTime);
+        
+        if (endTime) {
+            const formattedEnd = formatTime(endTime);
+            return `${formattedStart} - ${formattedEnd}`;
+        }
+        
+        return formattedStart;
+    }
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    addPrintStyles() {
+        if (document.getElementById('print-styles')) return;
+
+        const printStyles = document.createElement('style');
+        printStyles.id = 'print-styles';
+        printStyles.textContent = `
+            @media print {
+                body * { visibility: hidden; }
+                #newsletterPreview, #newsletterPreview * { visibility: visible; }
+                #newsletterPreview {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100% !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+            }
+        `;
+        document.head.appendChild(printStyles);
+    }
+
+    removePrintStyles() {
+        const printStyles = document.getElementById('print-styles');
+        if (printStyles) {
+            printStyles.remove();
+        }
+    }
+
+    setupEmailTemplate() {
+        // Email template setup if needed
+    }
+
+    setupPrintStyles() {
+        // Print styles setup if needed
+    }
+}
+
+// Create global instance
+window.exportManager = new ExportManager();
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ExportManager;
+}
