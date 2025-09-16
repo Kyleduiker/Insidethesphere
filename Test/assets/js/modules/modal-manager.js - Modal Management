@@ -1,0 +1,638 @@
+/**
+ * Modal Manager Module
+ * Handles all modal functionality including show/hide, form handling, and event management
+ */
+
+class ModalManager {
+    constructor() {
+        this.activeModals = new Set();
+        this.modalStack = [];
+        this.keyboardListeners = new Map();
+        this.init();
+    }
+
+    /**
+     * Initialize modal manager
+     */
+    init() {
+        this.bindGlobalEvents();
+        this.setupModals();
+    }
+
+    /**
+     * Setup all modals with their event listeners
+     */
+    setupModals() {
+        // Find all modal overlays
+        const modals = DOMHelpers.findElements('.modal-overlay');
+        
+        modals.forEach(modal => {
+            this.setupModal(modal);
+        });
+    }
+
+    /**
+     * Setup individual modal
+     */
+    setupModal(modalElement) {
+        const modalId = modalElement.id;
+        
+        // Setup close buttons
+        const closeButtons = modalElement.querySelectorAll('[data-action="close-modal"]');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => this.close(modalId));
+        });
+
+        // Setup action buttons
+        const actionButtons = modalElement.querySelectorAll('[data-action]');
+        actionButtons.forEach(btn => {
+            const action = btn.dataset.action;
+            if (action !== 'close-modal') {
+                btn.addEventListener('click', (e) => this.handleAction(action, e, modalId));
+            }
+        });
+
+        // Setup form submissions
+        const forms = modalElement.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', (e) => this.handleFormSubmit(e, modalId));
+        });
+
+        // Close on overlay click
+        modalElement.addEventListener('click', (e) => {
+            if (e.target === modalElement) {
+                this.close(modalId);
+            }
+        });
+    }
+
+    /**
+     * Show modal
+     */
+    show(modalId, options = {}) {
+        const modal = DOMHelpers.findElement(`#${modalId}`);
+        if (!modal) {
+            console.warn(`Modal not found: ${modalId}`);
+            return false;
+        }
+
+        // Add to active modals
+        this.activeModals.add(modalId);
+        this.modalStack.push(modalId);
+
+        // Show modal
+        modal.classList.add('modal-overlay--show');
+        document.body.classList.add('modal-open');
+
+        // Focus first input if available
+        const firstInput = modal.querySelector('input, select, textarea, button');
+        if (firstInput && !options.skipFocus) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+
+        // Setup keyboard listeners
+        this.setupModalKeyboardHandlers(modalId);
+
+        // Trigger modal shown event
+        this.triggerEvent('modalShown', { modalId, modal });
+
+        // Run any initialization callback
+        if (options.onShow) {
+            options.onShow(modal);
+        }
+
+        return true;
+    }
+
+    /**
+     * Close modal
+     */
+    close(modalId) {
+        const modal = DOMHelpers.findElement(`#${modalId}`);
+        if (!modal || !this.activeModals.has(modalId)) {
+            return false;
+        }
+
+        // Remove from active modals
+        this.activeModals.delete(modalId);
+        this.modalStack = this.modalStack.filter(id => id !== modalId);
+
+        // Hide modal
+        modal.classList.remove('modal-overlay--show');
+
+        // Remove body class if no more modals
+        if (this.activeModals.size === 0) {
+            document.body.classList.remove('modal-open');
+        }
+
+        // Clean up form if present
+        const form = modal.querySelector('form');
+        if (form) {
+            this.resetForm(form);
+        }
+
+        // Clean up validation messages
+        this.clearValidationMessages(modal);
+
+        // Clean up keyboard listeners
+        this.cleanupModalKeyboardHandlers(modalId);
+
+        // Trigger modal closed event
+        this.triggerEvent('modalClosed', { modalId, modal });
+
+        // Focus on the previous modal or body
+        if (this.modalStack.length > 0) {
+            const previousModalId = this.modalStack[this.modalStack.length - 1];
+            const previousModal = DOMHelpers.findElement(`#${previousModalId}`);
+            const focusElement = previousModal?.querySelector('input, select, textarea, button');
+            if (focusElement) focusElement.focus();
+        }
+
+        return true;
+    }
+
+    /**
+     * Close all modals
+     */
+    closeAll() {
+        const modalsToClose = [...this.activeModals];
+        modalsToClose.forEach(modalId => this.close(modalId));
+    }
+
+    /**
+     * Toggle modal
+     */
+    toggle(modalId, options = {}) {
+        if (this.isOpen(modalId)) {
+            return this.close(modalId);
+        } else {
+            return this.show(modalId, options);
+        }
+    }
+
+    /**
+     * Check if modal is open
+     */
+    isOpen(modalId) {
+        return this.activeModals.has(modalId);
+    }
+
+    /**
+     * Get currently active modal
+     */
+    getActiveModal() {
+        if (this.modalStack.length === 0) return null;
+        return this.modalStack[this.modalStack.length - 1];
+    }
+
+    /**
+     * Handle form submission
+     */
+    handleFormSubmit(e, modalId) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = DOMHelpers.getFormData(form);
+        
+        // Validate form
+        if (!this.validateForm(form)) {
+            return false;
+        }
+
+        // Handle specific forms
+        switch (modalId) {
+            case 'addEventModal':
+                this.handleAddEvent(formData);
+                break;
+                
+            case 'addCustomPropertyTypeModal':
+                this.handleAddCustomPropertyType(formData);
+                break;
+                
+            default:
+                // Trigger generic form submit event
+                this.triggerEvent('formSubmit', { modalId, formData, form });
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle add event form
+     */
+    handleAddEvent(formData) {
+        const { title, date, startTime, endTime, location, description, detailsLink } = formData;
+        
+        // Validation
+        if (!title || !date) {
+            DOMHelpers.showToast('Please fill in Title and Date (required fields)', 'error');
+            return;
+        }
+
+        // Validate URL if provided
+        if (detailsLink && !detailsLink.startsWith('http://') && !detailsLink.startsWith('https://')) {
+            DOMHelpers.showToast('Event details link must start with http:// or https://', 'error');
+            return;
+        }
+
+        // Validate end time is after start time
+        if (startTime && endTime && endTime <= startTime) {
+            DOMHelpers.showToast('End time must be after start time', 'error');
+            return;
+        }
+
+        // Add event to data
+        const eventData = {
+            title,
+            date,
+            startTime,
+            endTime,
+            location,
+            description,
+            detailsLink,
+            image: window.newsletterData.getData().images.currentEventImage
+        };
+
+        const newEvent = window.newsletterData.addEvent(eventData);
+        
+        // Reset current event image
+        window.newsletterData.setImage('currentEventImage', null);
+        
+        DOMHelpers.showToast('Event added successfully!', 'success');
+        this.close('addEventModal');
+        
+        // Trigger event added
+        this.triggerEvent('eventAdded', { event: newEvent });
+    }
+
+    /**
+     * Handle add custom property type form
+     */
+    handleAddCustomPropertyType(formData) {
+        const { name, icon } = formData;
+        
+        if (!name || !name.trim()) {
+            DOMHelpers.showToast('Please enter a property type name', 'error');
+            return;
+        }
+
+        const propertyType = window.newsletterData.addCustomPropertyType(name.trim(), icon || '🏘️');
+        
+        DOMHelpers.showToast('Custom property type added!', 'success');
+        this.close('addCustomPropertyTypeModal');
+        
+        // Trigger property type added
+        this.triggerEvent('customPropertyTypeAdded', { propertyType });
+    }
+
+    /**
+     * Handle action buttons
+     */
+    handleAction(action, event, modalId) {
+        switch (action) {
+            case 'copy-email':
+                if (window.exportManager) {
+                    window.exportManager.copyEmailSafeHTML();
+                    this.close(modalId);
+                }
+                break;
+                
+            case 'export-html':
+                if (window.exportManager) {
+                    window.exportManager.exportAsHTML();
+                    this.close(modalId);
+                }
+                break;
+                
+            case 'print':
+                if (window.exportManager) {
+                    window.exportManager.printNewsletter();
+                    this.close(modalId);
+                }
+                break;
+                
+            case 'show-export-modal':
+                this.show('exportModal');
+                break;
+                
+            case 'toggle-instructions':
+                this.toggleInstructions();
+                break;
+                
+            case 'toggle-emoji-picker':
+                this.toggleEmojiPicker();
+                break;
+                
+            case 'add-tip':
+                this.addMaintenanceTip();
+                break;
+                
+            case 'reset-tips':
+                this.resetMaintenanceTips();
+                break;
+                
+            default:
+                // Trigger generic action event
+                this.triggerEvent('modalAction', { action, event, modalId });
+        }
+    }
+
+    /**
+     * Toggle instructions popup
+     */
+    toggleInstructions() {
+        const popup = DOMHelpers.findElement('#instructionsPopup');
+        if (popup) {
+            const isVisible = !popup.classList.contains('hidden') && popup.style.display !== 'none';
+            if (isVisible) {
+                DOMHelpers.hide(popup);
+            } else {
+                DOMHelpers.show(popup, 'fadeInUp');
+            }
+        }
+    }
+
+    /**
+     * Toggle emoji picker
+     */
+    toggleEmojiPicker() {
+        const picker = DOMHelpers.findElement('#emojiPicker');
+        if (picker) {
+            const isVisible = !picker.classList.contains('hidden') && picker.style.display !== 'none';
+            if (isVisible) {
+                DOMHelpers.hide(picker);
+            } else {
+                DOMHelpers.show(picker);
+                // Focus the input field when opening emoji picker
+                const input = DOMHelpers.findElement('#newMaintenanceTip');
+                if (input) input.focus();
+            }
+        }
+    }
+
+    /**
+     * Add maintenance tip
+     */
+    addMaintenanceTip() {
+        const input = DOMHelpers.findElement('#newMaintenanceTip');
+        if (!input) return;
+
+        const tip = input.value.trim();
+        if (!tip) {
+            DOMHelpers.showToast('Please enter a tip', 'error');
+            return;
+        }
+
+        if (window.newsletterData.addMaintenanceTip(tip)) {
+            input.value = '';
+            DOMHelpers.showToast('Maintenance tip added!', 'success');
+            
+            // Hide emoji picker
+            const picker = DOMHelpers.findElement('#emojiPicker');
+            if (picker) DOMHelpers.hide(picker);
+            
+            // Trigger tip added event
+            this.triggerEvent('maintenanceTipAdded', { tip });
+        }
+    }
+
+    /**
+     * Reset maintenance tips
+     */
+    resetMaintenanceTips() {
+        if (confirm('Are you sure you want to reset to the default seasonal tips? This will remove all your custom tips.')) {
+            if (window.newsletterData.resetMaintenanceTips()) {
+                DOMHelpers.showToast('Reset to default seasonal tips', 'success');
+                this.triggerEvent('maintenanceTipsReset');
+            }
+        }
+    }
+
+    /**
+     * Validate form
+     */
+    validateForm(form) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        // Clear previous validation messages
+        this.clearValidationMessages(form);
+
+        requiredFields.forEach(field => {
+            if (!field.value || !field.value.trim()) {
+                this.showFieldError(field, 'This field is required');
+                isValid = false;
+            } else {
+                // Validate specific field types
+                if (field.type === 'email' && !this.isValidEmail(field.value)) {
+                    this.showFieldError(field, 'Please enter a valid email address');
+                    isValid = false;
+                }
+                
+                if (field.type === 'url' && field.value && !this.isValidURL(field.value)) {
+                    this.showFieldError(field, 'Please enter a valid URL');
+                    isValid = false;
+                }
+            }
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Show field error
+     */
+    showFieldError(field, message) {
+        const errorId = `${field.name || field.id}-error`;
+        let errorElement = DOMHelpers.findElement(`#${errorId}`);
+        
+        if (!errorElement) {
+            errorElement = DOMHelpers.createElement('div', {
+                id: errorId,
+                className: 'validation-message error'
+            }, message);
+            
+            field.parentNode.appendChild(errorElement);
+        } else {
+            errorElement.textContent = message;
+            errorElement.classList.add('error');
+        }
+        
+        field.classList.add('error');
+    }
+
+    /**
+     * Clear validation messages
+     */
+    clearValidationMessages(container) {
+        const errorMessages = container.querySelectorAll('.validation-message');
+        errorMessages.forEach(msg => msg.remove());
+        
+        const errorFields = container.querySelectorAll('.error');
+        errorFields.forEach(field => field.classList.remove('error'));
+    }
+
+    /**
+     * Reset form
+     */
+    resetForm(form) {
+        form.reset();
+        this.clearValidationMessages(form);
+        
+        // Reset any image previews
+        const imagePreviews = form.querySelectorAll('.image-preview');
+        imagePreviews.forEach(preview => {
+            preview.style.display = 'none';
+        });
+    }
+
+    /**
+     * Setup modal keyboard handlers
+     */
+    setupModalKeyboardHandlers(modalId) {
+        const handler = (e) => {
+            // Escape key closes modal
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.close(modalId);
+            }
+            
+            // Enter key in maintenance tip input
+            if (e.key === 'Enter' && e.target.id === 'newMaintenanceTip') {
+                e.preventDefault();
+                this.addMaintenanceTip();
+            }
+            
+            // Tab trapping for accessibility
+            if (e.key === 'Tab') {
+                this.trapFocus(e, modalId);
+            }
+        };
+        
+        document.addEventListener('keydown', handler);
+        this.keyboardListeners.set(modalId, handler);
+    }
+
+    /**
+     * Trap focus within modal for accessibility
+     */
+    trapFocus(e, modalId) {
+        const modal = DOMHelpers.findElement(`#${modalId}`);
+        if (!modal) return;
+        
+        const focusableElements = modal.querySelectorAll(
+            'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select'
+        );
+        
+        const firstFocusableElement = focusableElements[0];
+        const lastFocusableElement = focusableElements[focusableElements.length - 1];
+        
+        if (e.shiftKey) {
+            if (document.activeElement === firstFocusableElement) {
+                lastFocusableElement.focus();
+                e.preventDefault();
+            }
+        } else {
+            if (document.activeElement === lastFocusableElement) {
+                firstFocusableElement.focus();
+                e.preventDefault();
+            }
+        }
+    }
+
+    /**
+     * Cleanup modal keyboard handlers
+     */
+    cleanupModalKeyboardHandlers(modalId) {
+        const handler = this.keyboardListeners.get(modalId);
+        if (handler) {
+            document.removeEventListener('keydown', handler);
+            this.keyboardListeners.delete(modalId);
+        }
+    }
+
+    /**
+     * Bind global events
+     */
+    bindGlobalEvents() {
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            // Close emoji picker when clicking outside
+            const emojiPicker = DOMHelpers.findElement('#emojiPicker');
+            const emojiButton = e.target.closest('[data-action="toggle-emoji-picker"]');
+            
+            if (emojiPicker && 
+                !emojiButton && 
+                !e.target.closest('#emojiPicker') &&
+                !emojiPicker.classList.contains('hidden') &&
+                emojiPicker.style.display !== 'none') {
+                DOMHelpers.hide(emojiPicker);
+            }
+        });
+    }
+
+    /**
+     * Email validation
+     */
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    /**
+     * URL validation
+     */
+    isValidURL(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return /^https?:\/\/.+/.test(url);
+        }
+    }
+
+    /**
+     * Trigger custom events
+     */
+    triggerEvent(eventName, detail = {}) {
+        const event = new CustomEvent(eventName, { detail });
+        document.dispatchEvent(event);
+    }
+
+    /**
+     * Subscribe to modal events
+     */
+    on(eventName, callback) {
+        document.addEventListener(eventName, callback);
+        
+        // Return unsubscribe function
+        return () => {
+            document.removeEventListener(eventName, callback);
+        };
+    }
+
+    /**
+     * Destroy modal manager
+     */
+    destroy() {
+        // Close all modals
+        this.closeAll();
+        
+        // Remove all keyboard listeners
+        this.keyboardListeners.forEach((handler, modalId) => {
+            document.removeEventListener('keydown', handler);
+        });
+        
+        this.keyboardListeners.clear();
+        this.activeModals.clear();
+        this.modalStack = [];
+    }
+}
+
+// Create global instance
+window.modalManager = new ModalManager();
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ModalManager;
+}
