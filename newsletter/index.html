@@ -4,30 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Newsletter Builder Pro - Inside the Sphere</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
     
-    <!-- ============================================ -->
-    <!-- NAVIGATION BAR STYLES - Add your nav styles here -->
-    <!-- ============================================ -->
-    <style>
-        /* Your navigation bar styles should go here */
-        .site-navigation {
-            /* Placeholder styles - replace with your actual nav styles */
-            background: #333;
-            padding: 15px 20px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 10001;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        /* Adjust main content to account for fixed navigation */
-        body.has-navigation {
-            padding-top: 60px; /* Adjust based on your nav height */
-        }
-    </style>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="../js/firebase-config.js"></script>
+    
+    <!-- Navigation Styles and Scripts -->
+    <link rel="stylesheet" href="../assets/css/navigation.css">
+    <script src="../assets/js/navigation.js"></script>
+    
+    <!-- NAVIGATION CONFIGURATION -->
+    <script>
+    // Configure navigation for newsletter builder page
+    configureSphereNav({ 
+        requireAuth: false, // Newsletter builder doesn't require auth
+        loginRedirectUrl: '/',
+        homeUrl: '/'
+    });
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -63,6 +63,7 @@
             color: var(--text-light);
             min-height: 100vh;
             line-height: 1.5;
+            padding-top: 80px; /* Adjust for navigation height */
         }
 
         /* Main Content Section */
@@ -92,13 +93,8 @@
             overflow-y: auto;
             max-height: 90vh;
             position: sticky;
-            top: 20px;
+            top: 100px; /* Adjust for navigation */
             box-shadow: var(--box-shadow);
-        }
-        
-        /* Adjust sticky positioning when navigation is present */
-        body.has-navigation .sidebar {
-            top: 80px; /* Adjust based on your nav height + spacing */
         }
 
         .preview-container {
@@ -109,13 +105,8 @@
             overflow-y: auto;
             max-height: 90vh;
             position: sticky;
-            top: 20px;
+            top: 100px; /* Adjust for navigation */
             box-shadow: var(--box-shadow);
-        }
-        
-        /* Adjust sticky positioning when navigation is present */
-        body.has-navigation .preview-container {
-            top: 80px; /* Adjust based on your nav height + spacing */
         }
 
         /* App Header */
@@ -391,17 +382,12 @@
         /* Toast Notifications */
         .toast-container {
             position: fixed;
-            top: 20px;
+            top: 100px; /* Adjust for navigation */
             right: 20px;
             z-index: 10000;
             display: flex;
             flex-direction: column;
             gap: 10px;
-        }
-        
-        /* Adjust toast position when navigation is present */
-        body.has-navigation .toast-container {
-            top: 80px; /* Adjust based on your nav height + spacing */
         }
 
         .toast {
@@ -573,6 +559,10 @@
         }
 
         @media (max-width: 767px) {
+            body {
+                padding-top: 70px; /* Adjust for mobile navigation */
+            }
+            
             .main-content {
                 padding: 30px 10px;
             }
@@ -593,6 +583,10 @@
             
             .preview-actions .btn {
                 width: 100%;
+            }
+            
+            .toast-container {
+                top: 80px; /* Adjust for mobile navigation */
             }
         }
 
@@ -709,8 +703,7 @@
             .preview-header,
             .preview-actions,
             .toast-container,
-            .modal-overlay,
-            .site-navigation {
+            .modal-overlay {
                 display: none !important;
             }
             
@@ -766,131 +759,8 @@
     </style>
 </head>
 <body>
-    <!-- ============================================ -->
- <script>
-/**
- * Optional settings
- * - Set requireAuth = true if you want to block filtering for unauthenticated users.
- * - If Firebase isn't present, the auth check is skipped safely.
- */
-const SphereNavSettings = {
-  requireAuth: false // change to true if you want auth-gated filtering
-};
+    <!-- Navigation will be automatically inserted here by navigation.js -->
 
-// Maps for header updates
-const CATEGORY_TITLES = {
-  all: 'All Tools',
-  email: 'Email Marketing Tools',
-  crm: 'CRM Automation Tools',
-  website: 'Website Enhancement Tools',
-  training: 'Training & Support Tools',
-  development: 'Custom Development Tools',
-  analytics: 'Business Intelligence Tools'
-};
-
-const CATEGORY_DESCRIPTIONS = {
-  all: 'Browse all available tools for BoldTrail (RLP Sphere) users',
-  email: 'Tools for email marketing and newsletter management',
-  crm: 'Automation and shortcuts for your CRM workflow',
-  website: 'Enhance your website and online presence',
-  training: 'Learning resources and support materials',
-  development: 'Custom solutions tailored to your needs',
-  analytics: 'Business intelligence and performance tracking'
-};
-
-/**
- * Core filter function used by the sidebar.
- * @param {string} category - 'all' | 'email' | 'crm' | 'website' | 'training' | 'development' | 'analytics'
- * @param {HTMLElement} clickedElement - the .nav-link that was clicked (for active styling)
- */
-function filterTools(category, clickedElement) {
-  // Optional auth gate
-  if (SphereNavSettings.requireAuth && typeof firebase !== 'undefined' && firebase.auth) {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      if (typeof openLoginModal === 'function') openLoginModal();
-      return;
-    }
-  }
-
-  const cards = document.querySelectorAll('.tool-card');
-  const navLinks = document.querySelectorAll('.nav-link');
-  const contentTitle = document.querySelector('.content-title');
-  const contentDescription = document.querySelector('.content-description');
-
-  // Highlight active nav
-  navLinks.forEach(link => link.classList.remove('active'));
-  if (clickedElement) clickedElement.classList.add('active');
-
-  // Show/hide cards
-  cards.forEach(card => {
-    const matches = category === 'all' || card.dataset.category === category;
-    card.style.display = matches ? 'flex' : 'none';
-  });
-
-  // Update header text
-  if (contentTitle && CATEGORY_TITLES[category]) {
-    contentTitle.textContent = CATEGORY_TITLES[category];
-  }
-  if (contentDescription && CATEGORY_DESCRIPTIONS[category]) {
-    contentDescription.textContent = CATEGORY_DESCRIPTIONS[category];
-  }
-}
-
-/**
- * (Optional) Recalculate the count bubbles shown in the sidebar.
- * Call once on load or after you mutate the tool list.
- */
-function updateToolCounts() {
-  const cards = Array.from(document.querySelectorAll('.tool-card'));
-  const counts = cards.reduce((acc, card) => {
-    const cat = card.dataset.category || 'uncategorized';
-    acc[cat] = (acc[cat] || 0) + 1;
-    acc.all = (acc.all || 0) + 1;
-    return acc;
-  }, { all: 0 });
-
-  document.querySelectorAll('.nav-item').forEach(item => {
-    const link = item.querySelector('.nav-link');
-    const bubble = item.querySelector('.tool-count');
-    if (!link || !bubble) return;
-    const cat = (link.getAttribute('onclick') || '').match(/filterTools\('([^']+)'/)?.[1] || 'all';
-    if (counts[cat] != null) bubble.textContent = counts[cat];
-  });
-}
-
-/**
- * Initialize active state (defaults to 'all' if nothing is active).
- */
-function initSidebarNav() {
-  // Ensure one link is active on load
-  const active = document.querySelector('.nav-link.active') || document.querySelector('.nav-link');
-  if (active) {
-    const cat = (active.getAttribute('onclick') || '').match(/filterTools\('([^']+)'/)?.[1] || 'all';
-    filterTools(cat, active);
-  }
-  // Optional: auto-update count bubbles
-  updateToolCounts();
-}
-
-document.addEventListener('DOMContentLoaded', initSidebarNav);
-</script>
-
-    <!-- ============================================ -->
-    <nav class="site-navigation" id="site-navigation">
-        <!-- 
-        INSTRUCTIONS: Replace this entire <nav> section with your website's navigation bar.
-        Make sure to:
-        1. Keep the id="site-navigation" or update the JavaScript accordingly
-        2. Adjust the padding-top in body.has-navigation CSS if your nav height differs
-        3. Update the sticky positioning offsets in the CSS if needed
-        -->
-        <div style="color: white; text-align: center; font-family: Arial, sans-serif;">
-            <p style="margin: 0; font-size: 14px;">⚠️ Replace this section with your website navigation bar</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">Your navigation code goes here</p>
-        </div>
-    </nav>
-    
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -1844,17 +1714,6 @@ document.addEventListener('DOMContentLoaded', initSidebarNav);
     </section>
 
     <script>
-        // ============================================
-        // NAVIGATION INTEGRATION
-        // ============================================
-        // Detect if navigation exists and adjust body padding
-        document.addEventListener('DOMContentLoaded', function() {
-            const navigation = document.getElementById('site-navigation');
-            if (navigation && navigation.offsetHeight > 0) {
-                document.body.classList.add('has-navigation');
-            }
-        });
-        
         // ============================================
         // ORIGINAL NEWSLETTER BUILDER JAVASCRIPT
         // ============================================
@@ -3505,7 +3364,7 @@ document.addEventListener('DOMContentLoaded', initSidebarNav);
 </html>`;
         }
 
-        // Preview generation (continues in next part due to length)
+        // Preview generation - continues with all the original newsletter logic...
         function updatePreview() {
             const season = newsletterData.content.newsletterSeason;
             const config = SEASONS[season];
@@ -3785,7 +3644,7 @@ document.addEventListener('DOMContentLoaded', initSidebarNav);
             }
         }
 
-        // Market stats generation (truncated for space - continues with same format)
+        // Market stats generation
         function generateMarketStatsHtml() {
             const stats = newsletterData.stats;
             const headerFont = newsletterData.design.headerFont;
@@ -4103,11 +3962,11 @@ document.addEventListener('DOMContentLoaded', initSidebarNav);
                     observer.observe(element);
                 });
                 
-                console.log('💡 Newsletter Builder Pro with Navigation:');
-                console.log('• Navigation bar area provided at top of page');
-                console.log('• Replace the placeholder navigation with your actual nav code');
-                console.log('• Adjust CSS padding values if your nav height differs');
-                console.log('• All original features preserved and fully functional');
+                console.log('💡 Newsletter Builder Pro with Smart Tools Navigation:');
+                console.log('• Navigation system integrated with Firebase authentication');
+                console.log('• All original newsletter features preserved and enhanced');
+                console.log('• Page protection and modal systems operational');
+                console.log('• Responsive design maintained across all screen sizes');
                 
             } catch (error) {
                 console.error('Application initialization error:', error);
