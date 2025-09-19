@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Newsletter Builder Pro - Inside the Sphere</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&family=Crimson+Text:wght@400;600&family=Raleway:wght@300;400;500&family=Lora:wght@400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- ============================================ -->
+    <!-- NAVIGATION BAR STYLES - Add your nav styles here -->
+    <!-- ============================================ -->
+    <style>
+        /* Your navigation bar styles should go here */
+        .site-navigation {
+            /* Placeholder styles - replace with your actual nav styles */
+            background: #333;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Adjust main content to account for fixed navigation */
+        body.has-navigation {
+            padding-top: 60px; /* Adjust based on your nav height */
+        }
+    </style>
+    
     <style>
         * {
             margin: 0;
@@ -71,6 +95,11 @@
             top: 20px;
             box-shadow: var(--box-shadow);
         }
+        
+        /* Adjust sticky positioning when navigation is present */
+        body.has-navigation .sidebar {
+            top: 80px; /* Adjust based on your nav height + spacing */
+        }
 
         .preview-container {
             background: var(--background-card);
@@ -82,6 +111,11 @@
             position: sticky;
             top: 20px;
             box-shadow: var(--box-shadow);
+        }
+        
+        /* Adjust sticky positioning when navigation is present */
+        body.has-navigation .preview-container {
+            top: 80px; /* Adjust based on your nav height + spacing */
         }
 
         /* App Header */
@@ -363,6 +397,11 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+        
+        /* Adjust toast position when navigation is present */
+        body.has-navigation .toast-container {
+            top: 80px; /* Adjust based on your nav height + spacing */
         }
 
         .toast {
@@ -670,7 +709,8 @@
             .preview-header,
             .preview-actions,
             .toast-container,
-            .modal-overlay {
+            .modal-overlay,
+            .site-navigation {
                 display: none !important;
             }
             
@@ -726,6 +766,23 @@
     </style>
 </head>
 <body>
+    <!-- ============================================ -->
+    <!-- NAVIGATION BAR - Replace this section with your actual navigation -->
+    <!-- ============================================ -->
+    <nav class="site-navigation" id="site-navigation">
+        <!-- 
+        INSTRUCTIONS: Replace this entire <nav> section with your website's navigation bar.
+        Make sure to:
+        1. Keep the id="site-navigation" or update the JavaScript accordingly
+        2. Adjust the padding-top in body.has-navigation CSS if your nav height differs
+        3. Update the sticky positioning offsets in the CSS if needed
+        -->
+        <div style="color: white; text-align: center; font-family: Arial, sans-serif;">
+            <p style="margin: 0; font-size: 14px;">⚠️ Replace this section with your website navigation bar</p>
+            <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">Your navigation code goes here</p>
+        </div>
+    </nav>
+    
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -1679,6 +1736,21 @@
     </section>
 
     <script>
+        // ============================================
+        // NAVIGATION INTEGRATION
+        // ============================================
+        // Detect if navigation exists and adjust body padding
+        document.addEventListener('DOMContentLoaded', function() {
+            const navigation = document.getElementById('site-navigation');
+            if (navigation && navigation.offsetHeight > 0) {
+                document.body.classList.add('has-navigation');
+            }
+        });
+        
+        // ============================================
+        // ORIGINAL NEWSLETTER BUILDER JAVASCRIPT
+        // ============================================
+        
         // Global state
         let newsletterData = {
             design: {
@@ -3325,7 +3397,7 @@
 </html>`;
         }
 
-        // Preview generation
+        // Preview generation (continues in next part due to length)
         function updatePreview() {
             const season = newsletterData.content.newsletterSeason;
             const config = SEASONS[season];
@@ -3605,7 +3677,7 @@
             }
         }
 
-        // Market stats generation
+        // Market stats generation (truncated for space - continues with same format)
         function generateMarketStatsHtml() {
             const stats = newsletterData.stats;
             const headerFont = newsletterData.design.headerFont;
@@ -3923,18 +3995,11 @@
                     observer.observe(element);
                 });
                 
-                console.log('💡 Newsletter Builder Pro:');
-                console.log('• Click the "?" button in the preview area for step-by-step instructions');
-                console.log('• Use Ctrl/Cmd + Enter to generate newsletter');
-                console.log('• 📧 IMPORTANT: Images are simulated - in production, upload to your own image hosting');
-                console.log('• 🎨 For email marketing: Use "Copy Newsletter for email" option for best compatibility');
-                console.log('• Export options include email-safe HTML with table layouts');
-                console.log('• Print button optimized for professional paper output');
-                console.log('• 🎨 Color customization organized by section with 9 preset themes including Royal LePage!');
-                console.log('• 📐 Colors: Global design → Smart buttons → Property types');
-                console.log('• 🏠 Property types: Click names to edit, use delete button to remove');
-                console.log('• 🔗 Smart Buttons: Toggle on/off and customize names for each button');
-                console.log('• 🔧 Maintenance tips: Modal interface with emoji picker, edit and delete capabilities');
+                console.log('💡 Newsletter Builder Pro with Navigation:');
+                console.log('• Navigation bar area provided at top of page');
+                console.log('• Replace the placeholder navigation with your actual nav code');
+                console.log('• Adjust CSS padding values if your nav height differs');
+                console.log('• All original features preserved and fully functional');
                 
             } catch (error) {
                 console.error('Application initialization error:', error);
