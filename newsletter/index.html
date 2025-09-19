@@ -766,21 +766,66 @@
     </style>
 </head>
 <body>
-    <!-- ============================================ -->
-    <!-- NAVIGATION BAR - Replace this section with your actual navigation -->
-    <!-- ============================================ -->
-    <nav class="site-navigation" id="site-navigation">
-        <!-- 
-        INSTRUCTIONS: Replace this entire <nav> section with your website's navigation bar.
-        Make sure to:
-        1. Keep the id="site-navigation" or update the JavaScript accordingly
-        2. Adjust the padding-top in body.has-navigation CSS if your nav height differs
-        3. Update the sticky positioning offsets in the CSS if needed
-        -->
-        <div style="color: white; text-align: center; font-family: Arial, sans-serif;">
-            <p style="margin: 0; font-size: 14px;">⚠️ Replace this section with your website navigation bar</p>
-            <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">Your navigation code goes here</p>
-        </div>
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protected Page - Inside The Sphere</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); // Include if using Firestore
+    </script>
+    
+    <!-- Navigation CSS -->
+    <link rel="stylesheet" href="/css/navigation.css">
+    
+    <!-- Navigation JavaScript -->
+    <script src="/js/sphere-navigation.js"></script>
+    
+    <!-- Configure for protected page -->
+    <script>
+        configureSphereNav({
+            requireAuth: true,  // THIS IS KEY FOR PROTECTED PAGES
+            homeUrl: '/',
+            loginRedirectUrl: 'https://insidethesphere.com/login'
+        });
+    </script>
+    
+    <!-- Your page's CSS -->
+    <link rel="stylesheet" href="/css/your-page-styles.css">
+</head>
+<body>
+    <!-- Navigation will auto-inject here -->
+    
+    <!-- Your protected content -->
+    <div class="main-content">
+        <h1>Protected Content</h1>
+        <p>This content is only visible to authenticated users.</p>
+        <!-- Your page content here -->
+    </div>
+    
+    <!-- Your page's JavaScript (if needed) -->
+    <script src="/js/your-page-script.js"></script>
+</body>
+</html>
     </nav>
     
     <!-- Toast Container -->
