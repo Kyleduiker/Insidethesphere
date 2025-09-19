@@ -767,7 +767,115 @@
 </head>
 <body>
     <!-- ============================================ -->
-    <!-- NAVIGATION BAR - Replace this section with your actual navigation -->
+ <script>
+/**
+ * Optional settings
+ * - Set requireAuth = true if you want to block filtering for unauthenticated users.
+ * - If Firebase isn't present, the auth check is skipped safely.
+ */
+const SphereNavSettings = {
+  requireAuth: false // change to true if you want auth-gated filtering
+};
+
+// Maps for header updates
+const CATEGORY_TITLES = {
+  all: 'All Tools',
+  email: 'Email Marketing Tools',
+  crm: 'CRM Automation Tools',
+  website: 'Website Enhancement Tools',
+  training: 'Training & Support Tools',
+  development: 'Custom Development Tools',
+  analytics: 'Business Intelligence Tools'
+};
+
+const CATEGORY_DESCRIPTIONS = {
+  all: 'Browse all available tools for BoldTrail (RLP Sphere) users',
+  email: 'Tools for email marketing and newsletter management',
+  crm: 'Automation and shortcuts for your CRM workflow',
+  website: 'Enhance your website and online presence',
+  training: 'Learning resources and support materials',
+  development: 'Custom solutions tailored to your needs',
+  analytics: 'Business intelligence and performance tracking'
+};
+
+/**
+ * Core filter function used by the sidebar.
+ * @param {string} category - 'all' | 'email' | 'crm' | 'website' | 'training' | 'development' | 'analytics'
+ * @param {HTMLElement} clickedElement - the .nav-link that was clicked (for active styling)
+ */
+function filterTools(category, clickedElement) {
+  // Optional auth gate
+  if (SphereNavSettings.requireAuth && typeof firebase !== 'undefined' && firebase.auth) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      if (typeof openLoginModal === 'function') openLoginModal();
+      return;
+    }
+  }
+
+  const cards = document.querySelectorAll('.tool-card');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const contentTitle = document.querySelector('.content-title');
+  const contentDescription = document.querySelector('.content-description');
+
+  // Highlight active nav
+  navLinks.forEach(link => link.classList.remove('active'));
+  if (clickedElement) clickedElement.classList.add('active');
+
+  // Show/hide cards
+  cards.forEach(card => {
+    const matches = category === 'all' || card.dataset.category === category;
+    card.style.display = matches ? 'flex' : 'none';
+  });
+
+  // Update header text
+  if (contentTitle && CATEGORY_TITLES[category]) {
+    contentTitle.textContent = CATEGORY_TITLES[category];
+  }
+  if (contentDescription && CATEGORY_DESCRIPTIONS[category]) {
+    contentDescription.textContent = CATEGORY_DESCRIPTIONS[category];
+  }
+}
+
+/**
+ * (Optional) Recalculate the count bubbles shown in the sidebar.
+ * Call once on load or after you mutate the tool list.
+ */
+function updateToolCounts() {
+  const cards = Array.from(document.querySelectorAll('.tool-card'));
+  const counts = cards.reduce((acc, card) => {
+    const cat = card.dataset.category || 'uncategorized';
+    acc[cat] = (acc[cat] || 0) + 1;
+    acc.all = (acc.all || 0) + 1;
+    return acc;
+  }, { all: 0 });
+
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const link = item.querySelector('.nav-link');
+    const bubble = item.querySelector('.tool-count');
+    if (!link || !bubble) return;
+    const cat = (link.getAttribute('onclick') || '').match(/filterTools\('([^']+)'/)?.[1] || 'all';
+    if (counts[cat] != null) bubble.textContent = counts[cat];
+  });
+}
+
+/**
+ * Initialize active state (defaults to 'all' if nothing is active).
+ */
+function initSidebarNav() {
+  // Ensure one link is active on load
+  const active = document.querySelector('.nav-link.active') || document.querySelector('.nav-link');
+  if (active) {
+    const cat = (active.getAttribute('onclick') || '').match(/filterTools\('([^']+)'/)?.[1] || 'all';
+    filterTools(cat, active);
+  }
+  // Optional: auto-update count bubbles
+  updateToolCounts();
+}
+
+document.addEventListener('DOMContentLoaded', initSidebarNav);
+</script>
+
     <!-- ============================================ -->
     <nav class="site-navigation" id="site-navigation">
         <!-- 
