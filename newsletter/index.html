@@ -648,6 +648,20 @@
     border: none !important;
     border-radius: 4px !important;
 }
+        /* Hex color input styling */
+input[id$="ColorHex"],
+input[id$="Hex"] {
+    background: white !important;
+    color: var(--text-light) !important;
+    font-family: monospace !important;
+    font-size: 13px !important;
+}
+
+/* Force white background on all color-related text inputs */
+.form-group__input[id*="Color"][type="text"] {
+    background: white !important;
+    color: #333 !important;
+}
         /* Section headers in stats */
         .stats-section-header {
             font-size: 13px;
