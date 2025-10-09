@@ -673,6 +673,34 @@
             border-color: var(--primary-color);
         }
 
+        /* FORCE WHITE BACKGROUNDS - Override everything */
+        input.form-group__input,
+        textarea.form-group__textarea,
+        select.form-group__select,
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        textarea {
+            background: white !important;
+            background-color: white !important;
+            color: #333333 !important;
+        }
+
+        /* Specific fix for hex color inputs */
+        input[id*="Hex"],
+        input[id$="ColorHex"] {
+            background: white !important;
+            background-color: white !important;
+            color: #333333 !important;
+        }
+
+        /* Specific fix for custom subtitle */
+        #customSubtitle {
+            background: white !important;
+            background-color: white !important;
+            color: #333333 !important;
+        }
         small {
             color: var(--text-secondary);
             font-size: 11px;
