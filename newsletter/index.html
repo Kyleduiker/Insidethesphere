@@ -3208,173 +3208,212 @@
         };
 
         function getEmailSafeHTML() {
-            const season = newsletterData.content.newsletterSeason;
-            const config = SEASONS[season];
-            const colors = newsletterData.design.colors;
-            const buttonColors = newsletterData.design.buttonColors;
-            const propertyColors = newsletterData.design.propertyTypeColors;
+    const season = newsletterData.content.newsletterSeason;
+    const config = SEASONS[season];
+    const colors = newsletterData.design.colors;
+    const buttonColors = newsletterData.design.buttonColors;
+    const propertyColors = newsletterData.design.propertyTypeColors;
+    
+    // Get enabled buttons
+    const enabledButtons = [];
+    const buttons = newsletterData.agent.smartButtons;
+    
+    if (buttons.buyersGuide.url) {
+        enabledButtons.push({
+            name: buttons.buyersGuide.name || 'Button 1',
+            url: buttons.buyersGuide.url,
+            color: buttonColors.buyersGuide
+        });
+    }
+    if (buttons.sellersGuide.url) {
+        enabledButtons.push({
+            name: buttons.sellersGuide.name || 'Button 2',
+            url: buttons.sellersGuide.url,
+            color: buttonColors.sellersGuide
+        });
+    }
+    if (buttons.website.url) {
+        enabledButtons.push({
+            name: buttons.website.name || 'Button 3',
+            url: buttons.website.url,
+            color: buttonColors.website
+        });
+    }
+    if (buttons.blog.url) {
+        enabledButtons.push({
+            name: buttons.blog.name || 'Button 4',
+            url: buttons.blog.url,
+            color: buttonColors.blog
+        });
+    }
+    
+    // Generate button rows (2 buttons per row max for email)
+    let buttonsHtml = '';
+    if (enabledButtons.length > 0) {
+        buttonsHtml = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">';
+        for (let i = 0; i < enabledButtons.length; i += 2) {
+            const btn1 = enabledButtons[i];
+            const btn2 = enabledButtons[i + 1];
             
-            // Get enabled buttons
-            const enabledButtons = [];
-            const buttons = newsletterData.agent.smartButtons;
-            
-            if (buttons.buyersGuide.url) {
-                enabledButtons.push({
-                    name: buttons.buyersGuide.name || 'Button 1',
-                    url: buttons.buyersGuide.url,
-                    color: buttonColors.buyersGuide
-                });
+            buttonsHtml += '<tr>';
+            if (btn1) {
+                buttonsHtml += `
+                    <td align="center" style="padding: 5px;" width="50%">
+                        <a href="${btn1.url}" style="display: block; background-color: ${btn1.color}; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">${btn1.name}</a>
+                    </td>
+                `;
             }
-            if (buttons.sellersGuide.url) {
-                enabledButtons.push({
-                    name: buttons.sellersGuide.name || 'Button 2',
-                    url: buttons.sellersGuide.url,
-                    color: buttonColors.sellersGuide
-                });
+            if (btn2) {
+                buttonsHtml += `
+                    <td align="center" style="padding: 5px;" width="50%">
+                        <a href="${btn2.url}" style="display: block; background-color: ${btn2.color}; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">${btn2.name}</a>
+                    </td>
+                `;
+            } else if (btn1) {
+                buttonsHtml += '<td width="50%"></td>'; // Empty cell for alignment
             }
-            if (buttons.website.url) {
-                enabledButtons.push({
-                    name: buttons.website.name || 'Button 3',
-                    url: buttons.website.url,
-                    color: buttonColors.website
-                });
-            }
-            if (buttons.blog.url) {
-                enabledButtons.push({
-                    name: buttons.blog.name || 'Button 4',
-                    url: buttons.blog.url,
-                    color: buttonColors.blog
-                });
-            }
-            
-            // Generate button rows (2 buttons per row max for email)
-            let buttonsHtml = '';
-            if (enabledButtons.length > 0) {
-                buttonsHtml = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">';
-                for (let i = 0; i < enabledButtons.length; i += 2) {
-                    const btn1 = enabledButtons[i];
-                    const btn2 = enabledButtons[i + 1];
-                    
-                    buttonsHtml += '<tr>';
-                    if (btn1) {
-                        buttonsHtml += `
-                            <td align="center" style="padding: 5px;">
-                                <a href="${btn1.url}" style="display: block; background-color: ${btn1.color}; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">${btn1.name}</a>
-                            </td>
-                        `;
-                    }
-                    if (btn2) {
-                        buttonsHtml += `
-                            <td align="center" style="padding: 5px;">
-                                <a href="${btn2.url}" style="display: block; background-color: ${btn2.color}; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">${btn2.name}</a>
-                            </td>
-                        `;
-                    } else if (btn1) {
-                        buttonsHtml += '<td></td>'; // Empty cell for alignment
-                    }
-                    buttonsHtml += '</tr>';
-                }
-                buttonsHtml += '</table>';
-            }
-            
-            // Generate maintenance tips HTML
-            const tipsHtml = getMaintenanceTips(config).map(tip => 
-                `<tr><td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; font-size: 14px; color: ${colors.bodyText};">${tip}</td></tr>`
-            ).join('');
-            
-            // Generate events HTML
-            let eventsHtml = '';
-            if (newsletterData.customEvents && newsletterData.customEvents.length > 0) {
-                const sortedEvents = newsletterData.customEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-                eventsHtml = sortedEvents.map(event => {
-                    const eventDate = formatEventDate(event.date);
-                    return `
+            buttonsHtml += '</tr>';
+        }
+        buttonsHtml += '</table>';
+    }
+    
+    // Generate maintenance tips HTML
+    const tipsHtml = getMaintenanceTips(config).map(tip => 
+        `<tr><td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; font-size: 14px; color: ${colors.bodyText};">${tip}</td></tr>`
+    ).join('');
+    
+    // Generate events HTML
+    let eventsHtml = '';
+    if (newsletterData.customEvents && newsletterData.customEvents.length > 0) {
+        const sortedEvents = newsletterData.customEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+        eventsHtml = sortedEvents.map(event => {
+            const eventDate = formatEventDate(event.date);
+            return `
+                <tr>
+                    <td style="padding: 20px; border: 1px solid #f0f0f0; border-radius: 8px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                                <td width="100" valign="top" align="center" style="padding-right: 20px;">
+                                    <div style="background-color: ${colors.accent}; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; border-radius: 4px;">${eventDate.month}</div>
+                                    <div style="font-size: 24px; font-weight: 300; color: ${colors.headerText};">${eventDate.day}</div>
+                                    ${event.startTime ? `<div style="font-size: 10px; color: ${colors.bodyText}; margin-top: 5px;">${formatEventTime(event.startTime, event.endTime)}</div>` : ''}
+                                </td>
+                                <td valign="top">
+                                    <h3 style="font-size: 16px; font-weight: 500; margin: 0 0 5px 0; color: ${colors.headerText};">${event.title}</h3>
+                                    ${event.location ? `<p style="font-size: 13px; color: ${colors.bodyText}; margin: 5px 0;">📍 ${event.location}</p>` : ''}
+                                    ${event.description ? `<p style="font-size: 12px; color: #999; margin: 5px 0; font-style: italic;">${event.description}</p>` : ''}
+                                    ${event.detailsLink ? `
+                                        <div style="margin-top: 10px;">
+                                            <a href="${event.detailsLink}" style="background-color: ${colors.accent}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; text-transform: uppercase; display: inline-block;">Event Details</a>
+                                        </div>
+                                    ` : ''}
+                                </td>
+                                ${event.image ? `
+                                    <td width="150" valign="top" align="center" style="padding-left: 20px;">
+                                        <img src="${event.image}" width="140" style="width: 140px; height: 100px; object-fit: cover; border-radius: 6px; border: 2px solid #e0e0e0; display: block;" alt="Event">
+                                    </td>
+                                ` : ''}
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr><td height="20"></td></tr>
+            `;
+        }).join('');
+    }
+    
+    // Get month name
+    const currentMonth = newsletterData.content.newsletterSeason || 'august';
+    const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    const currentIndex = monthNames.indexOf(currentMonth);
+    const previousIndex = currentIndex === 0 ? 11 : currentIndex - 1;
+    const previousMonth = monthNames[previousIndex].charAt(0).toUpperCase() + monthNames[previousIndex].slice(1);
+    
+    // Generate property type sections
+    const activePropertyTypes = newsletterData.design.defaultPropertyTypes.filter(pt => !pt.deleted);
+    let propertyTypeSectionsHtml = '';
+    
+    activePropertyTypes.forEach(propertyType => {
+        const ptStats = newsletterData.stats;
+        const colorKey = propertyType.colorKey || propertyType.id;
+        const color = propertyColors[colorKey] || propertyColors.detached;
+        
+        propertyTypeSectionsHtml += `
+            <tr>
+                <td style="padding-bottom: 25px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
                         <tr>
-                            <td style="padding: 20px; border: 1px solid #f0f0f0; border-radius: 8px;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                    <tr>
-                                        <td width="100" valign="top" align="center" style="padding-right: 20px;">
-                                            <div style="background-color: ${colors.accent}; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; border-radius: 4px;">${eventDate.month}</div>
-                                            <div style="font-size: 24px; font-weight: 300; color: ${colors.headerText};">${eventDate.day}</div>
-                                            ${event.startTime ? `<div style="font-size: 10px; color: ${colors.bodyText}; margin-top: 5px;">${formatEventTime(event.startTime, event.endTime)}</div>` : ''}
-                                        </td>
-                                        <td valign="top">
-                                            <h3 style="font-size: 16px; font-weight: 500; margin: 0 0 5px 0; color: ${colors.headerText};">${event.title}</h3>
-                                            ${event.location ? `<p style="font-size: 13px; color: ${colors.bodyText}; margin: 5px 0;">📍 ${event.location}</p>` : ''}
-                                            ${event.description ? `<p style="font-size: 12px; color: #999; margin: 5px 0; font-style: italic;">${event.description}</p>` : ''}
-                                            ${event.detailsLink ? `
-                                                <div style="margin-top: 10px;">
-                                                    <a href="${event.detailsLink}" style="background-color: ${colors.accent}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 600; text-transform: uppercase; display: inline-block;">Event Details</a>
-                                                </div>
-                                            ` : ''}
-                                        </td>
-                                        ${event.image ? `
-                                            <td width="150" valign="top" align="center" style="padding-left: 20px;">
-                                                <img src="${event.image}" width="140" style="width: 140px; height: 100px; object-fit: cover; border-radius: 6px; border: 2px solid #e0e0e0; display: block;" alt="Event">
-                                            </td>
-                                        ` : ''}
-                                    </tr>
-                                </table>
+                            <td colspan="4" style="background-color: ${color}; color: white; padding: 12px 20px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${propertyType.icon} ${propertyType.name}
                             </td>
                         </tr>
-                        <tr><td height="20"></td></tr>
-                    `;
-                }).join('');
-            }
-            
-            // Get month name
-            const currentMonth = newsletterData.content.newsletterSeason || 'august';
-            const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-            const currentIndex = monthNames.indexOf(currentMonth);
-            const previousIndex = currentIndex === 0 ? 11 : currentIndex - 1;
-            const previousMonth = monthNames[previousIndex].charAt(0).toUpperCase() + monthNames[previousIndex].slice(1);
-            
-            // Generate property type sections
-            const activePropertyTypes = newsletterData.design.defaultPropertyTypes.filter(pt => !pt.deleted);
-            let propertyTypeSectionsHtml = '';
-            
-            activePropertyTypes.forEach(propertyType => {
-                const ptStats = newsletterData.stats;
-                const colorKey = propertyType.colorKey || propertyType.id;
-                const color = propertyColors[colorKey] || propertyColors.detached;
-                
-                propertyTypeSectionsHtml += `
-                    <tr>
-                        <td style="padding-bottom: 25px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-                                <tr>
-                                    <td colspan="4" style="background-color: ${color}; color: white; padding: 12px 20px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        ${propertyType.icon} ${propertyType.name}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
-                                        <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Price'] || 'N/A'}</div>
-                                        <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Price</div>
-                                        <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'Change'] && ptStats[propertyType.id + 'Change'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'Change'] || 'N/A'} Y/Y</div>
-                                    </td>
-                                    <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
-                                        <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Sales'] || 'N/A'}</div>
-                                        <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Sales</div>
-                                        <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'SalesChange'] && ptStats[propertyType.id + 'SalesChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'SalesChange'] || 'N/A'} Y/Y</div>
-                                    </td>
-                                    <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
-                                        <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Listings'] || 'N/A'}</div>
-                                        <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Listings</div>
-                                        <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'ListingsChange'] && ptStats[propertyType.id + 'ListingsChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'ListingsChange'] || 'N/A'} Y/Y</div>
-                                    </td>
-                                    <td width="25%" align="center" style="padding: 15px; background-color: white;">
-                                        <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Supply'] || 'N/A'}</div>
-                                        <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Months Supply</div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            return `<!DOCTYPE html>
+                        <tr>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Price'] || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Price</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'Change'] && ptStats[propertyType.id + 'Change'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'Change'] || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Sales'] || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Sales</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'SalesChange'] && ptStats[propertyType.id + 'SalesChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'SalesChange'] || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Listings'] || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Listings</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${ptStats[propertyType.id + 'ListingsChange'] && ptStats[propertyType.id + 'ListingsChange'].startsWith('-') ? '#dc3545' : '#27ae60'};">${ptStats[propertyType.id + 'ListingsChange'] || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${ptStats[propertyType.id + 'Supply'] || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Months Supply</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        `;
+    });
+    
+    // Add custom property types
+    let customPropertyTypesHtml = '';
+    if (newsletterData.customPropertyTypes && newsletterData.customPropertyTypes.length > 0) {
+        customPropertyTypesHtml = newsletterData.customPropertyTypes.map(propertyType => `
+            <tr>
+                <td style="padding-bottom: 25px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <tr>
+                            <td colspan="4" style="background-color: ${propertyColors.custom}; color: white; padding: 12px 20px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${propertyType.icon} ${propertyType.name}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.price || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Price</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.priceChange && propertyType.stats.priceChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.priceChange || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.sales || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Sales</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.salesChange && propertyType.stats.salesChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.salesChange || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; border-right: 1px solid #e0e0e0; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.listings || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Listings</div>
+                                <div style="font-size: 12px; font-weight: 500; color: ${propertyType.stats.listingsChange && propertyType.stats.listingsChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${propertyType.stats.listingsChange || 'N/A'} Y/Y</div>
+                            </td>
+                            <td width="25%" align="center" style="padding: 15px; background-color: white;">
+                                <div style="font-size: 18px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 3px;">${propertyType.stats.supply || 'N/A'}</div>
+                                <div style="font-size: 10px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 3px;">Months Supply</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3437,24 +3476,24 @@
                         </td>
                     </tr>
                     
-                    <!-- Main Stats -->
+                    <!-- Main Stats (3 columns using tables) -->
                     <tr>
                         <td style="padding: 0 40px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td width="33%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
+                                    <td width="32%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
                                         <div style="font-size: 24px; font-weight: 600; color: ${colors.accent}; margin-bottom: 5px;">${newsletterData.stats.avgPrice}</div>
                                         <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">Total Residential Price</div>
                                         <div style="font-size: 14px; font-weight: 500; color: ${newsletterData.stats.priceChange && newsletterData.stats.priceChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${newsletterData.stats.priceChange} Y/Y</div>
                                     </td>
-                                    <td width="10"></td>
-                                    <td width="33%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
+                                    <td width="2%"></td>
+                                    <td width="32%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
                                         <div style="font-size: 24px; font-weight: 600; color: ${colors.headerText}; margin-bottom: 5px;">${newsletterData.stats.homesSold}</div>
                                         <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">Sales</div>
                                         <div style="font-size: 14px; font-weight: 500; color: ${newsletterData.stats.salesChange && newsletterData.stats.salesChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${newsletterData.stats.salesChange || 'N/A'} Y/Y</div>
                                     </td>
-                                    <td width="10"></td>
-                                    <td width="33%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
+                                    <td width="2%"></td>
+                                    <td width="32%" align="center" style="padding: 20px 10px; background-color: ${colors.background}; border-radius: 8px;">
                                         <div style="font-size: 24px; font-weight: 600; color: ${propertyColors.row}; margin-bottom: 5px;">${newsletterData.stats.newListings}</div>
                                         <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">New Listings</div>
                                         <div style="font-size: 14px; font-weight: 500; color: ${newsletterData.stats.listingsChange && newsletterData.stats.listingsChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${newsletterData.stats.listingsChange || 'N/A'} Y/Y</div>
@@ -3466,18 +3505,18 @@
                     
                     <tr><td height="20"></td></tr>
                     
-                    <!-- Secondary Stats -->
+                    <!-- Secondary Stats (2 columns using tables) -->
                     <tr>
                         <td style="padding: 0 40px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td width="50%" align="center" style="padding: 20px; background-color: ${colors.background}; border-radius: 8px;">
+                                    <td width="48%" align="center" style="padding: 20px; background-color: ${colors.background}; border-radius: 8px;">
                                         <div style="font-size: 24px; font-weight: 600; color: ${propertyColors.apartment}; margin-bottom: 5px;">${newsletterData.stats.inventory}</div>
                                         <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">Total Inventory</div>
                                         <div style="font-size: 14px; font-weight: 500; color: ${newsletterData.stats.inventoryChange && newsletterData.stats.inventoryChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${newsletterData.stats.inventoryChange || 'N/A'} Y/Y</div>
                                     </td>
-                                    <td width="20"></td>
-                                    <td width="50%" align="center" style="padding: 20px; background-color: ${colors.background}; border-radius: 8px;">
+                                    <td width="4%"></td>
+                                    <td width="48%" align="center" style="padding: 20px; background-color: ${colors.background}; border-radius: 8px;">
                                         <div style="font-size: 24px; font-weight: 600; color: ${propertyColors.semi}; margin-bottom: 5px;">${newsletterData.stats.monthsOfSupply || 'N/A'}</div>
                                         <div style="font-size: 12px; color: ${colors.bodyText}; text-transform: uppercase; margin-bottom: 5px;">Months of Supply</div>
                                         <div style="font-size: 14px; font-weight: 500; color: ${newsletterData.stats.supplyChange && newsletterData.stats.supplyChange.startsWith('-') ? '#dc3545' : '#27ae60'};">${newsletterData.stats.supplyChange || 'Balanced'}</div>
@@ -3500,7 +3539,24 @@
                     ` : ''}
                     
                     <!-- Property Type Sections -->
-                    ${propertyTypeSectionsHtml}
+                    <tr>
+                        <td style="padding: 0 40px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                ${propertyTypeSectionsHtml}
+                                ${customPropertyTypesHtml}
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    ${newsletterData.content.marketButtonText ? `
+                    <tr>
+                        <td align="center" style="padding: 20px 40px;">
+                            <a href="${newsletterData.content.marketButtonUrl || '#'}" style="display: inline-block; background-color: ${newsletterData.design.buttonColors.marketReport}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${newsletterData.content.marketButtonText}
+                            </a>
+                        </td>
+                    </tr>
+                    ` : ''}
                     
                     <!-- Events Section -->
                     ${eventsHtml ? `
@@ -3591,7 +3647,7 @@
     </table>
 </body>
 </html>`;
-        }
+}
         
         function generateEmailBannerHtml() {
             const bannerStyle = newsletterData.design.bannerStyle;
