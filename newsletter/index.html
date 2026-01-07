@@ -1700,6 +1700,13 @@
     </section>
 
     <script>
+        // Get current month name - ADD THIS FUNCTION HERE
+    function getCurrentMonth() {
+        const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 
+                           'july', 'august', 'september', 'october', 'november', 'december'];
+        const now = new Date();
+        return monthNames[now.getMonth()];
+    }
         // Global state
         let newsletterData = {
             design: {
@@ -1845,7 +1852,7 @@
             },
             content: {
                 personalMessage: 'Before fall routines kick in, August is the perfect time to make a move or prep your home for sale. Let\'s chat about your next step!',
-                newsletterSeason: 'august',
+                newsletterSeason: getCurrentMonth(), // Dynamic current month
                 customSubtitle: 'LATE SUMMER',
                 marketButtonText: '',
                 marketButtonUrl: ''
@@ -4284,38 +4291,64 @@
         }, observerOptions);
 
         document.addEventListener('DOMContentLoaded', function() {
-            try {
-                const currentSeason = newsletterData.content.newsletterSeason;
-                const seasonConfig = SEASONS[currentSeason];
-                if (seasonConfig && seasonConfig.tips) {
-                    newsletterData.maintenanceTips = [...seasonConfig.tips];
-                }
-                
-                renderStats();
-                updatePropertyTypeColorInputs();
-                setupEventListeners();
-                updateMonthDisplay();
-                updateEventsList();
-                renderMaintenanceTipsSummary();
-                updateColorInputs();
-                updatePreview();
-                updatePreviewStatus();
-                
-                document.querySelectorAll('.fade-in').forEach(element => {
-                    observer.observe(element);
-                });
-                
-                console.log('💡 Newsletter Builder Pro with Smart Tools Navigation:');
-                console.log('• Navigation system integrated with Firebase authentication');
-                console.log('• All original newsletter features preserved and enhanced');
-                console.log('• Page protection and modal systems operational');
-                console.log('• Responsive design maintained across all screen sizes');
-                
-            } catch (error) {
-                console.error('Application initialization error:', error);
-                showToast('⚠️ Application started with some limitations. Please refresh if you encounter issues.', 'warning', 6000);
+    try {
+        // Set current month
+        const currentMonth = getCurrentMonth();
+        newsletterData.content.newsletterSeason = currentMonth;
+        
+        // Update the dropdown to show current month
+        const seasonSelect = document.getElementById('newsletterSeason');
+        if (seasonSelect) {
+            seasonSelect.value = currentMonth;
+        }
+        
+        // Initialize with current month's default content
+        const seasonConfig = SEASONS[currentMonth];
+        if (seasonConfig) {
+            if (seasonConfig.tips) {
+                newsletterData.maintenanceTips = [...seasonConfig.tips];
             }
+            if (seasonConfig.personalMessage) {
+                newsletterData.content.personalMessage = seasonConfig.personalMessage;
+                const messageField = document.getElementById('personalMessage');
+                if (messageField) {
+                    messageField.value = seasonConfig.personalMessage;
+                }
+            }
+            if (seasonConfig.subtitle) {
+                newsletterData.content.customSubtitle = seasonConfig.subtitle;
+                const subtitleField = document.getElementById('customSubtitle');
+                if (subtitleField) {
+                    subtitleField.value = seasonConfig.subtitle;
+                }
+            }
+        }
+        
+        renderStats();
+        updatePropertyTypeColorInputs();
+        setupEventListeners();
+        updateMonthDisplay();
+        updateEventsList();
+        renderMaintenanceTipsSummary();
+        updateColorInputs();
+        updatePreview();
+        updatePreviewStatus();
+        
+        document.querySelectorAll('.fade-in').forEach(element => {
+            observer.observe(element);
         });
+        
+        console.log(`💡 Newsletter Builder Pro loaded for ${currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)} ${new Date().getFullYear()}`);
+        console.log('• Navigation system integrated with Firebase authentication');
+        console.log('• All original newsletter features preserved and enhanced');
+        console.log('• Page protection and modal systems operational');
+        console.log('• Responsive design maintained across all screen sizes');
+        
+    } catch (error) {
+        console.error('Application initialization error:', error);
+        showToast('⚠️ Application started with some limitations. Please refresh if you encounter issues.', 'warning', 6000);
+    }
+});
     </script>
 </body>
 </html>
