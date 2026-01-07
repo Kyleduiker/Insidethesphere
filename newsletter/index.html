@@ -1852,13 +1852,7 @@
             },
             customPropertyTypes: [],
             customEvents: [],
-            maintenanceTips: [
-                '🏠 Review roof for hail damage',
-                '🔥 Prep furnace for fall (early servicing)', 
-                '🧹 Deep clean garage or shed',
-                '📋 Plan fall landscaping or repairs',
-                '🎨 Touch up exterior paint'
-            ]
+           maintenanceTips: []  // Will be populated based on selected month
         };
 
         // Season configurations
@@ -2783,24 +2777,18 @@
         }
 
         function updateMaintenanceTipsForSeason(season) {
-            const config = SEASONS[season];
-            if (config && config.tips) {
-                const currentTips = newsletterData.maintenanceTips || [];
-                const hasCustomTips = currentTips.length > 0 && !isDefaultTips(currentTips, season);
-                
-                if (!hasCustomTips) {
-                    newsletterData.maintenanceTips = [...config.tips];
-                    renderMaintenanceTipsSummary();
-                }
-            }
-        }
+    const config = SEASONS[season];
+    if (config && config.tips) {
+        // Always update to the new season's tips when the month changes
+        newsletterData.maintenanceTips = [...config.tips];
+        renderMaintenanceTipsSummary();
+        updatePreview();
+        
+        console.log(`Maintenance tips updated for ${season}:`, newsletterData.maintenanceTips);
+    }
+}
 
-        function isDefaultTips(currentTips, season) {
-            const defaultTips = SEASONS[season]?.tips || [];
-            if (currentTips.length !== defaultTips.length) return false;
-            
-            return currentTips.every((tip, index) => tip === defaultTips[index]);
-        }
+        
 
         function getMaintenanceTips(config) {
             const tips = newsletterData.maintenanceTips || config.tips;
