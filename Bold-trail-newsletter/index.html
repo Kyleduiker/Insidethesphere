@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bold Trail RLP Sphere Newsletter Stats</title>
+<style>
+  :root {
+    --red: #EA002A; --black: #000; --dg: #4D4D4D;
+    --mg: #A59D95; --lg: #F5F5F5; --border: #E0E0E0;
+    --radius: 8px; --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font); background:#EBEBEB; color:var(--black); min-height:100vh; }
+
+  /* HEADER */
+  .app-header {
+    background:var(--black); color:white; padding:14px 24px;
+    display:flex; align-items:center; gap:12px;
+    border-bottom:3px solid var(--red); position:sticky; top:0; z-index:100;
+  }
+  .logo { width:32px; height:32px; background:var(--red); border-radius:4px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; color:white; }
+  .app-header h1 { font-size:16px; font-weight:700; }
+  .app-header p  { font-size:11px; color:var(--mg); margin-top:1px; }
+  .hdr-btns { margin-left:auto; display:flex; gap:8px; }
+  .hbtn { padding:7px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; border:none; transition:opacity .15s; }
+  .hbtn.r { background:var(--red); color:white; }
+  .hbtn.g { background:#333; color:white; }
+  .hbtn:hover { opacity:.85; }
+
+  /* LAYOUT */
+  .workspace { display:grid; grid-template-columns:400px 1fr; height:calc(100vh - 63px); overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { background:white; border-right:1px solid var(--border); overflow-y:auto; }
+  .sbs { border-bottom:1px solid var(--border); padding:16px 20px; }
+  .sbl {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;
+    color:var(--red); margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .sbl::after { content:''; flex:1; height:1px; background:#F0F0F0; }
+
+  .f { margin-bottom:9px; }
+  .f label { display:block; font-size:10px; font-weight:700; color:var(--dg); text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+  .f input, .f textarea, .f select {
+    width:100%; padding:7px 10px; border:1.5px solid var(--border); border-radius:6px;
+    font-size:13px; font-family:var(--font); background:white; color:var(--black); transition:border-color .15s;
+  }
+  .f input:focus, .f textarea:focus, .f select:focus { outline:none; border-color:var(--red); }
+  .f textarea { resize:vertical; min-height:82px; line-height:1.55; }
+  .fr { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  /* STAT CARDS */
+  .sg { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .sc { border:1.5px solid var(--border); border-radius:6px; padding:8px 10px; background:#FAFAFA; }
+  .sc .sl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--mg); margin-bottom:3px; }
+  .sc input { border:none; padding:0; font-size:14px; font-weight:700; color:var(--red); background:transparent; width:100%; }
+  .sc input.ch { font-size:11px; color:var(--dg); font-weight:500; margin-top:2px; }
+  .sc input:focus { outline:none; }
+
+  .pth {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+    color:var(--dg); padding:11px 0 6px; margin-top:4px; border-top:1px solid #F0F0F0;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .pth button {
+    font-size:10px; color:var(--mg); background:none; border:none; cursor:pointer; padding:2px 6px;
+  }
+  .pth button:hover { color:var(--red); }
+
+  /* ADD PROP TYPE */
+  .add-pt-row { display:flex; gap:6px; margin-top:10px; }
+  .add-pt-row input {
+    flex:1; padding:7px 10px; border:1.5px dashed var(--border); border-radius:6px;
+    font-size:12px; font-family:var(--font); background:white;
+  }
+  .add-pt-row input:focus { outline:none; border-color:var(--red); border-style:solid; }
+  .add-pt-btn {
+    padding:7px 12px; background:var(--red); color:white; border:none;
+    border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+
+  /* TIPS */
+  .month-tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+  .mt { padding:4px 9px; border-radius:20px; font-size:10px; font-weight:700;
+    border:1.5px solid var(--border); background:white; color:var(--dg); cursor:pointer; transition:all .15s; }
+  .mt.active, .mt:hover { background:var(--red); color:white; border-color:var(--red); }
+
+  .tips-list { display:flex; flex-direction:column; gap:5px; }
+  .tip-row { display:flex; gap:6px; align-items:center; }
+  .tip-row input { flex:1; border:1.5px solid var(--border); border-radius:6px; padding:6px 9px; font-size:12px; font-family:var(--font); background:white; }
+  .tip-row input:focus { outline:none; border-color:var(--red); }
+  .tdel { background:none; border:none; color:#CCC; cursor:pointer; font-size:18px; line-height:1; padding:2px 4px; }
+  .tdel:hover { color:var(--red); }
+  .add-tip { margin-top:6px; width:100%; padding:7px; background:white; border:1.5px dashed var(--border);
+    border-radius:6px; font-size:12px; color:var(--mg); cursor:pointer; transition:all .15s; }
+  .add-tip:hover { border-color:var(--red); color:var(--red); }
+
+  /* PREVIEW */
+  .preview-panel { display:flex; flex-direction:column; overflow:hidden; background:#DFDFDF; }
+  .prev-bar { background:white; border-bottom:1px solid var(--border); padding:10px 20px;
+    display:flex; align-items:center; gap:9px; flex-shrink:0; }
+  .prev-bar span { font-size:12px; color:var(--mg); flex:1; }
+  .pb { padding:7px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; border:1.5px solid; transition:all .15s; }
+  .pb.r { background:var(--red); color:white; border-color:var(--red); }
+  .pb.r:hover { opacity:.88; }
+  .pb.g { background:white; color:var(--dg); border-color:var(--border); }
+  .pb.g:hover { border-color:#999; }
+
+  .prev-scroll { flex:1; overflow-y:auto; padding:20px; display:flex; justify-content:center; }
+  .email-shell { width:640px; background:white; box-shadow:0 4px 24px rgba(0,0,0,.13); border-radius:4px; overflow:hidden; }
+
+  .empty-state { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--mg); text-align:center; }
+  .empty-state .ei { font-size:40px; }
+  .empty-state p { font-size:13px; max-width:230px; line-height:1.6; }
+
+  .toast { position:fixed; bottom:18px; right:18px; background:#111; color:white; padding:10px 16px;
+    border-radius:8px; font-size:13px; font-weight:500; transform:translateY(60px); opacity:0; transition:all .3s; z-index:9999; }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">RL</div>
+  <div><h1>Bold Trail RLP Sphere Newsletter Stats</h1><p>Update stats · write message · generate Bold Trail–ready HTML</p></div>
+  <div class="hdr-btns">
+    <button class="hbtn g" onclick="downloadHTML()">⬇ Download HTML</button>
+    <button class="hbtn r" onclick="copyHTML()">📋 Copy for Bold Trail</button>
+  </div>
+</header>
+
+<div class="workspace">
+<aside class="sidebar">
+
+  <!-- MONTH SELECTOR -->
+  <div class="sbs">
+    <div class="sbl">Newsletter Month</div>
+    <div class="month-tabs" id="monthTabs"></div>
+  </div>
+
+  <!-- YOUR MESSAGE -->
+  <div class="sbs">
+    <div class="sbl">Your Message</div>
+    <div class="f">
+      <label>Opening Commentary</label>
+      <textarea id="agentMessage"></textarea>
+    </div>
+    <div style="font-size:10px;color:var(--mg);margin-top:-4px;">Auto-fills when you pick a month in Tips. Edit freely.</div>
+  </div>
+
+  <!-- MARKET STATS -->
+  <div class="sbs">
+    <div class="sbl">Market Statistics</div>
+
+    <div class="sg">
+      <div class="sc"><div class="sl">Benchmark Price</div><input id="s_totalPrice" value="$570,500"><input class="ch" id="s_totalPriceChg" value="-3.0% Y/Y"></div>
+      <div class="sc"><div class="sl">Total Sales</div><input id="s_sales" value="2,162"><input class="ch" id="s_salesChg" value="-15.5% Y/Y"></div>
+      <div class="sc"><div class="sl">New Listings</div><input id="s_listings" value="4,226"><input class="ch" id="s_listingsChg" value="-12.7% Y/Y"></div>
+      <div class="sc"><div class="sl">Inventory</div><input id="s_inventory" value="6,752"><input class="ch" id="s_inventoryChg" value="+0.1% Y/Y"></div>
+      <div class="sc"><div class="sl">Months of Supply</div><input id="s_mos" value="3.12"><input class="ch" id="s_mosChg" value="+18.5% Y/Y"></div>
+      <div class="sc"><div class="sl">Days on Market</div><input id="s_dom" value="34"><input class="ch" id="s_domChg" value="+5.1% Y/Y"></div>
+    </div>
+
+    <!-- BUILT-IN PROPERTY TYPES -->
+    <div id="builtinTypes">
+      <div class="pth"><span>🏠 Detached</span></div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Price</div><input id="d_price" value="$747,800"><input class="ch" id="d_priceChg" value="-2.4% Y/Y"></div>
+        <div class="sc"><div class="sl">Sales</div><input id="d_sales" value="1,192"><input class="ch" id="d_salesChg" value="-6.4% Y/Y"></div>
+        <div class="sc"><div class="sl">New Listings</div><input id="d_listings" value="2,195"><input class="ch" id="d_listingsChg" value="-9.2% Y/Y"></div>
+        <div class="sc"><div class="sl">Months Supply</div><input id="d_mos" value="2.45"><input class="ch" id="d_inventory" value="2,916 inventory"></div>
+      </div>
+
+      <div class="pth"><span>🏘️ Semi-Detached</span></div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Price</div><input id="sm_price" value="$691,100"><input class="ch" id="sm_priceChg" value="-1.0% Y/Y"></div>
+        <div class="sc"><div class="sl">Sales</div><input id="sm_sales" value="217"><input class="ch" id="sm_salesChg" value="-14.9% Y/Y"></div>
+        <div class="sc"><div class="sl">New Listings</div><input id="sm_listings" value="375"><input class="ch" id="sm_listingsChg" value="-12.2% Y/Y"></div>
+        <div class="sc"><div class="sl">Months Supply</div><input id="sm_mos" value="2.73"><input class="ch" id="sm_inventory" value="593 inventory"></div>
+      </div>
+
+      <div class="pth"><span>🏗️ Row / Townhome</span></div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Price</div><input id="r_price" value="$422,300"><input class="ch" id="r_priceChg" value="-6.4% Y/Y"></div>
+        <div class="sc"><div class="sl">Sales</div><input id="r_sales" value="350"><input class="ch" id="r_salesChg" value="-23.4% Y/Y"></div>
+        <div class="sc"><div class="sl">New Listings</div><input id="r_listings" value="695"><input class="ch" id="r_listingsChg" value="-9.2% Y/Y"></div>
+        <div class="sc"><div class="sl">Months Supply</div><input id="r_mos" value="3.35"><input class="ch" id="r_inventory" value="1,173 inventory"></div>
+      </div>
+
+      <div class="pth"><span>🏢 Apartment / Condo</span></div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Price</div><input id="a_price" value="$300,400"><input class="ch" id="a_priceChg" value="-9.1% Y/Y"></div>
+        <div class="sc"><div class="sl">Sales</div><input id="a_sales" value="403"><input class="ch" id="a_salesChg" value="-29.8% Y/Y"></div>
+        <div class="sc"><div class="sl">New Listings</div><input id="a_listings" value="961"><input class="ch" id="a_listingsChg" value="-21.9% Y/Y"></div>
+        <div class="sc"><div class="sl">Months Supply</div><input id="a_mos" value="5.14"><input class="ch" id="a_inventory" value="2,070 inventory"></div>
+      </div>
+    </div>
+
+    <!-- CUSTOM PROPERTY TYPES -->
+    <div id="customTypesContainer"></div>
+
+    <!-- ADD CUSTOM TYPE -->
+    <div class="add-pt-row">
+      <input type="text" id="newPtName" placeholder="+ Add property type (e.g. Luxury, Lake Community…)" onkeydown="if(event.key==='Enter')addPropertyType()">
+      <button class="add-pt-btn" onclick="addPropertyType()">Add</button>
+    </div>
+
+    <!-- EDITABLE DISCLAIMER -->
+    <div class="f" style="margin-top:14px;">
+      <label>Statistics Disclaimer</label>
+      <textarea id="statsDisclaimer" style="min-height:52px;font-size:11px;color:#666;line-height:1.5;">Statistics sourced from CREB® (Calgary Real Estate Board). The trademarks MLS®, REALTOR®, and Multiple Listing Service® are owned by CREA. For informational purposes only.</textarea>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="sbs">
+    <div class="sbl">Monthly Maintenance Tips</div>
+    <div class="tips-list" id="tipsList"></div>
+    <button class="add-tip" onclick="addTip('')">+ Add tip</button>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="sbs" style="border-bottom:none;">
+    <button onclick="generateNewsletter()" style="width:100%;padding:13px;background:var(--red);color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;">
+      ⚡ Generate Newsletter
+    </button>
+  </div>
+
+</aside>
+
+<!-- PREVIEW -->
+<main class="preview-panel">
+  <div class="prev-bar">
+    <span id="prevLabel">Fill in the form and click Generate Newsletter</span>
+    <button class="pb g" onclick="downloadHTML()">⬇ Download HTML</button>
+    <button class="pb r" onclick="copyHTML()">📋 Copy for Bold Trail</button>
+  </div>
+  <div class="prev-scroll">
+    <div id="previewArea">
+      <div class="empty-state">
+        <div class="ei">📊</div>
+        <p>Stats are pre-loaded from May 2026. Pick a month for tips, update your message, then hit <strong>Generate</strong>.</p>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const MESSAGES = {
+  January:   "Happy New Year! 🎉 January has a way of making everything feel fresh and full of possibility — and real estate is no different. Whether you're dreaming of a new space, curious about your home's value, or just keeping an eye on things, I'm always happy to chat. Here's a look at what the Calgary market was up to last month.",
+  February:  "February is here, and with it, a little extra reason to love where you live. 🏡 Whether your home is your cozy retreat from the cold or you're starting to imagine what's next, it's always a good time to stay informed. Here's your monthly snapshot of the Calgary real estate market.",
+  March:     "Spring is in the air — and there's something exciting about this time of year. 🌱 The days are getting longer, the snow is (slowly) disappearing, and Calgary is waking up. It's a great season to start thinking about what home means to you. Here's what the market looked like last month.",
+  April:     "April is one of my favourite months in Calgary — the city comes alive, patios open up, and there's energy in the air. 🌷 Whether you're thinking about making a move or just love knowing what's going on in the market, I've got you covered. Here's your April update.",
+  May:       "May in Calgary is pretty hard to beat — long evenings, green spaces, and that feeling that summer is right around the corner. ☀️ It's also one of the most active times of year in real estate, which means there's always something interesting to talk about. Here's a look at the numbers from last month.",
+  June:      "June is officially here, and Calgary is in full summer mode. 🌞 Patios, pathways, and longer days — it really doesn't get much better. Whatever's on your radar this summer, I'm here if you ever want to talk through your options. In the meantime, here's what the market has been up to.",
+  July:      "Hope your summer is off to a great start! 🙌 July is all about slowing down, soaking it in, and enjoying everything Calgary has to offer. Real estate doesn't take a summer break though — here's your monthly market update to keep you in the loop.",
+  August:    "Can you believe it's already August? ☀️ Summer is still going strong, but there's that subtle shift in the air that makes you start thinking about fall. It's a great time to take stock of where things are at — in life and in the market. Here's what's been happening in Calgary real estate.",
+  September: "Welcome to September! 🍂 Back-to-school energy, cooler mornings, and the best sunsets of the year — there's a lot to love about this month. It's also a great time to revisit any real estate goals you set at the start of the year. Here's your monthly market update.",
+  October:   "October is here, and Calgary is doing its thing — colourful leaves, crisp air, and that cozy feeling that makes home mean a little more. 🍁 Whether you're settled in for the season or thinking about what's next, I'm always just a message away. Here's what the market looked like last month.",
+  November:  "November in Calgary — the snow is coming, the hot chocolate is flowing, and the year is winding down. ❄️ It's a quieter month in real estate, but that doesn't mean nothing's happening. Here's your monthly update, plus a few tips to get your home ready for winter.",
+  December:  "December! 🎄 The most wonderful time of year. Whether you're hosting family, cozying up at home, or sneaking a peek at what's happening in the market between holiday plans — I've got you. Wishing you a warm and wonderful season. Here's your final market update of the year.",
+};
+
+const TIPS = {
+  January:   ['🔧 Replace furnace filter','💧 Run humidifier to combat dry winter air','🧊 Watch for ice dams on roof edges after Chinooks','❄️ Check for frost in attic and basement','🚨 Test smoke and CO detectors'],
+  February:  ['🌨️ Clear snow from foundation vents and window wells','🚪 Inspect weatherstripping after freeze-thaw cycles','🔐 Lubricate door locks and garage mechanisms','💧 Monitor for condensation on windows','⚡ Test sump pump before early spring thaw'],
+  March:     ['☀️ Begin clearing snow from your home perimeter','💧 Check grading and drainage for pooling meltwater','🏠 Book a roof inspection before spring rains','🌳 Trim snow-damaged tree limbs away from structures','🌱 Prep garden tools and order spring supplies'],
+  April:     ['🌧️ Clean gutters and downspouts','🏠 Inspect shingles and siding for winter damage','💧 Test exterior taps after last frost','🔧 Caulk around windows and doors','🌿 Apply spring fertilizer to lawn'],
+  May:       ['🚿 Power wash siding, deck, and walkways','💧 Inspect irrigation system for leaks','🔧 Reseal driveway and deck surfaces','🍖 Clean BBQ and prep outdoor living space','🐛 Monitor for signs of pests'],
+  June:      ['❄️ Test air conditioning and change filters','🌧️ Check eavestrough slope and downspout extensions','🔧 Inspect fence posts for shifting','🪟 Wash windows and inspect screens','💨 Secure patio furniture before summer windstorms'],
+  July:      ['🌳 Trim trees near the home — hail and wind risk','🏠 Check attic insulation and ventilation','☀️ Use UV window film on south-facing windows','💧 Water lawn early morning to reduce evaporation','🔥 Inspect dryer vent for lint buildup'],
+  August:    ['🏠 Inspect roof for hail or storm damage','🔥 Book furnace service before fall season','🧹 Deep clean the garage or storage shed','📋 Plan fall landscaping, staining, or repairs','🎨 Touch up exterior paint before cooler weather'],
+  September: ['💧 Blow out irrigation system before first frost','🌿 Apply fall fertilizer to lawn','🔥 Inspect chimney and fireplace before use','📦 Store summer furniture and garden equipment','🐭 Seal attic and garage entry points against rodents'],
+  October:   ['❄️ Winterize outdoor faucets and hoses','🍂 Rake and compost leaves','🏠 Inspect foundation for new cracks','🔥 Test heating system and thermostat','🚪 Apply fresh weatherseal to exterior doors and windows'],
+  November:  ['❄️ Prepare snow removal equipment','❄️ Cover or store air conditioning units','💡 Install exterior light timers for shorter days','🧊 Stock ice melt and emergency supplies','🔧 Replace furnace filter before peak heating season'],
+  December:  ['❄️ Clear snow from roof edges and exhaust vents','🚨 Test CO detectors during peak furnace use','💨 Check for drafts around windows and doors','🚶 Keep all exits and walkways clear of ice','🏠 Monitor roof load after heavy snowfall'],
+};
+
+// Palette for custom property types (cycles through)
+const PT_COLORS = ['#2C3E50','#1A5276','#145A32','#6E2F8C','#7E5109','#1B4F72','#512E5F','#922B21'];
+
+let currentTips = [];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let activeMonth = MONTH_NAMES[new Date().getMonth()];
+let generatedHTML = '';
+let customTypes = []; // [{id, name, color, fields: {price,priceChg,sales,salesChg,listings,listingsChg,mos,extra}}]
+
+// ── MONTH TABS ──
+function initMonthTabs() {
+  const container = document.getElementById('monthTabs');
+  Object.keys(TIPS).forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mt' + (m === activeMonth ? ' active' : '');
+    btn.textContent = m.slice(0,3);
+    btn.onclick = () => setMonth(m);
+    container.appendChild(btn);
+  });
+  setMonth(activeMonth, true);
+}
+
+function setMonth(m, silent) {
+  activeMonth = m;
+  document.querySelectorAll('.mt').forEach(b => b.classList.toggle('active', b.textContent === m.slice(0,3)));
+  currentTips = [...TIPS[m]];
+  renderTips();
+  // Auto-fill message if still default or empty
+  if (!silent) {
+    const ta = document.getElementById('agentMessage');
+    const cur = ta.value.trim();
+    const isDefault = Object.values(MESSAGES).some(msg => msg === cur) || cur === '';
+    if (isDefault) ta.value = MESSAGES[m] || '';
+  }
+}
+
+function renderTips() {
+  const list = document.getElementById('tipsList');
+  list.innerHTML = '';
+  currentTips.forEach((tip, i) => {
+    const row = document.createElement('div');
+    row.className = 'tip-row';
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.value = tip;
+    inp.addEventListener('change', () => { currentTips[i] = inp.value; });
+    const del = document.createElement('button');
+    del.className = 'tdel'; del.textContent = '×';
+    del.onclick = () => { currentTips.splice(i,1); renderTips(); };
+    row.appendChild(inp); row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function addTip(t) {
+  currentTips.push(t || '🔧 ');
+  renderTips();
+  const inputs = document.querySelectorAll('#tipsList input');
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+
+// ── CUSTOM PROPERTY TYPES ──
+function addPropertyType() {
+  const input = document.getElementById('newPtName');
+  const name = input.value.trim();
+  if (!name) return;
+  const id = 'pt_' + Date.now();
+  const color = PT_COLORS[customTypes.length % PT_COLORS.length];
+  customTypes.push({ id, name, color, fields: { price:'', priceChg:'', sales:'', salesChg:'', listings:'', listingsChg:'', mos:'', extra:'' } });
+  input.value = '';
+  renderCustomTypes();
+  showToast(`Added "${name}" property type`);
+}
+
+function removePropertyType(id) {
+  customTypes = customTypes.filter(t => t.id !== id);
+  renderCustomTypes();
+}
+
+function renderCustomTypes() {
+  const container = document.getElementById('customTypesContainer');
+  container.innerHTML = '';
+  customTypes.forEach(pt => {
+    const block = document.createElement('div');
+    block.innerHTML = `
+      <div class="pth">
+        <span style="color:${pt.color}">■</span>&nbsp;<span>${pt.name}</span>
+        <button onclick="removePropertyType('${pt.id}')">✕ Remove</button>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Price</div><input id="${pt.id}_price" value="${pt.fields.price}" placeholder="$0"><input class="ch" id="${pt.id}_priceChg" value="${pt.fields.priceChg}" placeholder="0.0% Y/Y"></div>
+        <div class="sc"><div class="sl">Sales</div><input id="${pt.id}_sales" value="${pt.fields.sales}" placeholder="0"><input class="ch" id="${pt.id}_salesChg" value="${pt.fields.salesChg}" placeholder="0.0% Y/Y"></div>
+        <div class="sc"><div class="sl">New Listings</div><input id="${pt.id}_listings" value="${pt.fields.listings}" placeholder="0"><input class="ch" id="${pt.id}_listingsChg" value="${pt.fields.listingsChg}" placeholder="0.0% Y/Y"></div>
+        <div class="sc"><div class="sl">Months Supply</div><input id="${pt.id}_mos" value="${pt.fields.mos}" placeholder="0.00"><input class="ch" id="${pt.id}_extra" value="${pt.fields.extra}" placeholder="0 inventory"></div>
+      </div>`;
+    container.appendChild(block);
+  });
+}
+
+// ── HELPERS ──
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+function chgColor(s) { return s && s.startsWith('-') ? '#C0392B' : '#27AE60'; }
+
+function propCard(icon, label, color, price, priceChg, sales, salesChg, listings, listingsChg, mos, extra) {
+  return `<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:16px;border:1px solid #E0E0E0;border-radius:8px;overflow:hidden;">
+    <tr><td colspan="2" style="background:${color};color:#fff;padding:11px 16px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:.8px;">${icon} ${label}</td></tr>
+    <!-- Row 1: Price + Sales -->
+    <tr>
+      <td width="50%" align="center" style="padding:16px 10px 12px;border-right:1px solid #E0E0E0;border-bottom:1px solid #E0E0E0;background:#fff;">
+        <div style="font-size:18px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${price||'—'}</div>
+        <div style="font-size:10px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Benchmark Price</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(priceChg)};font-family:Arial,sans-serif;">${priceChg||''}</div>
+      </td>
+      <td width="50%" align="center" style="padding:16px 10px 12px;border-bottom:1px solid #E0E0E0;background:#fff;">
+        <div style="font-size:18px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${sales||'—'}</div>
+        <div style="font-size:10px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Sales</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(salesChg)};font-family:Arial,sans-serif;">${salesChg||''}</div>
+      </td>
+    </tr>
+    <!-- Row 2: New Listings + Months Supply -->
+    <tr>
+      <td width="50%" align="center" style="padding:14px 10px;border-right:1px solid #E0E0E0;background:#fafafa;">
+        <div style="font-size:18px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${listings||'—'}</div>
+        <div style="font-size:10px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">New Listings</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(listingsChg)};font-family:Arial,sans-serif;">${listingsChg||''}</div>
+      </td>
+      <td width="50%" align="center" style="padding:14px 10px;background:#fafafa;">
+        <div style="font-size:18px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${mos||'—'}</div>
+        <div style="font-size:10px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Months Supply</div>
+        <div style="font-size:11px;color:#A59D95;font-family:Arial,sans-serif;">${extra||''}</div>
+      </td>
+    </tr>
+  </table>`;
+}
+
+// ── GENERATE ──
+function generateNewsletter() {
+  // sync tips from DOM
+  document.querySelectorAll('#tipsList input').forEach((inp,i) => { if(currentTips[i]!==undefined) currentTips[i]=inp.value; });
+
+  const message    = v('agentMessage');
+  const statsMonth = activeMonth + ' 2026';
+
+  const tipsRows = currentTips.filter(Boolean).map(t =>
+    `<tr><td style="padding:10px 0;border-bottom:1px solid #EEEEEE;font-size:14px;color:#4D4D4D;font-family:Arial,sans-serif;line-height:1.4;">${t}</td></tr>`
+  ).join('');
+
+  // All property type cards — built-ins + customs — all paired into one 2-column flow
+  const allCards = [
+    { icon:'🏠', name:'Detached',         color:'#000000', price:v('d_price'),  priceChg:v('d_priceChg'),  sales:v('d_sales'),  salesChg:v('d_salesChg'),  listings:v('d_listings'),  listingsChg:v('d_listingsChg'),  mos:v('d_mos'),  extra:v('d_inventory') },
+    { icon:'🏘️', name:'Semi-Detached',    color:'#4D4D4D', price:v('sm_price'), priceChg:v('sm_priceChg'), sales:v('sm_sales'), salesChg:v('sm_salesChg'), listings:v('sm_listings'), listingsChg:v('sm_listingsChg'), mos:v('sm_mos'), extra:v('sm_inventory') },
+    { icon:'🏗️', name:'Row / Townhome',   color:'#A59D95', price:v('r_price'),  priceChg:v('r_priceChg'),  sales:v('r_sales'),  salesChg:v('r_salesChg'),  listings:v('r_listings'),  listingsChg:v('r_listingsChg'),  mos:v('r_mos'),  extra:v('r_inventory') },
+    { icon:'🏢', name:'Apartment / Condo',color:'#C4C18E', price:v('a_price'),  priceChg:v('a_priceChg'),  sales:v('a_sales'),  salesChg:v('a_salesChg'),  listings:v('a_listings'),  listingsChg:v('a_listingsChg'),  mos:v('a_mos'),  extra:v('a_inventory') },
+    ...customTypes.map(pt => ({ icon:'▪', name:pt.name, color:pt.color, price:v(pt.id+'_price'), priceChg:v(pt.id+'_priceChg'), sales:v(pt.id+'_sales'), salesChg:v(pt.id+'_salesChg'), listings:v(pt.id+'_listings'), listingsChg:v(pt.id+'_listingsChg'), mos:v(pt.id+'_mos'), extra:v(pt.id+'_extra') }))
+  ];
+
+  // Pair all cards into 2-column rows
+  const allCardsHTML = [];
+  for (let i = 0; i < allCards.length; i += 2) {
+    const a = allCards[i], b = allCards[i+1];
+    allCardsHTML.push(`
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr valign="top">
+      <td width="49%">${propCard(a.icon,a.name,a.color,a.price,a.priceChg,a.sales,a.salesChg,a.listings,a.listingsChg,a.mos,a.extra)}</td>
+      <td width="2%"></td>
+      <td width="49%">${b ? propCard(b.icon,b.name,b.color,b.price,b.priceChg,b.sales,b.salesChg,b.listings,b.listingsChg,b.mos,b.extra) : ''}</td>
+    </tr></table>`);
+  }
+
+  generatedHTML = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Calgary Market Update — ${statsMonth}</title></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;">
+<tr><td align="center" style="padding:20px 12px;">
+<table cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;background:#ffffff;">
+
+  <!-- RED RULE TOP -->
+  <tr><td style="background:#EA002A;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+  ${message ? `<!-- MESSAGE -->
+  <tr><td style="padding:26px 30px 20px;">
+    <div style="border-left:4px solid #EA002A;padding-left:14px;">
+      <p style="font-size:15px;line-height:1.75;color:#4D4D4D;margin:0;font-family:Arial,sans-serif;font-style:italic;">${message.replace(/\n/g,'<br>')}</p>
+    </div>
+  </td></tr>` : ''}
+
+  <!-- DIVIDER -->
+  <tr><td style="padding:0 30px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:#E0E0E0;height:1px;font-size:0;line-height:0;"></td></tr></table></td></tr>
+
+  <!-- SECTION HEADER -->
+  <tr><td style="padding:20px 30px 14px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#EA002A;font-family:Arial,sans-serif;">Market Overview — ${statsMonth}</div>
+  </td></tr>
+
+  <!-- TOP 3 STATS -->
+  <tr><td style="padding:0 30px 10px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#EA002A;font-family:Arial,sans-serif;">${v('s_totalPrice')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Benchmark Price</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_totalPriceChg'))};font-family:Arial,sans-serif;">${v('s_totalPriceChg')||''}</div>
+      </td>
+      <td width="2%"></td>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${v('s_sales')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Sales</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_salesChg'))};font-family:Arial,sans-serif;">${v('s_salesChg')||''}</div>
+      </td>
+      <td width="2%"></td>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${v('s_listings')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">New Listings</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_listingsChg'))};font-family:Arial,sans-serif;">${v('s_listingsChg')||''}</div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- BOTTOM 3 STATS -->
+  <tr><td style="padding:10px 30px 24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${v('s_inventory')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Inventory</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_inventoryChg'))};font-family:Arial,sans-serif;">${v('s_inventoryChg')||''}</div>
+      </td>
+      <td width="2%"></td>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${v('s_mos')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Months of Supply</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_mosChg'))};font-family:Arial,sans-serif;">${v('s_mosChg')||''}</div>
+      </td>
+      <td width="2%"></td>
+      <td width="32%" align="center" style="background:#F5F5F5;padding:16px 10px;border-radius:6px;">
+        <div style="font-size:20px;font-weight:700;color:#000;font-family:Arial,sans-serif;">${v('s_dom')||'—'}</div>
+        <div style="font-size:11px;color:#A59D95;text-transform:uppercase;letter-spacing:.5px;margin:5px 0 4px;font-family:Arial,sans-serif;">Days on Market</div>
+        <div style="font-size:12px;font-weight:600;color:${chgColor(v('s_domChg'))};font-family:Arial,sans-serif;">${v('s_domChg')||''}</div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- DIVIDER -->
+  <tr><td style="padding:0 30px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:#E0E0E0;height:1px;font-size:0;line-height:0;"></td></tr></table></td></tr>
+
+  <!-- PROPERTY TYPE HEADER -->
+  <tr><td style="padding:20px 30px 14px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#EA002A;font-family:Arial,sans-serif;">Property Type Breakdown</div>
+  </td></tr>
+
+  <!-- ALL PROPERTY TYPE CARDS - 2 col continuous flow -->
+  <tr><td style="padding:0 30px 10px;">
+    ${allCardsHTML.join('')}
+  </td></tr>
+
+  <!-- CREB DISCLAIMER -->
+  <tr><td style="padding:6px 30px 20px;">
+    <p style="font-size:10px;color:#A59D95;margin:0;font-family:Arial,sans-serif;line-height:1.6;">
+      ${v('statsDisclaimer')}
+    </p>
+  </td></tr>
+
+  ${tipsRows ? `<!-- DIVIDER -->
+  <tr><td style="padding:0 30px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:#E0E0E0;height:1px;font-size:0;line-height:0;"></td></tr></table></td></tr>
+  <tr><td style="padding:20px 30px 14px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#EA002A;font-family:Arial,sans-serif;">${activeMonth} Home Maintenance Tips</div>
+  </td></tr>
+  <tr><td style="padding:0 30px 24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F5F5;border-radius:6px;">
+      <tr><td style="padding:18px 22px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">${tipsRows}</table>
+      </td></tr>
+    </table>
+  </td></tr>` : ''}
+
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const area = document.getElementById('previewArea');
+  area.innerHTML = '';
+  const shell = document.createElement('div');
+  shell.className = 'email-shell';
+  shell.innerHTML = generatedHTML;
+  area.appendChild(shell);
+  document.getElementById('prevLabel').textContent = `${statsMonth} market update — ready to copy`;
+  showToast('Newsletter generated!');
+}
+
+async function copyHTML() {
+  if (!generatedHTML) { showToast('Generate first'); return; }
+  try {
+    await navigator.clipboard.writeText(generatedHTML);
+    showToast('✅ Copied — paste into Bold Trail advanced editor');
+  } catch { showToast('Copy failed — use Download instead'); }
+}
+
+function downloadHTML() {
+  if (!generatedHTML) { showToast('Generate first'); return; }
+  const blob = new Blob([generatedHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'calgary-market-update.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ──
+initMonthTabs();
+document.getElementById('agentMessage').value = MESSAGES[activeMonth];
+</script>
+</body>
+</html>
