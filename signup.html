@@ -345,9 +345,10 @@ body{
 let selectedPlan = 'free';
 let currentStep = 1;
 
-// Check if already logged in
+// Only redirect if already logged in AND not in signup process
+let signingUp = false;
 firebase.auth().onAuthStateChanged(user => {
-  if (user) window.location.href = 'smarttools/';
+  if (user && !signingUp) window.location.href = 'smarttools/';
 });
 
 // PASSWORD STRENGTH
@@ -444,6 +445,7 @@ function selectPlan(plan) {
 
 // CREATE ACCOUNT
 function createAccount() {
+  signingUp = true;
   const email = document.getElementById('s1-email').value.trim();
   const pw = document.getElementById('s1-password').value;
   const first = document.getElementById('s2-first').value.trim();
@@ -501,6 +503,7 @@ function createAccount() {
 
 // GOOGLE SIGNUP
 function googleSignup() {
+  signingUp = true;
   const provider = new firebase.auth.GoogleAuthProvider();
   firebase.auth().signInWithPopup(provider)
     .then(result => {
