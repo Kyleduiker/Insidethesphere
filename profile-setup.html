@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Up Your Profile — Inside The Sphere</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#f8f8f8;color:#1a1a1a;min-height:100vh;
+}
+
+/* TOP BAR */
+.topbar{
+  background:#fff;border-bottom:1px solid #eee;
+  padding:14px 40px;display:flex;align-items:center;
+  justify-content:space-between;
+}
+.topbar-logo{
+  font-size:1.1rem;font-weight:700;color:#1a1a1a;
+  display:flex;align-items:center;gap:8px;
+}
+.topbar-skip{
+  font-size:13px;color:#888;cursor:pointer;
+  background:none;border:none;font-family:inherit;
+  text-decoration:underline;
+}
+.topbar-skip:hover{color:#1a1a1a}
+
+/* PROGRESS */
+.progress-wrap{background:#fff;border-bottom:1px solid #eee;padding:0 40px}
+.progress-bar{height:3px;background:#eee}
+.progress-fill{height:100%;background:#EA002A;transition:width .4s ease;width:0%}
+.progress-steps{
+  display:flex;justify-content:space-between;
+  padding:12px 0 14px;
+}
+.ps{
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:600;color:#ccc;
+  cursor:default;transition:color .3s;
+}
+.ps.done{color:#22c55e}
+.ps.active{color:#1a1a1a}
+.ps-dot{
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;transition:all .3s;
+  background:#eee;color:#bbb;flex-shrink:0;
+}
+.ps.done .ps-dot{background:#22c55e;color:#fff}
+.ps.active .ps-dot{background:#1a1a2e;color:#fff}
+
+/* MAIN */
+.main{max-width:640px;margin:0 auto;padding:48px 20px}
+
+/* STEP */
+.step{display:none}
+.step.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.step-header{text-align:center;margin-bottom:36px}
+.step-icon{font-size:3rem;margin-bottom:14px}
+.step-title{font-size:1.8rem;font-weight:700;color:#1a1a1a;margin-bottom:8px}
+.step-sub{font-size:15px;color:#888;line-height:1.5;max-width:460px;margin:0 auto}
+
+/* CARDS */
+.card{
+  background:#fff;border:1px solid #eee;border-radius:14px;
+  padding:24px;margin-bottom:16px;
+}
+.card-title{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#bbb;margin-bottom:16px;
+}
+
+/* FORM */
+.fg{margin-bottom:14px}
+.fg:last-child{margin-bottom:0}
+.fg label{
+  display:block;font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:#999;margin-bottom:5px;
+}
+.fg input,.fg textarea,.fg select{
+  width:100%;padding:11px 13px;background:#f9f9f9;
+  border:1.5px solid #eee;border-radius:9px;
+  font-size:14px;color:#1a1a1a;font-family:inherit;
+  transition:all .15s;
+}
+.fg input:focus,.fg textarea:focus,.fg select:focus{
+  outline:none;border-color:#1a1a2e;background:#fff;
+}
+.fg input::placeholder,.fg textarea::placeholder{color:#ccc}
+.fg textarea{resize:vertical;min-height:90px;line-height:1.6}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* PHOTO UPLOAD */
+.photo-upload{
+  border:2px dashed #e0e0e0;border-radius:14px;
+  padding:32px 20px;text-align:center;cursor:pointer;
+  transition:all .2s;background:#fafafa;
+  position:relative;overflow:hidden;
+}
+.photo-upload:hover{border-color:#1a1a2e;background:#f5f3ff}
+.photo-upload input[type=file]{display:none}
+.photo-upload-icon{font-size:2.5rem;margin-bottom:10px;opacity:.35}
+.photo-upload-label{font-size:14px;font-weight:600;color:#555;margin-bottom:4px}
+.photo-upload-sub{font-size:12px;color:#bbb}
+.photo-preview-wrap{
+  position:relative;display:inline-block;
+  margin-bottom:8px;
+}
+.photo-preview{
+  width:120px;height:120px;border-radius:50%;
+  object-fit:cover;border:3px solid #eee;display:block;
+}
+.photo-preview.rect{
+  width:100%;height:80px;border-radius:8px;
+  object-fit:contain;border:1px solid #eee;
+}
+.photo-rm{
+  position:absolute;top:-4px;right:-4px;
+  background:#ef4444;color:#fff;border:2px solid #fff;
+  border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;cursor:pointer;font-weight:700;
+}
+.upload-prog{
+  height:3px;background:#eee;border-radius:2px;
+  margin-top:12px;overflow:hidden;display:none;
+}
+.upload-prog-fill{
+  height:100%;background:#1a1a2e;border-radius:2px;
+  width:0;transition:width .3s;
+}
+.upload-done{
+  display:none;font-size:13px;color:#22c55e;
+  font-weight:600;margin-top:8px;
+}
+
+/* REVIEWS */
+.review-item{
+  background:#f9f9f9;border:1px solid #eee;
+  border-radius:10px;padding:14px;margin-bottom:10px;
+}
+.review-top{
+  display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:10px;
+}
+.stars{display:flex;gap:3px}
+.star{
+  font-size:20px;color:#eee;cursor:pointer;
+  transition:color .1s;line-height:1;
+}
+.star.lit{color:#f59e0b}
+.review-del{
+  background:none;border:none;color:#ddd;
+  cursor:pointer;font-size:16px;
+}
+.review-del:hover{color:#ef4444}
+.add-review{
+  width:100%;padding:10px;background:transparent;
+  border:1.5px dashed #e0e0e0;border-radius:8px;
+  color:#bbb;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;margin-top:4px;
+  transition:all .15s;
+}
+.add-review:hover{border-color:#1a1a2e;color:#1a1a2e}
+
+/* SHELTER */
+.shelter-preview{
+  background:#fff7f0;border:1px solid #fed7aa;
+  border-radius:10px;padding:16px;margin-top:12px;
+  font-size:13px;color:#9a3412;line-height:1.6;
+}
+.shelter-preview strong{display:block;margin-bottom:4px;color:#7c2d12}
+
+/* SKIP STEP */
+.skip-step{
+  text-align:center;margin-top:10px;
+}
+.skip-step button{
+  background:none;border:none;color:#bbb;
+  font-size:13px;cursor:pointer;font-family:inherit;
+  text-decoration:underline;
+}
+.skip-step button:hover{color:#888}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:24px;
+}
+.btn-back{
+  background:none;border:1.5px solid #eee;border-radius:9px;
+  padding:12px 20px;font-size:14px;font-weight:600;
+  color:#888;cursor:pointer;font-family:inherit;
+  transition:all .15s;
+}
+.btn-back:hover{border-color:#ccc;color:#555}
+.btn-next{
+  background:#1a1a2e;border:none;border-radius:9px;
+  padding:12px 28px;font-size:14px;font-weight:600;
+  color:#fff;cursor:pointer;font-family:inherit;
+  transition:all .15s;display:flex;align-items:center;gap:8px;
+}
+.btn-next:hover{background:#2d3748}
+.btn-next:disabled{opacity:.5;cursor:not-allowed}
+.btn-finish{
+  background:#EA002A;border:none;border-radius:9px;
+  padding:12px 28px;font-size:14px;font-weight:600;
+  color:#fff;cursor:pointer;font-family:inherit;
+  transition:all .15s;
+}
+.btn-finish:hover{background:#c8001f}
+
+/* LOADING */
+.loading{
+  min-height:100vh;display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:14px;
+}
+.spinner{
+  width:36px;height:36px;border:3px solid #eee;
+  border-top-color:#1a1a2e;border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* COMPLETE */
+.complete{text-align:center;padding:60px 20px}
+.complete-icon{font-size:4rem;margin-bottom:20px}
+.complete-title{font-size:2rem;font-weight:700;color:#1a1a1a;margin-bottom:8px}
+.complete-sub{font-size:15px;color:#888;margin-bottom:32px;line-height:1.6}
+.complete-btn{
+  display:inline-block;background:#1a1a2e;color:#fff;
+  padding:14px 32px;border-radius:10px;font-size:15px;
+  font-weight:600;text-decoration:none;transition:all .2s;
+}
+.complete-btn:hover{background:#2d3748}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;right:20px;
+  background:#1a1a1a;color:#fff;border-radius:10px;
+  padding:10px 16px;font-size:13px;font-weight:600;
+  z-index:1000;transform:translateY(60px);opacity:0;
+  transition:all .3s;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:#22c55e}
+.toast.err{background:#ef4444}
+
+@media(max-width:600px){
+  .topbar{padding:14px 20px}
+  .progress-wrap{padding:0 20px}
+  .progress-steps{display:none}
+  .main{padding:28px 16px}
+  .fg-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOADING -->
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <p style="color:#888;font-size:14px">Loading your profile...</p>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<div class="topbar">
+  <div class="topbar-logo">🏠 Inside The Sphere</div>
+  <button class="topbar-skip" onclick="skipAll()">Skip setup — go to dashboard →</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="progress-steps">
+    <div class="ps active" id="ps-1"><div class="ps-dot">1</div>Photo</div>
+    <div class="ps" id="ps-2"><div class="ps-dot">2</div>Bio</div>
+    <div class="ps" id="ps-3"><div class="ps-dot">3</div>Reviews</div>
+    <div class="ps" id="ps-4"><div class="ps-dot">4</div>Shelter Foundation</div>
+    <div class="ps" id="ps-5"><div class="ps-dot">5</div>Done</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1: HEADSHOT -->
+  <div class="step active" id="step-1">
+    <div class="step-header">
+      <div class="step-icon">📸</div>
+      <div class="step-title">Add your headshot</div>
+      <div class="step-sub">Your photo appears on every CMA client page, your newsletters, and your listings. First impressions matter.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Agent headshot</div>
+      <div class="photo-upload" id="headshot-drop" onclick="document.getElementById('headshot-file').click()">
+        <input type="file" id="headshot-file" accept="image/*" onchange="uploadPhoto(this,'headshot')">
+        <div id="headshot-inner">
+          <div class="photo-upload-icon">👤</div>
+          <div class="photo-upload-label">Upload your headshot</div>
+          <div class="photo-upload-sub">JPG or PNG · Square crop recommended · min 400×400px</div>
+        </div>
+        <div class="upload-prog" id="headshot-prog"><div class="upload-prog-fill" id="headshot-prog-fill"></div></div>
+        <div class="upload-done" id="headshot-done">✓ Headshot uploaded and saved</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Brokerage logo</div>
+      <div class="photo-upload" id="logo-drop" onclick="document.getElementById('logo-file').click()">
+        <input type="file" id="logo-file" accept="image/*" onchange="uploadPhoto(this,'logo')">
+        <div id="logo-inner">
+          <div class="photo-upload-icon">🏢</div>
+          <div class="photo-upload-label">Upload your brokerage logo</div>
+          <div class="photo-upload-sub">PNG with transparent background preferred</div>
+        </div>
+        <div class="upload-prog" id="logo-prog"><div class="upload-prog-fill" id="logo-prog-fill"></div></div>
+        <div class="upload-done" id="logo-done">✓ Logo uploaded and saved</div>
+      </div>
+    </div>
+    <div class="skip-step"><button onclick="next(2)">Skip for now →</button></div>
+    <div class="bottom-nav">
+      <div></div>
+      <button class="btn-next" onclick="next(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: BIO -->
+  <div class="step" id="step-2">
+    <div class="step-header">
+      <div class="step-icon">✍️</div>
+      <div class="step-title">Write your bio</div>
+      <div class="step-sub">Tell sellers who you are and why you're the right agent for them. Be specific — generic bios get ignored.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Short bio <span style="font-size:10px;color:#ddd;font-weight:400;text-transform:none">2-3 sentences · shown on CMA cover</span></div>
+      <div class="fg" style="margin-bottom:0">
+        <textarea id="shortBio" rows="3" placeholder="Specializing exclusively in SE Calgary lake communities, I bring 15+ years of local market expertise and a track record of 180+ homes sold. My data-driven approach consistently delivers results above asking price." oninput="autoSave()"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Full bio <span style="font-size:10px;color:#ddd;font-weight:400;text-transform:none">shown on the about section of every client page</span></div>
+      <div class="fg" style="margin-bottom:0">
+        <textarea id="fullBio" rows="5" placeholder="When you hire me, you're hiring a specialist — not a generalist. I focus exclusively on SE Calgary's most sought-after lake communities: Mahogany, Auburn Bay, Legacy, Cranston, Seton, and Chestermere..." oninput="autoSave()"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tagline <span style="font-size:10px;color:#ddd;font-weight:400;text-transform:none">one sentence · shown under your name</span></div>
+      <div class="fg" style="margin-bottom:0">
+        <input type="text" id="tagline" placeholder="SE Calgary lake community specialist — Mahogany, Auburn Bay, Legacy, Cranston, Seton & Chestermere" oninput="autoSave()">
+      </div>
+    </div>
+    <div class="skip-step"><button onclick="next(3)">Skip for now →</button></div>
+    <div class="bottom-nav">
+      <button class="btn-back" onclick="next(1)">← Back</button>
+      <button class="btn-next" onclick="saveBioAndNext()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: REVIEWS -->
+  <div class="step" id="step-3">
+    <div class="step-header">
+      <div class="step-icon">⭐</div>
+      <div class="step-title">Add client reviews</div>
+      <div class="step-sub">Your 3 best reviews — with specific results — appear on every CMA client page. They close listings for you.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        Reviews
+        <button onclick="addReview()" style="background:#1a1a2e;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;float:right;font-family:inherit">+ Add review</button>
+      </div>
+      <div id="reviews-list">
+        <p style="color:#ccc;font-size:13px;text-align:center;padding:16px 0">No reviews yet — add your first one above</p>
+      </div>
+    </div>
+    <div class="card" style="background:#fffbeb;border-color:#fde68a">
+      <div class="card-title" style="color:#92400e">💡 What makes a great review</div>
+      <p style="font-size:13px;color:#78350f;line-height:1.6">"Kyle had our home sold in <strong>8 days at 102% of asking</strong>" is 10x more powerful than "great agent, highly recommend." Include the result, the community, and the year.</p>
+    </div>
+    <div class="skip-step"><button onclick="saveReviewsAndNext()">Skip for now →</button></div>
+    <div class="bottom-nav">
+      <button class="btn-back" onclick="next(2)">← Back</button>
+      <button class="btn-next" onclick="saveReviewsAndNext()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: SHELTER -->
+  <div class="step" id="step-4">
+    <div class="step-header">
+      <div class="step-icon">🏠</div>
+      <div class="step-title">Shelter Foundation</div>
+      <div class="step-sub">Tell your clients about your commitment to the Royal LePage Shelter Foundation. Make it personal — it resonates far more than a generic statement.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Your personal message</div>
+      <div class="fg" style="margin-bottom:0">
+        <textarea id="shelterText" rows="5" placeholder="A portion of every commission from your sale goes directly to the Royal LePage Shelter Foundation — Canada's largest public foundation dedicated to ending domestic violence. This cause is deeply personal to me. When you sell with me, you help make a difference in someone's life." oninput="updateShelterPreview()"></textarea>
+      </div>
+      <div class="shelter-preview" id="shelter-preview" style="display:none">
+        <strong>Preview — how it appears on your client page:</strong>
+        <span id="shelter-preview-text"></span>
+      </div>
+    </div>
+    <div class="card" style="background:#fff5f5;border-color:#fecaca">
+      <div class="card-title" style="color:#991b1b">About the Shelter Foundation</div>
+      <p style="font-size:13px;color:#7f1d1d;line-height:1.6">The Royal LePage Shelter Foundation is Canada's largest public foundation dedicated to ending domestic violence. Since 1998 it has funded over 500 women's shelters across Canada. Agents who mention this cause see it strengthen client relationships — it shows you care about more than the commission.</p>
+    </div>
+    <div class="skip-step"><button onclick="saveShelterAndNext()">Skip for now →</button></div>
+    <div class="bottom-nav">
+      <button class="btn-back" onclick="next(3)">← Back</button>
+      <button class="btn-next" onclick="saveShelterAndNext()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: COMPLETE -->
+  <div class="step" id="step-5">
+    <div class="complete">
+      <div class="complete-icon">🎉</div>
+      <div class="complete-title">You're all set, <span id="complete-name">Kyle</span></div>
+      <div class="complete-sub">Your profile is ready. Every CMA you create will now be personalized with your photo, bio, and reviews automatically.<br><br>Head to your dashboard to create your first CMA.</div>
+      <a href="smarttools/" class="complete-btn">Go to my dashboard →</a>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+let currentUser = null;
+let profile = {};
+let reviews = [];
+let photoUrls = { headshot: '', logo: '', team: '' };
+let autoSaveTimer = null;
+
+// AUTH
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  loadProfile();
+});
+
+function loadProfile() {
+  db.collection('users').doc(currentUser.uid).get()
+    .then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        profile = data.agentProfile || {};
+        reviews = profile.reviews || [];
+        photoUrls = profile.photoUrls || { headshot: '', logo: '', team: '' };
+
+        // Pre-fill existing data
+        if (profile.shortBio) document.getElementById('shortBio').value = profile.shortBio;
+        if (profile.fullBio) document.getElementById('fullBio').value = profile.fullBio;
+        if (profile.tagline) document.getElementById('tagline').value = profile.tagline;
+        if (profile.shelterText) {
+          document.getElementById('shelterText').value = profile.shelterText;
+          updateShelterPreview();
+        }
+
+        // Show existing photos
+        if (photoUrls.headshot) showPhotoPreview('headshot', photoUrls.headshot);
+        if (photoUrls.logo) showPhotoPreview('logo', photoUrls.logo);
+
+        // Set complete name
+        const name = profile.firstName || (currentUser.displayName?.split(' ')[0]) || 'there';
+        document.getElementById('complete-name').textContent = name;
+      }
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      renderReviews();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    });
+}
+
+// STEP NAVIGATION
+function next(step) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + step).classList.add('active');
+
+  // Update progress
+  const pcts = { 1: 10, 2: 30, 3: 55, 4: 78, 5: 100 };
+  document.getElementById('progress-fill').style.width = pcts[step] + '%';
+
+  // Update step indicators
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById('ps-' + i);
+    const dot = el.querySelector('.ps-dot');
+    if (i < step) {
+      el.className = 'ps done';
+      dot.textContent = '✓';
+    } else if (i === step) {
+      el.className = 'ps active';
+      dot.textContent = i;
+    } else {
+      el.className = 'ps';
+      dot.textContent = i;
+    }
+  }
+
+  window.scrollTo(0, 0);
+}
+
+// PHOTO UPLOAD
+function uploadPhoto(input, key) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const prog = document.getElementById(key + '-prog');
+  const fill = document.getElementById(key + '-prog-fill');
+  const done = document.getElementById(key + '-done');
+  if (prog) prog.style.display = 'block';
+
+  const ext = file.name.split('.').pop();
+  const path = `users/${currentUser.uid}/profile/${key}_${Date.now()}.${ext}`;
+  const ref = storage.ref(path);
+  const task = ref.put(file);
+
+  task.on('state_changed',
+    snap => {
+      const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
+      if (fill) fill.style.width = pct + '%';
+    },
+    err => {
+      if (prog) prog.style.display = 'none';
+      showToast('Upload failed — ' + err.message, 'err');
+    },
+    () => {
+      task.snapshot.ref.getDownloadURL().then(url => {
+        photoUrls[key] = url;
+        showPhotoPreview(key, url);
+        if (prog) prog.style.display = 'none';
+        if (done) done.style.display = 'block';
+        savePhotos();
+        showToast('Photo saved', 'ok');
+      });
+    }
+  );
+}
+
+function showPhotoPreview(key, src) {
+  const inner = document.getElementById(key + '-inner');
+  if (!inner) return;
+  const isCircle = key === 'headshot';
+  inner.innerHTML = `
+    <div class="photo-preview-wrap">
+      <img src="${src}" class="photo-preview${isCircle ? '' : ' rect'}" alt="${key}">
+      <div class="photo-rm" onclick="removePhoto('${key}',event)">✕</div>
+    </div>
+    <div style="font-size:12px;color:#888;margin-top:4px">Click to replace</div>`;
+  const done = document.getElementById(key + '-done');
+  if (done) done.style.display = 'block';
+}
+
+function removePhoto(key, e) {
+  e.stopPropagation();
+  photoUrls[key] = '';
+  const inner = document.getElementById(key + '-inner');
+  const icons = { headshot: '👤', logo: '🏢' };
+  const labels = { headshot: 'Upload your headshot', logo: 'Upload your brokerage logo' };
+  const subs = { headshot: 'JPG or PNG · Square crop recommended · min 400×400px', logo: 'PNG with transparent background preferred' };
+  if (inner) inner.innerHTML = `
+    <div class="photo-upload-icon">${icons[key]}</div>
+    <div class="photo-upload-label">${labels[key]}</div>
+    <div class="photo-upload-sub">${subs[key]}</div>`;
+  const done = document.getElementById(key + '-done');
+  if (done) done.style.display = 'none';
+  savePhotos();
+}
+
+function savePhotos() {
+  const safeUrls = {
+    headshot: photoUrls.headshot?.startsWith('https://') ? photoUrls.headshot : '',
+    logo: photoUrls.logo?.startsWith('https://') ? photoUrls.logo : '',
+    team: photoUrls.team?.startsWith('https://') ? photoUrls.team : ''
+  };
+  db.collection('users').doc(currentUser.uid).set(
+    { agentProfile: { photoUrls: safeUrls } }, { merge: true }
+  ).catch(console.error);
+}
+
+// AUTO SAVE BIO
+function autoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveBio, 1500);
+}
+
+function saveBio() {
+  db.collection('users').doc(currentUser.uid).set({
+    agentProfile: {
+      shortBio: document.getElementById('shortBio').value,
+      fullBio: document.getElementById('fullBio').value,
+      tagline: document.getElementById('tagline').value,
+    }
+  }, { merge: true }).catch(console.error);
+}
+
+function saveBioAndNext() {
+  saveBio();
+  next(3);
+}
+
+// REVIEWS
+function renderReviews() {
+  const list = document.getElementById('reviews-list');
+  if (!reviews.length) {
+    list.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:16px 0">No reviews yet — add your first one above</p>';
+    return;
+  }
+  list.innerHTML = reviews.map((r, i) => `
+    <div class="review-item">
+      <div class="review-top">
+        <div class="stars">
+          ${[1,2,3,4,5].map(n => `<span class="star${(r.stars||5)>=n?' lit':''}" onclick="setStars(${i},${n})">★</span>`).join('')}
+        </div>
+        <button class="review-del" onclick="delReview(${i})">✕</button>
+      </div>
+      <div class="fg"><label>Review</label>
+        <textarea rows="2" oninput="reviews[${i}].text=this.value;autoSaveReviews()" style="font-size:13px">${r.text||''}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="fg" style="margin-bottom:0"><label>Community / name</label>
+          <input type="text" value="${r.author||''}" oninput="reviews[${i}].author=this.value;autoSaveReviews()" placeholder="Mahogany">
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>Year</label>
+          <input type="text" value="${r.year||''}" oninput="reviews[${i}].year=this.value;autoSaveReviews()" placeholder="2024">
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>Result</label>
+          <input type="text" value="${r.result||''}" oninput="reviews[${i}].result=this.value;autoSaveReviews()" placeholder="102% · 8 days">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+let reviewSaveTimer = null;
+function autoSaveReviews() {
+  clearTimeout(reviewSaveTimer);
+  reviewSaveTimer = setTimeout(saveReviews, 1500);
+}
+
+function saveReviews() {
+  db.collection('users').doc(currentUser.uid).set(
+    { agentProfile: { reviews } }, { merge: true }
+  ).catch(console.error);
+}
+
+function addReview() {
+  reviews.push({ stars: 5, text: '', author: '', year: new Date().getFullYear().toString(), result: '' });
+  renderReviews();
+  document.querySelectorAll('.review-item').at(-1)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function delReview(i) {
+  reviews.splice(i, 1);
+  renderReviews();
+  saveReviews();
+}
+
+function setStars(i, n) {
+  reviews[i].stars = n;
+  renderReviews();
+  saveReviews();
+}
+
+function saveReviewsAndNext() {
+  saveReviews();
+  next(4);
+}
+
+// SHELTER
+function updateShelterPreview() {
+  const txt = document.getElementById('shelterText').value;
+  const prev = document.getElementById('shelter-preview');
+  const prevTxt = document.getElementById('shelter-preview-text');
+  if (txt.trim()) {
+    prev.style.display = 'block';
+    prevTxt.textContent = txt;
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+function saveShelterAndNext() {
+  const txt = document.getElementById('shelterText').value;
+  db.collection('users').doc(currentUser.uid).set(
+    { agentProfile: { shelterText: txt } }, { merge: true }
+  ).then(() => {
+    // Mark profile as complete
+    return db.collection('users').doc(currentUser.uid).set(
+      { profileComplete: true }, { merge: true }
+    );
+  }).then(() => {
+    next(5);
+  }).catch(err => {
+    console.error(err);
+    next(5);
+  });
+}
+
+// SKIP ALL
+function skipAll() {
+  if (confirm('Skip profile setup? You can complete it any time from your dashboard.')) {
+    window.location.href = 'smarttools/';
+  }
+}
+
+// TOAST
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
