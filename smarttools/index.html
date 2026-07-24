@@ -8,6 +8,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
+<script>window.sphereActivePage = 'dashboard';</script>
+<script src="../js/profile.js"></script>
+<script src="../js/header.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -232,16 +235,7 @@ body{
 <!-- APP -->
 <div id="app" style="display:none">
 
-<header class="header">
-  <a href="../" class="header-logo">🏠 Inside The Sphere</a>
-  <div class="header-nav">
-    <a href="../profile.html" class="header-profile" id="profile-link">
-      <div class="profile-initials" id="nav-initials">KD</div>
-      <span class="profile-name" id="nav-name">My Profile</span>
-    </a>
-    <button class="header-btn btn-danger" onclick="logout()">Logout</button>
-  </div>
-</header>
+<div id="sphere-header"></div>
 
 <!-- HERO -->
 <div class="hero">
@@ -437,22 +431,7 @@ function loadDashboard(user) {
       document.getElementById('hero-name').textContent = firstName;
       document.getElementById('stat-plan').textContent = plan;
 
-      // Update nav
-      document.getElementById('nav-name').textContent = firstName;
-      document.getElementById('nav-initials').textContent = initials;
-
-      if (headshotUrl) {
-        const wrap = document.getElementById('profile-link');
-        const init = document.getElementById('nav-initials');
-        if (init) {
-          const img = document.createElement('img');
-          img.src = headshotUrl;
-          img.className = 'profile-avatar';
-          img.alt = firstName;
-          img.onerror = () => img.replaceWith(init);
-          init.replaceWith(img);
-        }
-      }
+      // Nav handled by js/header.js
 
       // Show profile banner if incomplete
       if (!profileComplete) {
@@ -477,13 +456,7 @@ function loadDashboard(user) {
     });
 }
 
-function logout() {
-  if (confirm('Log out?')) {
-    firebase.auth().signOut().then(() => {
-      window.location.href = '../login.html';
-    });
-  }
-}
+// Logout handled by js/header.js (sphereLogout)
 </script>
 </body>
 </html>
