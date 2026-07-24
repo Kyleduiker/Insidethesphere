@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Profile — Inside The Sphere</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#f8f8f8;color:#1a1a1a;min-height:100vh;
+}
+
+/* HEADER */
+.header{
+  background:#fff;border-bottom:1px solid #eee;
+  padding:16px 32px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;
+}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{
+  font-size:1.1rem;font-weight:700;
+  background:linear-gradient(135deg,#60a5fa,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;text-decoration:none;
+}
+.breadcrumb{font-size:13px;color:#999}
+.breadcrumb span{color:#555}
+.header-right{display:flex;align-items:center;gap:8px}
+.save-status{
+  font-size:12px;color:#999;padding:4px 10px;
+  background:#f5f5f5;border:1px solid #eee;border-radius:20px;
+}
+.save-status.saving{color:#f59e0b;border-color:#fde68a;background:#fffbeb}
+.save-status.saved{color:#22c55e;border-color:#bbf7d0;background:#f0fdf4}
+
+.btn{
+  padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;transition:all .2s;text-decoration:none;
+  display:inline-flex;align-items:center;gap:6px;font-family:inherit;
+}
+.btn-primary{background:linear-gradient(135deg,#60a5fa,#a78bfa);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-ghost{background:#f5f5f5;color:#555;border:1px solid #eee}
+.btn-ghost:hover{background:#eee;color:#333}
+.btn-danger{background:#fff5f5;color:#ef4444;border:1px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px)}
+
+/* SIDEBAR */
+.sidebar{
+  background:#fff;border-right:1px solid #eee;
+  padding:20px 0;position:sticky;top:57px;
+  height:calc(100vh - 57px);overflow-y:auto;
+}
+.sidebar-section{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#bbb;padding:14px 18px 5px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:9px 18px;
+  cursor:pointer;font-size:13px;color:#777;
+  border-left:2px solid transparent;transition:all .15s;user-select:none;
+}
+.nav-item:hover{color:#333;background:#f9f9f9}
+.nav-item.active{color:#6366f1;border-left-color:#6366f1;background:#f5f3ff}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+
+/* MAIN */
+.main{overflow-y:auto;padding:32px}
+.panel{display:none;max-width:780px}
+.panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* PANEL HEADER */
+.panel-header{margin-bottom:24px}
+.panel-header h2{font-size:1.4rem;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.panel-header p{font-size:13px;color:#999}
+
+/* CARDS */
+.card{
+  background:#fff;border:1px solid #eee;border-radius:14px;
+  padding:24px;margin-bottom:16px;
+}
+.card h3{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#bbb;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-group label{
+  display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:#999;margin-bottom:5px;
+}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:10px 12px;background:#f9f9f9;
+  border:1px solid #eee;border-radius:8px;color:#1a1a1a;
+  font-size:14px;font-family:inherit;transition:all .15s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  outline:none;border-color:#6366f1;background:#fff;
+  box-shadow:0 0 0 3px rgba(99,102,241,.08);
+}
+.form-group input::placeholder,.form-group textarea::placeholder{color:#ccc}
+.form-group textarea{resize:vertical;min-height:80px;line-height:1.5}
+
+/* PHOTO UPLOAD */
+.photo-upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.photo-slot{
+  border:1.5px dashed #e0e0e0;border-radius:12px;
+  padding:20px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+  background:#fafafa;
+}
+.photo-slot:hover{border-color:#6366f1;background:#f5f3ff}
+.photo-slot.has-photo{border-style:solid;border-color:#eee;padding:0}
+.photo-slot input[type=file]{display:none}
+.photo-slot-icon{font-size:1.8rem;margin-bottom:8px;opacity:.4}
+.photo-slot-label{font-size:13px;font-weight:600;color:#555;margin-bottom:3px}
+.photo-slot-sub{font-size:11px;color:#aaa}
+.photo-preview{
+  width:100%;height:160px;object-fit:cover;border-radius:10px;display:block;
+}
+.photo-preview.circle{
+  width:120px;height:120px;border-radius:50%;
+  object-fit:cover;margin:0 auto 10px;display:block;
+}
+.photo-remove{
+  position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);
+  color:#fff;border:none;border-radius:50%;width:24px;height:24px;
+  cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+}
+.photo-name{font-size:11px;color:#999;margin-top:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px 8px}
+.upload-progress{
+  height:3px;background:#e0e0e0;border-radius:2px;margin-top:8px;overflow:hidden;
+  display:none;
+}
+.upload-progress-fill{height:100%;background:#6366f1;border-radius:2px;width:0;transition:width .3s}
+
+/* SINGLE PHOTO UPLOAD */
+.single-upload{
+  border:1.5px dashed #e0e0e0;border-radius:12px;
+  overflow:hidden;background:#fafafa;cursor:pointer;
+  transition:all .2s;
+}
+.single-upload:hover{border-color:#6366f1;background:#f5f3ff}
+.single-upload-inner{padding:24px;text-align:center}
+.single-upload input[type=file]{display:none}
+.single-upload.has-photo{border-style:solid;border-color:#eee}
+
+/* REVIEWS */
+.review-item{
+  background:#f9f9f9;border:1px solid #eee;border-radius:10px;
+  padding:16px;margin-bottom:10px;position:relative;
+}
+.review-item-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.review-stars-input{display:flex;gap:4px}
+.star-btn{
+  background:none;border:none;font-size:20px;cursor:pointer;
+  color:#ddd;transition:color .15s;padding:0;
+}
+.star-btn.lit{color:#f59e0b}
+.review-delete{
+  background:none;border:none;color:#ddd;cursor:pointer;
+  font-size:16px;transition:color .15s;
+}
+.review-delete:hover{color:#ef4444}
+.add-review-btn{
+  width:100%;padding:10px;background:transparent;
+  border:1.5px dashed #e0e0e0;border-radius:8px;
+  color:#999;font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .15s;font-family:inherit;margin-top:4px;
+}
+.add-review-btn:hover{border-color:#6366f1;color:#6366f1}
+
+/* PREVIEW */
+.preview-box{
+  background:#1a1a2e;border-radius:12px;padding:20px;
+  display:flex;align-items:center;gap:16px;
+}
+.preview-headshot{
+  width:60px;height:60px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.preview-initials{
+  width:60px;height:60px;border-radius:50%;background:#EA002A;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:18px;color:#fff;flex-shrink:0;
+}
+.preview-name{font-size:15px;font-weight:600;color:#fff}
+.preview-title{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px}
+.preview-logo{height:28px;object-fit:contain;margin-left:auto;filter:brightness(0) invert(1);opacity:.6}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;right:20px;background:#1a1a1a;
+  border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;
+  color:#fff;z-index:1000;transform:translateY(70px);opacity:0;
+  transition:all .3s;display:flex;align-items:center;gap:7px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:#ef4444}
+.toast.success{background:#22c55e}
+
+/* LOADING */
+.loading-screen{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:80vh;gap:14px;
+}
+.spinner{
+  width:36px;height:36px;border:3px solid #eee;
+  border-top-color:#6366f1;border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SECTION DIVIDER */
+.divider{height:1px;background:#f0f0f0;margin:16px 0}
+
+/* COLOR PICKER ROW */
+.color-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.color-chip{
+  width:36px;height:36px;border-radius:8px;cursor:pointer;
+  border:2px solid transparent;transition:all .15s;flex-shrink:0;
+}
+.color-chip.selected{border-color:#1a1a1a;transform:scale(1.1)}
+.color-chip-custom{
+  width:36px;height:36px;border-radius:8px;border:1.5px solid #eee;
+  cursor:pointer;overflow:hidden;flex-shrink:0;
+}
+.color-chip-custom input[type=color]{
+  width:200%;height:200%;transform:translate(-25%,-25%);
+  cursor:pointer;border:none;padding:0;background:none;
+}
+.color-label{font-size:12px;color:#999;margin-left:4px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:16px}
+  .form-row{grid-template-columns:1fr}
+  .photo-upload-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOADING -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="spinner"></div>
+  <p style="color:#999;font-size:14px">Loading profile...</p>
+</div>
+
+<!-- APP -->
+<div id="appContent" style="display:none">
+
+<header class="header">
+  <div class="header-left">
+    <a href="../smarttools/" class="logo">🏠 Inside The Sphere</a>
+    <span class="breadcrumb">/ <a href="index.html" style="color:#999;text-decoration:none">CMA Builder</a> / <span>Agent Profile</span></span>
+  </div>
+  <div class="header-right">
+    <span class="save-status" id="saveStatus">All saved</span>
+    <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+    <a href="index.html" class="btn btn-ghost">← Back</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">Profile</div>
+    <div class="nav-item active" onclick="showPanel('identity')" id="nav-identity">
+      <span class="nav-icon">👤</span> Identity
+    </div>
+    <div class="nav-item" onclick="showPanel('photos')" id="nav-photos">
+      <span class="nav-icon">📸</span> Photos & Logos
+    </div>
+    <div class="nav-item" onclick="showPanel('bio')" id="nav-bio">
+      <span class="nav-icon">✍️</span> Bio & Credentials
+    </div>
+    <div class="nav-item" onclick="showPanel('reviews')" id="nav-reviews">
+      <span class="nav-icon">⭐</span> Client Reviews
+    </div>
+    <div class="nav-item" onclick="showPanel('branding')" id="nav-branding">
+      <span class="nav-icon">🎨</span> Branding
+    </div>
+    <div class="nav-item" onclick="showPanel('shelter')" id="nav-shelter">
+      <span class="nav-icon">🏠</span> Shelter Foundation
+    </div>
+    <div class="sidebar-section">Preview</div>
+    <div class="nav-item" onclick="showPanel('preview')" id="nav-preview">
+      <span class="nav-icon">👁️</span> Preview
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- IDENTITY -->
+    <div class="panel active" id="panel-identity">
+      <div class="panel-header">
+        <h2>Your identity</h2>
+        <p>This information pre-fills on every CMA you create</p>
+      </div>
+      <div class="card">
+        <h3>Personal information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>First name</label>
+            <input type="text" id="firstName" placeholder="Kyle" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Last name</label>
+            <input type="text" id="lastName" placeholder="Duiker" oninput="markDirty()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title / designation</label>
+            <input type="text" id="title" placeholder="Broker Delegate" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Brokerage</label>
+            <input type="text" id="brokerage" placeholder="Royal LePage Solutions" oninput="markDirty()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="phone" placeholder="403-252-5900" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="kyleduiker@royallepage.ca" oninput="markDirty()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Booking / Calendly link</label>
+            <input type="url" id="calendlyUrl" placeholder="https://calendly.com/kyleduiker" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Licensed since (year)</label>
+            <input type="number" id="licensedSince" placeholder="2010" oninput="markDirty()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Specialization tagline</label>
+          <input type="text" id="tagline" placeholder="SE Calgary lake community specialist — Mahogany, Auburn Bay, Legacy, Cranston, Seton & Chestermere" oninput="markDirty()">
+        </div>
+      </div>
+      <div class="card">
+        <h3>Key stats</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Homes sold</label>
+            <input type="text" id="homesSold" placeholder="180+" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Avg list-to-sale ratio</label>
+            <input type="text" id="listToSaleRatio" placeholder="101.2%" oninput="markDirty()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Broker designation year</label>
+            <input type="number" id="brokerYear" placeholder="2021" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Years in real estate</label>
+            <input type="text" id="yearsActive" placeholder="15+" oninput="markDirty()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTOS & LOGOS -->
+    <div class="panel" id="panel-photos">
+      <div class="panel-header">
+        <h2>Photos & logos</h2>
+        <p>Upload once — appears on every CMA you create</p>
+      </div>
+
+      <div class="card">
+        <h3>Agent headshot</h3>
+        <div class="single-upload" id="headshot-upload" onclick="document.getElementById('headshot-file').click()">
+          <input type="file" id="headshot-file" accept="image/*" onchange="handlePhotoUpload(this,'headshot')">
+          <div class="single-upload-inner" id="headshot-inner">
+            <div style="font-size:2.5rem;margin-bottom:10px;opacity:.3">👤</div>
+            <div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">Upload headshot</div>
+            <div style="font-size:12px;color:#aaa">JPG or PNG · Square crop recommended · min 400×400px</div>
+          </div>
+        </div>
+        <div class="upload-progress" id="headshot-progress">
+          <div class="upload-progress-fill" id="headshot-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Brokerage logo</h3>
+        <div class="single-upload" id="logo-upload" onclick="document.getElementById('logo-file').click()">
+          <input type="file" id="logo-file" accept="image/*" onchange="handlePhotoUpload(this,'logo')">
+          <div class="single-upload-inner" id="logo-inner">
+            <div style="font-size:2.5rem;margin-bottom:10px;opacity:.3">🏢</div>
+            <div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">Upload brokerage logo</div>
+            <div style="font-size:12px;color:#aaa">PNG with transparent background preferred · white version for dark backgrounds</div>
+          </div>
+        </div>
+        <div class="upload-progress" id="logo-progress">
+          <div class="upload-progress-fill" id="logo-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Team / brand photo <span style="font-size:10px;color:#bbb;font-weight:400;text-transform:none">Optional — used on about section</span></h3>
+        <div class="single-upload" id="team-upload" onclick="document.getElementById('team-file').click()">
+          <input type="file" id="team-file" accept="image/*" onchange="handlePhotoUpload(this,'team')">
+          <div class="single-upload-inner" id="team-inner">
+            <div style="font-size:2.5rem;margin-bottom:10px;opacity:.3">📷</div>
+            <div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">Upload team or brand photo</div>
+            <div style="font-size:12px;color:#aaa">Landscape orientation · min 800×500px</div>
+          </div>
+        </div>
+        <div class="upload-progress" id="team-progress">
+          <div class="upload-progress-fill" id="team-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIO -->
+    <div class="panel" id="panel-bio">
+      <div class="panel-header">
+        <h2>Bio & credentials</h2>
+        <p>Write this in the first person — it appears exactly as written on the client page</p>
+      </div>
+      <div class="card">
+        <h3>Short bio <span style="font-size:10px;color:#bbb;font-weight:400;text-transform:none">2-3 sentences · appears on cover and about section</span></h3>
+        <div class="form-group" style="margin-bottom:0">
+          <textarea id="shortBio" rows="3" placeholder="Specializing exclusively in SE Calgary lake communities, I bring 15+ years of local market expertise and a track record of 180+ homes sold. My data-driven approach and deep community knowledge consistently deliver results above asking price." oninput="markDirty()"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Full bio <span style="font-size:10px;color:#bbb;font-weight:400;text-transform:none">Appears on the about section of the client page</span></h3>
+        <div class="form-group" style="margin-bottom:0">
+          <textarea id="fullBio" rows="6" placeholder="When you hire Kyle Duiker, you're hiring a specialist — not a generalist. Kyle focuses exclusively on SE Calgary's most sought-after lake communities: Mahogany, Auburn Bay, Legacy, Cranston, Seton, and Chestermere. Licensed since 2010 and holding a Broker designation since 2021, Kyle combines deep market knowledge with a data-driven approach that consistently delivers results. With 180+ homes sold and an average list-to-sale ratio of 101.2%, his sellers don't just get the job done — they get more." oninput="markDirty()"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>What to expect — agent promise <span style="font-size:10px;color:#bbb;font-weight:400;text-transform:none">3-4 bullet points shown on presentation</span></h3>
+        <div class="form-group">
+          <label>Promise 1</label>
+          <input type="text" id="promise1" placeholder="Honest, data-driven pricing based on real comparables" oninput="markDirty()">
+        </div>
+        <div class="form-group">
+          <label>Promise 2</label>
+          <input type="text" id="promise2" placeholder="Maximum exposure through a coordinated multi-channel marketing strategy" oninput="markDirty()">
+        </div>
+        <div class="form-group">
+          <label>Promise 3</label>
+          <input type="text" id="promise3" placeholder="Expert negotiation — I work exclusively for your interests" oninput="markDirty()">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Promise 4</label>
+          <input type="text" id="promise4" placeholder="Clear communication at every step — you're never left wondering" oninput="markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="panel" id="panel-reviews">
+      <div class="panel-header">
+        <h2>Client reviews</h2>
+        <p>Add your best 3-5 reviews — they appear on every CMA client page</p>
+      </div>
+      <div class="card">
+        <h3>Reviews <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="addReview()">+ Add review</button></h3>
+        <div id="reviews-list"></div>
+      </div>
+      <div class="card" style="background:#fffbeb;border-color:#fde68a">
+        <h3 style="color:#92400e">💡 Tips for powerful reviews</h3>
+        <div style="font-size:13px;color:#78350f;line-height:1.6">
+          <p style="margin-bottom:8px">The most effective reviews include a specific result — "sold in 8 days at 102% of asking" is far more powerful than "great experience."</p>
+          <p>Include the community name and year so sellers in that neighbourhood see relevant proof.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="panel" id="panel-branding">
+      <div class="panel-header">
+        <h2>Branding</h2>
+        <p>Set your accent color — appears throughout the client page</p>
+      </div>
+      <div class="card">
+        <h3>Primary accent color</h3>
+        <p style="font-size:13px;color:#999;margin-bottom:16px">This color appears on section headers, the progress bar, stat card accents, and call-to-action buttons.</p>
+        <div class="color-row">
+          <div class="color-chip selected" style="background:#EA002A" data-color="#EA002A" onclick="selectColor('#EA002A',this)" title="RLP Red"></div>
+          <div class="color-chip" style="background:#1a1a2e" data-color="#1a1a2e" onclick="selectColor('#1a1a2e',this)" title="Navy"></div>
+          <div class="color-chip" style="background:#C9A84C" data-color="#C9A84C" onclick="selectColor('#C9A84C',this)" title="Gold"></div>
+          <div class="color-chip" style="background:#2563eb" data-color="#2563eb" onclick="selectColor('#2563eb',this)" title="Blue"></div>
+          <div class="color-chip" style="background:#16a34a" data-color="#16a34a" onclick="selectColor('#16a34a',this)" title="Green"></div>
+          <div class="color-chip" style="background:#7c3aed" data-color="#7c3aed" onclick="selectColor('#7c3aed',this)" title="Purple"></div>
+          <div class="color-chip-custom" title="Custom color">
+            <input type="color" id="customColor" value="#EA002A" onchange="selectColor(this.value,null)">
+          </div>
+          <span class="color-label">or pick custom</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <div style="width:24px;height:24px;border-radius:6px;background:var(--accent-preview,#EA002A)" id="color-preview-chip"></div>
+          <span style="font-size:13px;color:#555" id="color-preview-label">#EA002A — RLP Red</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Gold accent</h3>
+        <p style="font-size:13px;color:#999;margin-bottom:16px">Used for recommended price, net proceeds, and premium highlights. Recommend keeping this as gold.</p>
+        <div class="color-row">
+          <div class="color-chip selected" style="background:#C9A84C" data-color-gold="#C9A84C" onclick="selectGold('#C9A84C',this)"></div>
+          <div class="color-chip" style="background:#d4a017" data-color-gold="#d4a017" onclick="selectGold('#d4a017',this)"></div>
+          <div class="color-chip" style="background:#b8860b" data-color-gold="#b8860b" onclick="selectGold('#b8860b',this)"></div>
+          <div class="color-chip-custom">
+            <input type="color" id="customGold" value="#C9A84C" onchange="selectGold(this.value,null)">
+          </div>
+          <span class="color-label">or pick custom</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHELTER FOUNDATION -->
+    <div class="panel" id="panel-shelter">
+      <div class="panel-header">
+        <h2>Shelter Foundation</h2>
+        <p>Your personal message about the Shelter Foundation — appears on every client page</p>
+      </div>
+      <div class="card">
+        <h3>Your message</h3>
+        <div class="form-group" style="margin-bottom:0">
+          <textarea id="shelterText" rows="5" oninput="markDirty()"
+            placeholder="A portion of every commission from your sale goes directly to the Royal LePage Shelter Foundation — Canada's largest public foundation dedicated to ending domestic violence and helping women and children find safety. This cause is deeply personal to me. When you sell with Kyle, you make a difference in someone's life."></textarea>
+        </div>
+      </div>
+      <div class="card" style="background:#fff5f5;border-color:#fecaca">
+        <h3 style="color:#991b1b">About the Shelter Foundation</h3>
+        <p style="font-size:13px;color:#7f1d1d;line-height:1.6">The Royal LePage Shelter Foundation is Canada's largest public foundation dedicated to ending domestic violence. Since 1998, it has funded over 500 women's shelters and violence prevention programs across Canada. Making this personal — mentioning why it matters to you — resonates far more than a generic statement.</p>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="panel" id="panel-preview">
+      <div class="panel-header">
+        <h2>Profile preview</h2>
+        <p>How your agent card appears on the client page cover</p>
+      </div>
+      <div class="card">
+        <h3>Cover agent card</h3>
+        <div class="preview-box" id="preview-box">
+          <div id="preview-photo-wrap">
+            <div class="preview-initials" id="preview-initials">KD</div>
+          </div>
+          <div>
+            <div class="preview-name" id="preview-name">Kyle Duiker · Broker Delegate</div>
+            <div class="preview-title" id="preview-title">Royal LePage Solutions · 403-252-5900</div>
+          </div>
+          <img id="preview-logo" src="" style="display:none" class="preview-logo" alt="Logo">
+        </div>
+      </div>
+      <div class="card">
+        <h3>Profile completeness</h3>
+        <div id="completeness-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<script>
+let currentUser = null;
+let profileData = {};
+let reviews = [];
+let isDirty = false;
+let saveTimer = null;
+let selectedColor = '#EA002A';
+let selectedGold = '#C9A84C';
+let photoUrls = { headshot: '', logo: '', team: '' };
+
+// AUTH
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    loadProfile();
+  } else {
+    window.location.href = '../login.html';
+  }
+});
+
+// LOAD PROFILE
+function loadProfile() {
+  db.collection('users').doc(currentUser.uid).get()
+    .then(doc => {
+      if (doc.exists) {
+        profileData = doc.data().agentProfile || {};
+        reviews = profileData.reviews || [];
+        photoUrls = profileData.photoUrls || { headshot: '', logo: '', team: '' };
+        selectedColor = profileData.accentColor || '#EA002A';
+        selectedGold = profileData.goldColor || '#C9A84C';
+        populateForm();
+      }
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContent').style.display = 'block';
+      renderReviews();
+      updatePreview();
+      checkCompleteness();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContent').style.display = 'block';
+    });
+}
+
+// POPULATE FORM
+function populateForm() {
+  const fields = ['firstName','lastName','title','brokerage','phone','email',
+    'calendlyUrl','licensedSince','tagline','homesSold','listToSaleRatio',
+    'brokerYear','yearsActive','shortBio','fullBio',
+    'promise1','promise2','promise3','promise4','shelterText'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && profileData[id]) el.value = profileData[id];
+  });
+
+  // Photos
+  if (photoUrls.headshot) showPhotoPreview('headshot', photoUrls.headshot);
+  if (photoUrls.logo) showPhotoPreview('logo', photoUrls.logo);
+  if (photoUrls.team) showPhotoPreview('team', photoUrls.team);
+
+  // Color chips
+  document.querySelectorAll('[data-color]').forEach(chip => {
+    chip.classList.toggle('selected', chip.dataset.color === selectedColor);
+  });
+}
+
+// COLLECT DATA
+function collectData() {
+  const fields = ['firstName','lastName','title','brokerage','phone','email',
+    'calendlyUrl','licensedSince','tagline','homesSold','listToSaleRatio',
+    'brokerYear','yearsActive','shortBio','fullBio',
+    'promise1','promise2','promise3','promise4','shelterText'];
+  const data = {};
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  data.reviews = reviews;
+  data.photoUrls = photoUrls;
+  data.accentColor = selectedColor;
+  data.goldColor = selectedGold;
+  return data;
+}
+
+// SAVE PROFILE
+function saveProfile() {
+  if (!currentUser) return;
+  setSaveStatus('saving');
+  const data = collectData();
+
+  db.collection('users').doc(currentUser.uid).set(
+    { agentProfile: data }, { merge: true }
+  ).then(() => {
+    profileData = data;
+    isDirty = false;
+    setSaveStatus('saved');
+    updatePreview();
+    checkCompleteness();
+    showToast('Profile saved', 'success');
+    setTimeout(() => setSaveStatus('idle'), 3000);
+  }).catch(err => {
+    console.error(err);
+    setSaveStatus('idle');
+    showToast('Error saving profile', 'error');
+  });
+}
+
+function markDirty() {
+  isDirty = true;
+  setSaveStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProfile, 2500);
+  updatePreview();
+}
+
+function setSaveStatus(s) {
+  const el = document.getElementById('saveStatus');
+  if (s === 'saving') { el.textContent = '● Saving...'; el.className = 'save-status saving'; }
+  else if (s === 'saved') { el.textContent = '✓ Saved'; el.className = 'save-status saved'; }
+  else { el.textContent = 'All saved'; el.className = 'save-status'; }
+}
+
+// PHOTO UPLOAD
+function handlePhotoUpload(input, key) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Show progress
+  const prog = document.getElementById(key + '-progress');
+  const fill = document.getElementById(key + '-progress-fill');
+  if (prog) prog.style.display = 'block';
+
+  // Read as base64 and store directly in Firestore
+  // (For production, Firebase Storage would be better but requires billing)
+  const reader = new FileReader();
+  reader.onload = e => {
+    const base64 = e.target.result;
+    photoUrls[key] = base64;
+    showPhotoPreview(key, base64);
+    if (fill) fill.style.width = '100%';
+    setTimeout(() => { if (prog) prog.style.display = 'none'; }, 800);
+    markDirty();
+    showToast('Photo uploaded', 'success');
+  };
+  reader.onprogress = e => {
+    if (fill && e.lengthComputable) {
+      fill.style.width = (e.loaded / e.total * 80) + '%';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPhotoPreview(key, src) {
+  const inner = document.getElementById(key + '-inner');
+  const upload = document.getElementById(key + '-upload');
+  if (!inner || !upload) return;
+
+  const isCircle = key === 'headshot';
+  inner.innerHTML = `
+    <div style="position:relative">
+      <img src="${src}" class="photo-preview${isCircle ? ' circle' : ''}" alt="${key}">
+      <button class="photo-remove" onclick="removePhoto('${key}',event)">✕</button>
+    </div>
+    <div class="photo-name">${key.charAt(0).toUpperCase() + key.slice(1)} uploaded</div>`;
+  upload.classList.add('has-photo');
+}
+
+function removePhoto(key, event) {
+  event.stopPropagation();
+  photoUrls[key] = '';
+  const inner = document.getElementById(key + '-inner');
+  const upload = document.getElementById(key + '-upload');
+  const icons = { headshot: '👤', logo: '🏢', team: '📷' };
+  const labels = { headshot: 'Upload headshot', logo: 'Upload brokerage logo', team: 'Upload team or brand photo' };
+  const subs = { headshot: 'JPG or PNG · Square crop recommended · min 400×400px', logo: 'PNG with transparent background preferred · white version for dark backgrounds', team: 'Landscape orientation · min 800×500px' };
+  if (inner) inner.innerHTML = `
+    <div style="font-size:2.5rem;margin-bottom:10px;opacity:.3">${icons[key]}</div>
+    <div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">${labels[key]}</div>
+    <div style="font-size:12px;color:#aaa">${subs[key]}</div>`;
+  if (upload) upload.classList.remove('has-photo');
+  markDirty();
+}
+
+// REVIEWS
+function renderReviews() {
+  const list = document.getElementById('reviews-list');
+  if (!list) return;
+  if (!reviews.length) {
+    list.innerHTML = '<p style="color:#bbb;font-size:13px;text-align:center;padding:20px 0">No reviews yet — add your first one above</p>';
+    return;
+  }
+  list.innerHTML = reviews.map((r, i) => `
+    <div class="review-item" id="review-${i}">
+      <div class="review-item-header">
+        <div class="review-stars-input">
+          ${[1,2,3,4,5].map(n => `<button class="star-btn${(r.stars||5)>=n?' lit':''}" onclick="setStars(${i},${n})">★</button>`).join('')}
+        </div>
+        <button class="review-delete" onclick="deleteReview(${i})">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Review text</label>
+        <textarea rows="2" oninput="updateReview(${i},'text',this.value)" style="font-size:13px">${r.text||''}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Client name / area</label>
+          <input type="text" value="${r.author||''}" oninput="updateReview(${i},'author',this.value)" placeholder="Auburn Bay">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Year</label>
+          <input type="text" value="${r.year||''}" oninput="updateReview(${i},'year',this.value)" placeholder="2024">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Result (optional)</label>
+          <input type="text" value="${r.result||''}" oninput="updateReview(${i},'result',this.value)" placeholder="Sold in 8 days · 102%">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addReview() {
+  reviews.push({ stars: 5, text: '', author: '', year: new Date().getFullYear().toString(), result: '' });
+  renderReviews();
+  markDirty();
+  document.getElementById(`review-${reviews.length-1}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function deleteReview(i) {
+  if (!confirm('Remove this review?')) return;
+  reviews.splice(i, 1);
+  renderReviews();
+  markDirty();
+}
+
+function setStars(i, n) {
+  reviews[i].stars = n;
+  renderReviews();
+  markDirty();
+}
+
+function updateReview(i, key, val) {
+  reviews[i][key] = val;
+  markDirty();
+}
+
+// COLORS
+function selectColor(color, chip) {
+  selectedColor = color;
+  document.querySelectorAll('[data-color]').forEach(c => c.classList.remove('selected'));
+  if (chip) chip.classList.add('selected');
+  document.getElementById('color-preview-chip').style.background = color;
+  document.getElementById('color-preview-label').textContent = color;
+  markDirty();
+}
+
+function selectGold(color, chip) {
+  selectedGold = color;
+  document.querySelectorAll('[data-color-gold]').forEach(c => c.classList.remove('selected'));
+  if (chip) chip.classList.add('selected');
+  markDirty();
+}
+
+// PREVIEW
+function updatePreview() {
+  const first = document.getElementById('firstName')?.value || 'Kyle';
+  const last = document.getElementById('lastName')?.value || 'Duiker';
+  const title = document.getElementById('title')?.value || 'Broker Delegate';
+  const brokerage = document.getElementById('brokerage')?.value || 'Royal LePage Solutions';
+  const phone = document.getElementById('phone')?.value || '403-252-5900';
+  const initials = (first.charAt(0) + last.charAt(0)).toUpperCase();
+
+  document.getElementById('preview-name').textContent = `${first} ${last} · ${title}`;
+  document.getElementById('preview-title').textContent = `${brokerage} · ${phone}`;
+  document.getElementById('preview-initials').textContent = initials;
+
+  const logoEl = document.getElementById('preview-logo');
+  if (photoUrls.headshot) {
+    document.getElementById('preview-photo-wrap').innerHTML =
+      `<img src="${photoUrls.headshot}" class="preview-headshot" alt="Headshot">`;
+  } else {
+    document.getElementById('preview-photo-wrap').innerHTML =
+      `<div class="preview-initials" id="preview-initials">${initials}</div>`;
+  }
+
+  if (photoUrls.logo && logoEl) {
+    logoEl.src = photoUrls.logo;
+    logoEl.style.display = 'block';
+  }
+}
+
+// COMPLETENESS
+function checkCompleteness() {
+  const checks = [
+    { label: 'First and last name', done: !!(document.getElementById('firstName')?.value && document.getElementById('lastName')?.value) },
+    { label: 'Phone number', done: !!document.getElementById('phone')?.value },
+    { label: 'Email address', done: !!document.getElementById('email')?.value },
+    { label: 'Headshot photo', done: !!photoUrls.headshot },
+    { label: 'Brokerage logo', done: !!photoUrls.logo },
+    { label: 'Short bio', done: !!document.getElementById('shortBio')?.value },
+    { label: 'At least one client review', done: reviews.length > 0 },
+    { label: 'Shelter Foundation message', done: !!document.getElementById('shelterText')?.value },
+  ];
+
+  const list = document.getElementById('completeness-list');
+  if (!list) return;
+  list.innerHTML = checks.map(c => `
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:${c.done?'#22c55e':'#999'}">
+      <span>${c.done ? '✓' : '○'}</span>
+      <span>${c.label}</span>
+    </div>`).join('');
+}
+
+// NAVIGATION
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'preview') { updatePreview(); checkCompleteness(); }
+}
+
+// TOAST
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
