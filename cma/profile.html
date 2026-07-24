@@ -670,7 +670,12 @@ function collectData() {
     if (el) data[id] = el.value;
   });
   data.reviews = reviews;
-  data.photoUrls = photoUrls;
+  // Only save URLs not base64 data
+  data.photoUrls = {
+    headshot: photoUrls.headshot?.startsWith('https://') ? photoUrls.headshot : '',
+    logo: photoUrls.logo?.startsWith('https://') ? photoUrls.logo : '',
+    team: photoUrls.team?.startsWith('https://') ? photoUrls.team : ''
+  };
   data.accentColor = selectedColor;
   data.goldColor = selectedGold;
   return data;
