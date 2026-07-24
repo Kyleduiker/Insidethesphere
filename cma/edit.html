@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit CMA - Inside The Sphere</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1c;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, #1a2332, #2d3748, #1a2332, #0a0f1c);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 12px;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .breadcrumb {
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .breadcrumb span { color: rgba(255,255,255,0.7); }
+
+        .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+        .save-status {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .save-status.saving { color: #fde68a; border-color: rgba(251,191,36,0.3); }
+        .save-status.saved { color: #86efac; border-color: rgba(34,197,94,0.3); }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, #60a5fa, #a78bfa); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-success { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .btn-success:hover { background: rgba(34,197,94,0.25); }
+        .btn-danger { background: rgba(248,113,113,0.15); color: #fca5a5; border: 1px solid rgba(248,113,113,0.3); }
+        .btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+        /* LAYOUT */
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: calc(100vh - 56px);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(255,255,255,0.07);
+            padding: 20px 0;
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            padding: 14px 18px 5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 18px;
+            cursor: pointer;
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .nav-item:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+
+        .nav-item.active {
+            color: #60a5fa;
+            border-left-color: #60a5fa;
+            background: rgba(96,165,250,0.08);
+        }
+
+        .nav-item .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+
+        /* MAIN */
+        .main { overflow-y: auto; }
+
+        .panel { display: none; padding: 28px 32px; max-width: 860px; }
+        .panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* PANEL HEADER */
+        .panel-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .panel-header h2 { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .panel-header p { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+        /* SECTION CARDS */
+        .section-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px 22px;
+            margin-bottom: 16px;
+        }
+
+        .section-card h3 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* FORM */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+        .form-row.four { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(255,255,255,0.09);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(255,255,255,0.2); }
+        .form-group select option { background: #1a2332; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        /* NET SHEET PREVIEW */
+        .net-preview {
+            background: rgba(96,165,250,0.05);
+            border: 1px solid rgba(96,165,250,0.15);
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-top: 14px;
+        }
+
+        .net-preview-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
+
+        .net-preview-row:last-child { border-bottom: none; }
+        .net-preview-row .label { color: rgba(255,255,255,0.45); }
+        .net-preview-row .value { font-weight: 600; color: #fff; }
+        .net-preview-row .value.deduct { color: #fca5a5; }
+        .net-preview-row .value.total { color: #86efac; font-size: 1.1rem; }
+
+        /* COMPARABLES */
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .comp-table th {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.3);
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .comp-table td {
+            padding: 10px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.75);
+            vertical-align: middle;
+        }
+
+        .comp-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .comp-table tr:last-child td { border-bottom: none; }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .badge-sold { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+        .badge-active { background: rgba(96,165,250,0.15); color: #93c5fd; border: 1px solid rgba(96,165,250,0.25); }
+        .badge-pending { background: rgba(251,191,36,0.15); color: #fde68a; border: 1px solid rgba(251,191,36,0.25); }
+        .badge-expired { background: rgba(248,113,113,0.15); color: #fca5a5; border: 1px solid rgba(248,113,113,0.25); }
+        .badge-terminated { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            transition: all 0.15s;
+        }
+
+        .icon-btn:hover { border-color: #60a5fa; color: #60a5fa; }
+        .icon-btn.del:hover { border-color: #fca5a5; color: #fca5a5; }
+
+        .add-comp-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: transparent;
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.35);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .add-comp-btn:hover { border-color: #60a5fa; color: #60a5fa; }
+
+        /* COMP STATS */
+        .comp-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .comp-stat {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .comp-stat .cs-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.3); margin-bottom: 5px; }
+        .comp-stat .cs-value { font-size: 1.2rem; font-weight: 700; color: #60a5fa; }
+
+        /* PRICING BAR */
+        .price-range-bar {
+            position: relative;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            margin: 20px 0 8px;
+        }
+
+        .price-range-fill {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .price-marker {
+            position: absolute;
+            top: -8px;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #a78bfa;
+            transition: left 0.3s;
+        }
+
+        .price-range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            margin-top: 4px;
+        }
+
+        .price-recommended {
+            text-align: center;
+            margin-top: 12px;
+            padding: 14px;
+            background: rgba(167,139,250,0.08);
+            border: 1px solid rgba(167,139,250,0.2);
+            border-radius: 8px;
+        }
+
+        .price-recommended .rec-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+        .price-recommended .rec-price { font-size: 1.8rem; font-weight: 700; color: #a78bfa; }
+
+        /* PUBLISH BANNER */
+        .publish-banner {
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .publish-banner .pb-info { font-size: 13px; color: rgba(255,255,255,0.6); }
+        .publish-banner .pb-url { font-size: 12px; color: #60a5fa; margin-top: 3px; word-break: break-all; }
+
+        /* LOADING */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            gap: 14px;
+        }
+
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #131929;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 28px;
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 18px; }
+
+        .modal-close {
+            position: absolute;
+            top: 18px; right: 18px;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: rgba(255,255,255,0.6);
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        .modal-footer {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            background: #1a2744;
+            border: 1px solid rgba(96,165,250,0.3);
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            z-index: 1000;
+            transform: translateY(70px);
+            opacity: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: rgba(248,113,113,0.4); }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .panel { padding: 18px 16px; }
+            .form-row, .form-row.three, .form-row.four { grid-template-columns: 1fr; }
+            .comp-stats { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- COMP MODAL -->
+<div class="modal-overlay" id="compModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeCompModal()">✕</button>
+        <h2 id="compModalTitle">Add Comparable</h2>
+
+        <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="comp-address" placeholder="138 Mahogany Cove SE, Calgary">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="comp-status">
+                    <option value="sold">Sold</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="expired">Expired</option>
+                    <option value="terminated">Terminated</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Price ($)</label>
+                <input type="number" id="comp-price" placeholder="699900">
+            </div>
+        </div>
+
+        <div class="form-row.four" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Beds</label>
+                <input type="number" id="comp-beds" placeholder="4">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Baths</label>
+                <input type="number" id="comp-baths" placeholder="3" step="0.5">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Sq.ft.</label>
+                <input type="number" id="comp-sqft" placeholder="1850">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>DOM</label>
+                <input type="number" id="comp-dom" placeholder="14">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Year built</label>
+                <input type="number" id="comp-year" placeholder="2020">
+            </div>
+            <div class="form-group">
+                <label>Garage stalls</label>
+                <input type="number" id="comp-garage" placeholder="2">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Notes / adjustments</label>
+            <textarea id="comp-notes" rows="2" placeholder="Key differences from subject property..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeCompModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveComp()">Save Comparable</button>
+        </div>
+    </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p style="color:rgba(255,255,255,0.4);font-size:14px">Loading CMA...</p>
+</div>
+
+<!-- APP -->
+<div id="appContent" style="display:none">
+
+    <header class="header">
+        <div class="header-left">
+            <a href="../smarttools/" class="logo">🏠 Inside The Sphere</a>
+            <span class="breadcrumb">/ <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:none">CMA Builder</a> / <span id="breadcrumb-name">Loading...</span></span>
+        </div>
+        <div class="header-right">
+            <span class="save-status" id="saveStatus">All saved</span>
+            <button class="btn btn-ghost" onclick="saveCMA()">Save</button>
+            <button class="btn btn-success" id="publishBtn" onclick="publishCMA()">Publish →</button>
+            <a href="index.html" class="btn btn-ghost">← Back</a>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav class="sidebar">
+            <div class="sidebar-section">Setup</div>
+            <div class="nav-item active" onclick="showPanel('seller')" id="nav-seller">
+                <span class="nav-icon">👤</span> Seller Profile
+            </div>
+            <div class="nav-item" onclick="showPanel('specs')" id="nav-specs">
+                <span class="nav-icon">🏠</span> Property Details
+            </div>
+
+            <div class="sidebar-section">Presentation</div>
+            <div class="nav-item" onclick="showPanel('market')" id="nav-market">
+                <span class="nav-icon">📈</span> Market Data
+            </div>
+            <div class="nav-item" onclick="showPanel('comps')" id="nav-comps">
+                <span class="nav-icon">🏘️</span> Comparables
+            </div>
+            <div class="nav-item" onclick="showPanel('pricing')" id="nav-pricing">
+                <span class="nav-icon">💲</span> Pricing Strategy
+            </div>
+            <div class="nav-item" onclick="showPanel('netsheet')" id="nav-netsheet">
+                <span class="nav-icon">🧮</span> Net Sheet
+            </div>
+            <div class="nav-item" onclick="showPanel('marketing')" id="nav-marketing">
+                <span class="nav-icon">📣</span> Marketing Plan
+            </div>
+
+            <div class="sidebar-section">Publish</div>
+            <div class="nav-item" onclick="showPanel('publish')" id="nav-publish">
+                <span class="nav-icon">🚀</span> Publish & Share
+            </div>
+        </nav>
+
+        <main class="main">
+
+            <!-- SELLER PROFILE -->
+            <div class="panel active" id="panel-seller">
+                <div class="panel-header">
+                    <h2>Seller Profile</h2>
+                    <p>Basic client and appointment information</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Client information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Seller name(s)</label>
+                            <input type="text" id="clientName" placeholder="John & Sarah Smith" oninput="markDirty()">
+                        </div>
+                        <div class="form-group">
+                            <label>Client email</label>
+                            <input type="email" id="clientEmail" placeholder="client@email.com" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Appointment date</label>
+                            <input type="date" id="appointmentDate" oninput="markDirty()">
+                        </div>
+                        <div class="form-group">
+                            <label>Client page password</label>
+                            <input type="text" id="clientPassword" placeholder="e.g. Legacy2026" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Seller motivation</label>
+                            <select id="sellerMotivation" onchange="markDirty()">
+                                <option value="">Select...</option>
+                                <option>Upsizing</option>
+                                <option>Downsizing</option>
+                                <option>Relocation</option>
+                                <option>Investment / cash out</option>
+                                <option>Divorce / estate</option>
+                                <option>Job transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target timeline</label>
+                            <select id="sellerTimeline" onchange="markDirty()">
+                                <option value="">Select...</option>
+                                <option>ASAP — within 30 days</option>
+                                <option>1–2 months</option>
+                                <option>3–6 months</option>
+                                <option>6+ months</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / special circumstances</label>
+                        <textarea id="sellerNotes" rows="3" placeholder="Anything relevant to this appointment..." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROPERTY DETAILS -->
+            <div class="panel" id="panel-specs">
+                <div class="panel-header">
+                    <h2>Property Details</h2>
+                    <p>Subject property information — the home you're listing</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Address & community</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Property address</label>
+                            <input type="text" id="address" placeholder="570 Legacy Circle SE, Calgary" oninput="markDirty()">
+                        </div>
+                        <div class="form-group">
+                            <label>Community</label>
+                            <select id="community" onchange="markDirty()">
+                                <option value="">Select community</option>
+                                <option>Mahogany</option>
+                                <option>Auburn Bay</option>
+                                <option>Seton</option>
+                                <option>Cranston</option>
+                                <option>Legacy</option>
+                                <option>Chestermere</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Property specs</h3>
+                    <div class="form-row four" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Beds</label>
+                            <input type="number" id="beds" placeholder="4" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Baths</label>
+                            <input type="number" id="baths" placeholder="3.5" step="0.5" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Sq. ft. (RMS)</label>
+                            <input type="number" id="sqft" placeholder="1751" oninput="markDirty();recalcPricing()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Year built</label>
+                            <input type="number" id="yearBuilt" placeholder="2023" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Garage stalls</label>
+                            <input type="number" id="garage" placeholder="2" oninput="markDirty()">
+                        </div>
+                        <div class="form-group">
+                            <label>Lot size (sq. ft.)</label>
+                            <input type="number" id="lotSize" placeholder="4800" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Key features</label>
+                        <textarea id="features" rows="3" placeholder="Lake access, finished basement, upgraded kitchen, gemstone lighting..." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARKET DATA -->
+            <div class="panel" id="panel-market">
+                <div class="panel-header">
+                    <h2>Market Data</h2>
+                    <p>Current SE Calgary market conditions — update before each appointment</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Key market stats</h3>
+                    <div class="form-row three" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Absorption rate (%)</label>
+                            <input type="number" id="absorption" placeholder="68" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Avg. days on market</label>
+                            <input type="number" id="domAvg" placeholder="17" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>List-to-sale ratio (%)</label>
+                            <input type="number" id="listToSale" placeholder="98.4" step="0.1" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-row three" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:0">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Active listings</label>
+                            <input type="number" id="activeListings" placeholder="23" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Sold last 30 days</label>
+                            <input type="number" id="soldLast30" placeholder="31" oninput="markDirty()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Median sold price ($)</label>
+                            <input type="number" id="medianSoldPrice" placeholder="697500" oninput="markDirty()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Market narrative</h3>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label>What to say to the seller about current conditions</label>
+                        <textarea id="marketNarrative" rows="4" placeholder="The SE Calgary lake community market remains a seller's market. With absorption above 65% and homes averaging just 17 days on market, well-priced properties are generating competing offers within the first week..." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPARABLES -->
+            <div class="panel" id="panel-comps">
+                <div class="panel-header">
+                    <h2>Comparables</h2>
+                    <p>Add sold, active, pending, expired, and terminated listings</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>
+                        Comparable properties
+                        <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="openCompModal()">+ Add comparable</button>
+                    </h3>
+
+                    <div id="compTableWrap">
+                        <p style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:20px">No comparables yet — add your first one above</p>
+                    </div>
+
+                    <button class="add-comp-btn" onclick="openCompModal()">+ Add comparable property</button>
+                </div>
+
+                <div class="comp-stats">
+                    <div class="comp-stat">
+                        <div class="cs-label">Avg sold price</div>
+                        <div class="cs-value" id="avgSoldPrice">—</div>
+                    </div>
+                    <div class="comp-stat">
+                        <div class="cs-label">Avg $/sq.ft.</div>
+                        <div class="cs-value" id="avgPsf">—</div>
+                    </div>
+                    <div class="comp-stat">
+                        <div class="cs-label">Avg DOM</div>
+                        <div class="cs-value" id="avgDom">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRICING STRATEGY -->
+            <div class="panel" id="panel-pricing">
+                <div class="panel-header">
+                    <h2>Pricing Strategy</h2>
+                    <p>Set your recommended price range based on the comparables</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Price range</h3>
+                    <div class="form-row three" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+                        <div class="form-group">
+                            <label>Low end ($)</label>
+                            <input type="number" id="priceLow" placeholder="670000" oninput="markDirty();recalcPricing()">
+                        </div>
+                        <div class="form-group">
+                            <label>Recommended ($)</label>
+                            <input type="number" id="priceRec" placeholder="699900" oninput="markDirty();recalcPricing();syncNetPrice()">
+                        </div>
+                        <div class="form-group">
+                            <label>High end ($)</label>
+                            <input type="number" id="priceHigh" placeholder="730000" oninput="markDirty();recalcPricing()">
+                        </div>
+                    </div>
+
+                    <div class="price-range-bar">
+                        <div class="price-range-fill" id="priceRangeFill"></div>
+                        <div class="price-marker" id="priceMarker">▼</div>
+                    </div>
+                    <div class="price-range-labels">
+                        <span id="priceLowLabel">$0</span>
+                        <span id="priceHighLabel">$0</span>
+                    </div>
+
+                    <div class="price-recommended">
+                        <div class="rec-label">Recommended list price</div>
+                        <div class="rec-price" id="priceRecDisplay">—</div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Pricing rationale</h3>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label>Justification for the seller</label>
+                        <textarea id="priceRationale" rows="4" placeholder="Sold comps within 500m average $700,750 — placing this home at $699,900 positions it to attract immediate serious interest while leaving room to negotiate. The expired listing confirms the ceiling where market resistance begins." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NET SHEET -->
+            <div class="panel" id="panel-netsheet">
+                <div class="panel-header">
+                    <h2>Seller Net Sheet</h2>
+                    <p>Live calculation — updates as you type</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Inputs</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sale price ($)</label>
+                            <input type="number" id="netPrice" placeholder="699900" oninput="markDirty();recalcNet()">
+                        </div>
+                        <div class="form-group">
+                            <label>Commission (%)</label>
+                            <input type="number" id="commission" value="3.5" step="0.1" oninput="markDirty();recalcNet()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>GST on commission (%)</label>
+                            <input type="number" id="gst" value="5" oninput="markDirty();recalcNet()">
+                        </div>
+                        <div class="form-group">
+                            <label>Legal fees ($)</label>
+                            <input type="number" id="legalFees" value="1800" oninput="markDirty();recalcNet()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mortgage balance ($)</label>
+                            <input type="number" id="mortgageBalance" placeholder="285000" oninput="markDirty();recalcNet()">
+                        </div>
+                        <div class="form-group">
+                            <label>Mortgage penalty ($)</label>
+                            <input type="number" id="mortgagePenalty" value="0" oninput="markDirty();recalcNet()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Property tax adjustment ($)</label>
+                            <input type="number" id="taxAdj" value="0" oninput="markDirty();recalcNet()">
+                        </div>
+                        <div class="form-group">
+                            <label>Other costs ($)</label>
+                            <input type="number" id="otherCosts" value="0" oninput="markDirty();recalcNet()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Estimated proceeds</h3>
+                    <div class="net-preview">
+                        <div class="net-preview-row"><span class="label">Sale price</span><span class="value" id="np-price">—</span></div>
+                        <div class="net-preview-row"><span class="label">Commission + GST</span><span class="value deduct" id="np-comm">—</span></div>
+                        <div class="net-preview-row"><span class="label">Legal fees</span><span class="value deduct" id="np-legal">—</span></div>
+                        <div class="net-preview-row"><span class="label">Mortgage payout</span><span class="value deduct" id="np-mortgage">—</span></div>
+                        <div class="net-preview-row"><span class="label">Mortgage penalty</span><span class="value deduct" id="np-penalty">—</span></div>
+                        <div class="net-preview-row"><span class="label">Property tax adj.</span><span class="value" id="np-tax">—</span></div>
+                        <div class="net-preview-row"><span class="label">Other costs</span><span class="value deduct" id="np-other">—</span></div>
+                        <div class="net-preview-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:6px;padding-top:6px">
+                            <span class="label" style="font-weight:700;color:rgba(255,255,255,0.7)">Estimated net proceeds</span>
+                            <span class="value total" id="np-net">—</span>
+                        </div>
+                    </div>
+                    <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:10px;line-height:1.5">Estimate only. Consult lawyer and mortgage broker for exact figures. Royal LePage Solutions and Duiker Properties are not responsible for variations.</p>
+                </div>
+            </div>
+
+            <!-- MARKETING PLAN -->
+            <div class="panel" id="panel-marketing">
+                <div class="panel-header">
+                    <h2>Marketing Plan</h2>
+                    <p>Your plan for selling this property</p>
+                </div>
+
+                <div class="section-card">
+                    <h3>Photography brief</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Photographer name</label>
+                            <input type="text" id="photographerName" placeholder="Jane Doe Photography" oninput="markDirty()">
+                        </div>
+                        <div class="form-group">
+                            <label>Shoot date</label>
+                            <input type="date" id="shootDate" oninput="markDirty()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Shot list / special requests</label>
+                        <textarea id="shotList" rows="2" placeholder="Backyard from deck, pond views from living room, gemstone lighting at dusk..." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Offer strategy notes</h3>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label>Notes specific to this listing</label>
+                        <textarea id="offerStrategy" rows="4" placeholder="Coordinated launch — list Thursday, showings Friday through Monday, offers Tuesday evening. Discuss bully offer protocol with seller before listing goes live..." oninput="markDirty()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PUBLISH -->
+            <div class="panel" id="panel-publish">
+                <div class="panel-header">
+                    <h2>Publish & Share</h2>
+                    <p>Publish this CMA and share the link with your client</p>
+                </div>
+
+                <div id="publishStatus"></div>
+
+                <div class="section-card">
+                    <h3>Client access</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Client page URL</label>
+                            <input type="text" id="clientUrl" readonly style="color:rgba(255,255,255,0.5);cursor:text">
+                        </div>
+                        <div class="form-group">
+                            <label>Client password</label>
+                            <input type="text" id="publishPassword" readonly style="color:rgba(255,255,255,0.5);cursor:text">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="btn btn-primary" onclick="publishCMA()">🚀 Publish CMA</button>
+                        <button class="btn btn-ghost" onclick="copyClientUrl()">Copy link</button>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Checklist before publishing</h3>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Seller profile complete</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Property details filled in</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Market data updated</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> At least 3 comparables added</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Recommended price set</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Net sheet figures entered</label>
+                        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6)"><input type="checkbox"> Client password set</label>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+    let cmaId = null;
+    let cmaData = {};
+    let comps = [];
+    let editingCompIndex = null;
+    let isDirty = false;
+    let saveTimer = null;
+
+    // ── GET CMA ID FROM URL ──
+    const params = new URLSearchParams(window.location.search);
+    cmaId = params.get('id');
+
+    if (!cmaId) {
+        window.location.href = 'index.html';
+    }
+
+    // ── AUTH ──
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            currentUser = user;
+            loadCMA();
+        } else {
+            window.location.href = '../login.html';
+        }
+    });
+
+    // ── LOAD CMA ──
+    function loadCMA() {
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(cmaId)
+            .get()
+            .then(doc => {
+                if (!doc.exists) {
+                    showToast('CMA not found', 'error');
+                    setTimeout(() => window.location.href = 'index.html', 2000);
+                    return;
+                }
+
+                cmaData = doc.data();
+                comps = cmaData.comps || [];
+                populateForm();
+                renderComps();
+                recalcNet();
+                recalcPricing();
+                updatePublishPanel();
+
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('appContent').style.display = 'block';
+                document.getElementById('breadcrumb-name').textContent = cmaData.clientName || 'Untitled';
+
+                // Load comparables from subcollection too (if stored there)
+                loadSubComps();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error loading CMA', 'error');
+            });
+    }
+
+    // Load comps from subcollection
+    function loadSubComps() {
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(cmaId)
+            .collection('comps')
+            .orderBy('createdAt', 'asc')
+            .get()
+            .then(snapshot => {
+                if (!snapshot.empty) {
+                    comps = [];
+                    snapshot.forEach(doc => {
+                        comps.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderComps();
+                    recalcCompStats();
+                }
+            })
+            .catch(() => {}); // subcollection may not exist yet
+    }
+
+    // ── POPULATE FORM ──
+    function populateForm() {
+        const fields = [
+            'clientName','clientEmail','appointmentDate','clientPassword',
+            'sellerMotivation','sellerTimeline','sellerNotes',
+            'address','community','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
+            'priceLow','priceRec','priceHigh','priceRationale',
+            'netPrice','commission','gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
+            'photographerName','shootDate','shotList','offerStrategy'
+        ];
+
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && cmaData[id] !== undefined && cmaData[id] !== '') {
+                el.value = cmaData[id];
+            }
+        });
+
+        // Set client URL preview
+        updateClientUrl();
+    }
+
+    // ── COLLECT FORM DATA ──
+    function collectFormData() {
+        const fields = [
+            'clientName','clientEmail','appointmentDate','clientPassword',
+            'sellerMotivation','sellerTimeline','sellerNotes',
+            'address','community','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
+            'priceLow','priceRec','priceHigh','priceRationale',
+            'netPrice','commission','gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
+            'photographerName','shootDate','shotList','offerStrategy'
+        ];
+
+        const data = {};
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) data[id] = el.value;
+        });
+
+        return data;
+    }
+
+    // ── SAVE CMA ──
+    function saveCMA() {
+        if (!currentUser || !cmaId) return;
+
+        setSaveStatus('saving');
+        const data = collectFormData();
+        data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(cmaId)
+            .update(data)
+            .then(() => {
+                cmaData = { ...cmaData, ...data };
+                isDirty = false;
+                setSaveStatus('saved');
+                document.getElementById('breadcrumb-name').textContent = data.clientName || 'Untitled';
+                setTimeout(() => setSaveStatus('idle'), 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                setSaveStatus('idle');
+                showToast('Error saving', 'error');
+            });
+    }
+
+    // Auto-save after 2 seconds of no typing
+    function markDirty() {
+        isDirty = true;
+        setSaveStatus('saving');
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveCMA, 2000);
+    }
+
+    function setSaveStatus(state) {
+        const el = document.getElementById('saveStatus');
+        if (state === 'saving') { el.textContent = '● Saving...'; el.className = 'save-status saving'; }
+        else if (state === 'saved') { el.textContent = '✓ Saved'; el.className = 'save-status saved'; }
+        else { el.textContent = 'All saved'; el.className = 'save-status'; }
+    }
+
+    // ── PUBLISH CMA ──
+    function publishCMA() {
+        if (!currentUser || !cmaId) return;
+
+        // Save first
+        const data = collectFormData();
+        data.status = 'published';
+        data.publishedAt = firebase.firestore.FieldValue.serverTimestamp();
+        data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+        const slug = cmaData.slug;
+
+        // Write to user's collection
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(cmaId)
+            .update(data)
+            .then(() => {
+                // Also write to public_cmas for client access
+                return db.collection('public_cmas').doc(slug).set({
+                    ...data,
+                    agentId: currentUser.uid,
+                    cmaId: cmaId,
+                    comps: comps,
+                    publishedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                cmaData = { ...cmaData, ...data };
+                showToast('CMA published! Client link is ready.');
+                updatePublishPanel();
+                updateClientUrl();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error publishing', 'error');
+            });
+    }
+
+    function updatePublishPanel() {
+        const statusDiv = document.getElementById('publishStatus');
+        if (cmaData.status === 'published') {
+            statusDiv.innerHTML = `
+                <div class="publish-banner">
+                    <div>
+                        <div class="pb-info">✓ This CMA is published and live</div>
+                        <div class="pb-url">${window.location.origin}/cma/client/?slug=${cmaData.slug}</div>
+                    </div>
+                    <button class="btn btn-ghost" onclick="copyClientUrl()">Copy link</button>
+                </div>`;
+        } else {
+            statusDiv.innerHTML = '';
+        }
+    }
+
+    function updateClientUrl() {
+        const slug = cmaData.slug || '';
+        const url = `${window.location.origin}/cma/client/?slug=${slug}`;
+        const urlEl = document.getElementById('clientUrl');
+        const passEl = document.getElementById('publishPassword');
+        if (urlEl) urlEl.value = url;
+        if (passEl) passEl.value = cmaData.clientPassword || document.getElementById('clientPassword').value || '—';
+    }
+
+    function copyClientUrl() {
+        const slug = cmaData.slug || '';
+        const url = `${window.location.origin}/cma/client/?slug=${slug}`;
+        navigator.clipboard.writeText(url).then(() => showToast('Link copied!'));
+    }
+
+    // ── NAVIGATION ──
+    function showPanel(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('panel-' + id).classList.add('active');
+        document.getElementById('nav-' + id).classList.add('active');
+
+        if (id === 'pricing') recalcPricing();
+        if (id === 'netsheet') recalcNet();
+        if (id === 'publish') { updatePublishPanel(); updateClientUrl(); }
+    }
+
+    // ── COMPARABLES ──
+    function openCompModal(index) {
+        editingCompIndex = (index !== undefined) ? index : null;
+        const comp = editingCompIndex !== null ? comps[editingCompIndex] : {};
+
+        document.getElementById('compModalTitle').textContent = editingCompIndex !== null ? 'Edit Comparable' : 'Add Comparable';
+        document.getElementById('comp-address').value = comp.address || '';
+        document.getElementById('comp-status').value = comp.status || 'sold';
+        document.getElementById('comp-price').value = comp.price || '';
+        document.getElementById('comp-beds').value = comp.beds || '';
+        document.getElementById('comp-baths').value = comp.baths || '';
+        document.getElementById('comp-sqft').value = comp.sqft || '';
+        document.getElementById('comp-dom').value = comp.dom || '';
+        document.getElementById('comp-year').value = comp.year || '';
+        document.getElementById('comp-garage').value = comp.garage || '';
+        document.getElementById('comp-notes').value = comp.notes || '';
+
+        document.getElementById('compModal').classList.add('open');
+    }
+
+    function closeCompModal() {
+        document.getElementById('compModal').classList.remove('open');
+        editingCompIndex = null;
+    }
+
+    function saveComp() {
+        const address = document.getElementById('comp-address').value.trim();
+        if (!address) { showToast('Please enter an address', 'error'); return; }
+
+        const comp = {
+            address,
+            status: document.getElementById('comp-status').value,
+            price: parseFloat(document.getElementById('comp-price').value) || 0,
+            beds: parseFloat(document.getElementById('comp-beds').value) || 0,
+            baths: parseFloat(document.getElementById('comp-baths').value) || 0,
+            sqft: parseFloat(document.getElementById('comp-sqft').value) || 0,
+            dom: parseInt(document.getElementById('comp-dom').value) || 0,
+            year: parseInt(document.getElementById('comp-year').value) || 0,
+            garage: parseInt(document.getElementById('comp-garage').value) || 0,
+            notes: document.getElementById('comp-notes').value
+        };
+
+        // Save to Firestore subcollection
+        const colRef = db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(cmaId)
+            .collection('comps');
+
+        let promise;
+        if (editingCompIndex !== null && comps[editingCompIndex].id) {
+            promise = colRef.doc(comps[editingCompIndex].id).update(comp);
+        } else {
+            comp.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            promise = colRef.add(comp);
+        }
+
+        promise.then(docRef => {
+            closeCompModal();
+            if (editingCompIndex !== null) {
+                comps[editingCompIndex] = { ...comps[editingCompIndex], ...comp };
+            } else {
+                comps.push({ id: docRef ? docRef.id : Date.now(), ...comp });
+            }
+            renderComps();
+            recalcCompStats();
+            showToast(editingCompIndex !== null ? 'Comparable updated' : 'Comparable added');
+        }).catch(err => {
+            console.error(err);
+            showToast('Error saving comparable', 'error');
+        });
+    }
+
+    function deleteComp(index) {
+        if (!confirm('Remove this comparable?')) return;
+        const comp = comps[index];
+        if (comp.id) {
+            db.collection('users').doc(currentUser.uid)
+                .collection('cmas').doc(cmaId)
+                .collection('comps').doc(comp.id)
+                .delete().catch(console.error);
+        }
+        comps.splice(index, 1);
+        renderComps();
+        recalcCompStats();
+        showToast('Comparable removed');
+    }
+
+    function renderComps() {
+        const wrap = document.getElementById('compTableWrap');
+        if (!wrap) return;
+
+        if (!comps.length) {
+            wrap.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:20px">No comparables yet — add your first one above</p>';
+            return;
+        }
+
+        const badgeClass = { sold: 'badge-sold', active: 'badge-active', pending: 'badge-pending', expired: 'badge-expired', terminated: 'badge-terminated' };
+
+        const rows = comps.map((c, i) => {
+            const psf = c.sqft > 0 ? Math.round(c.price / c.sqft) : 0;
+            return `<tr>
+                <td><span class="status-badge ${badgeClass[c.status] || ''}">${c.status}</span></td>
+                <td>${c.address}</td>
+                <td style="font-weight:600;color:#fff">$${(c.price||0).toLocaleString()}</td>
+                <td>${c.beds||'—'} bd / ${c.baths||'—'} ba</td>
+                <td>${c.sqft ? c.sqft.toLocaleString() : '—'}</td>
+                <td>${psf ? '$'+psf : '—'}</td>
+                <td>${c.dom ? c.dom+'d' : '—'}</td>
+                <td style="white-space:nowrap">
+                    <button class="icon-btn" onclick="openCompModal(${i})">✎</button>
+                    <button class="icon-btn del" onclick="deleteComp(${i})">✕</button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        wrap.innerHTML = `<div style="overflow-x:auto">
+            <table class="comp-table">
+                <thead><tr>
+                    <th>Status</th><th>Address</th><th>Price</th>
+                    <th>Beds/Baths</th><th>Sq.ft.</th><th>$/sf</th><th>DOM</th><th></th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    }
+
+    function recalcCompStats() {
+        const sold = comps.filter(c => c.status === 'sold');
+        const avgSold = sold.length ? Math.round(sold.reduce((s, c) => s + c.price, 0) / sold.length) : 0;
+        const withSqft = comps.filter(c => c.sqft > 0);
+        const avgPsf = withSqft.length ? Math.round(withSqft.reduce((s, c) => s + (c.price / c.sqft), 0) / withSqft.length) : 0;
+        const avgDom = comps.length ? Math.round(comps.reduce((s, c) => s + c.dom, 0) / comps.length) : 0;
+
+        document.getElementById('avgSoldPrice').textContent = avgSold ? '$' + avgSold.toLocaleString() : '—';
+        document.getElementById('avgPsf').textContent = avgPsf ? '$' + avgPsf : '—';
+        document.getElementById('avgDom').textContent = avgDom ? avgDom + 'd' : '—';
+    }
+
+    // ── PRICING ──
+    function recalcPricing() {
+        const low = parseFloat(document.getElementById('priceLow').value) || 0;
+        const high = parseFloat(document.getElementById('priceHigh').value) || 0;
+        const rec = parseFloat(document.getElementById('priceRec').value) || 0;
+
+        document.getElementById('priceLowLabel').textContent = low ? '$' + low.toLocaleString() : '$0';
+        document.getElementById('priceHighLabel').textContent = high ? '$' + high.toLocaleString() : '$0';
+        document.getElementById('priceRecDisplay').textContent = rec ? '$' + rec.toLocaleString() : '—';
+
+        if (high > low && rec >= low && rec <= high) {
+            const pct = ((rec - low) / (high - low)) * 100;
+            document.getElementById('priceRangeFill').style.width = pct + '%';
+            document.getElementById('priceMarker').style.left = pct + '%';
+        }
+    }
+
+    function syncNetPrice() {
+        const rec = document.getElementById('priceRec').value;
+        if (rec) document.getElementById('netPrice').value = rec;
+        recalcNet();
+    }
+
+    // ── NET SHEET ──
+    function recalcNet() {
+        const price = parseFloat(document.getElementById('netPrice').value) || 0;
+        const comm = parseFloat(document.getElementById('commission').value) || 0;
+        const gst = parseFloat(document.getElementById('gst').value) || 0;
+        const legal = parseFloat(document.getElementById('legalFees').value) || 0;
+        const mortgage = parseFloat(document.getElementById('mortgageBalance').value) || 0;
+        const penalty = parseFloat(document.getElementById('mortgagePenalty').value) || 0;
+        const tax = parseFloat(document.getElementById('taxAdj').value) || 0;
+        const other = parseFloat(document.getElementById('otherCosts').value) || 0;
+
+        const commAmt = Math.round(price * comm / 100);
+        const gstAmt = Math.round(commAmt * gst / 100);
+        const totalComm = commAmt + gstAmt;
+        const net = Math.max(0, price - totalComm - legal - mortgage - penalty + tax - other);
+
+        const fmt = n => n ? '$' + Math.round(n).toLocaleString() : '$0';
+
+        document.getElementById('np-price').textContent = fmt(price);
+        document.getElementById('np-comm').textContent = '−' + fmt(totalComm);
+        document.getElementById('np-legal').textContent = '−' + fmt(legal);
+        document.getElementById('np-mortgage').textContent = '−' + fmt(mortgage);
+        document.getElementById('np-penalty').textContent = '−' + fmt(penalty);
+        document.getElementById('np-tax').textContent = tax >= 0 ? '+' + fmt(tax) : '−' + fmt(Math.abs(tax));
+        document.getElementById('np-other').textContent = '−' + fmt(other);
+        document.getElementById('np-net').textContent = fmt(net);
+    }
+
+    // ── CLOSE MODAL ON OVERLAY CLICK ──
+    document.getElementById('compModal').addEventListener('click', function(e) {
+        if (e.target === this) closeCompModal();
+    });
+
+    // ── TOAST ──
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
+        t.className = 'toast show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => t.className = 'toast', 3000);
+    }
+</script>
+</body>
+</html>
