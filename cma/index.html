@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMA Builder - Inside The Sphere</title>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1c;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, #1a2332, #2d3748, #1a2332, #0a0f1c);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .breadcrumb {
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+        }
+
+        .breadcrumb span { color: rgba(255,255,255,0.7); }
+
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .user-badge {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            color: white;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-ghost {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        .btn-danger {
+            background: rgba(248,113,113,0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(248,113,113,0.3);
+        }
+
+        .btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+        .btn-success {
+            background: rgba(34,197,94,0.15);
+            color: #86efac;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+
+        .btn-success:hover { background: rgba(34,197,94,0.25); }
+
+        /* LOADING */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* MAIN LAYOUT */
+        .main { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+        /* PAGE TITLE */
+        .page-title {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* CMA LIST */
+        .cma-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .cma-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 22px;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cma-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+        }
+
+        .cma-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(96,165,250,0.3);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+        }
+
+        .cma-card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+
+        .status-draft {
+            background: rgba(251,191,36,0.15);
+            color: #fde68a;
+            border: 1px solid rgba(251,191,36,0.3);
+        }
+
+        .status-published {
+            background: rgba(34,197,94,0.15);
+            color: #86efac;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+
+        .cma-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .cma-card .address {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 14px;
+        }
+
+        .cma-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            border-top: 1px solid rgba(255,255,255,0.07);
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+
+        .cma-card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .cma-card-actions .btn { font-size: 12px; padding: 6px 12px; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 16px;
+        }
+
+        .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: rgba(255,255,255,0.7); }
+        .empty-state p { color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 24px; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #131929;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal p.modal-sub {
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: rgba(255,255,255,0.6);
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        /* FORM */
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 7px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+
+        .form-group select option { background: #1a2332; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #1a2744;
+            border: 1px solid rgba(96,165,250,0.3);
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            z-index: 1000;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: rgba(248,113,113,0.4); }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .page-title { flex-direction: column; }
+            .form-row { grid-template-columns: 1fr; }
+            .cma-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NEW CMA MODAL -->
+<div class="modal-overlay" id="newCmaModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2>New CMA</h2>
+        <p class="modal-sub">Start a new Comparative Market Analysis</p>
+
+        <div class="form-group">
+            <label>Client name(s)</label>
+            <input type="text" id="new-client-name" placeholder="John & Sarah Smith">
+        </div>
+
+        <div class="form-group">
+            <label>Property address</label>
+            <input type="text" id="new-address" placeholder="570 Legacy Circle SE, Calgary">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Community</label>
+                <select id="new-community">
+                    <option value="">Select community</option>
+                    <option>Mahogany</option>
+                    <option>Auburn Bay</option>
+                    <option>Seton</option>
+                    <option>Cranston</option>
+                    <option>Legacy</option>
+                    <option>Chestermere</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Appointment date</label>
+                <input type="date" id="new-date">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Client email (for sending CMA)</label>
+            <input type="email" id="new-email" placeholder="client@email.com">
+        </div>
+
+        <div class="form-group">
+            <label>Client password <span style="color:rgba(255,255,255,0.3);font-weight:400">(you give this to them)</span></label>
+            <input type="text" id="new-password" placeholder="e.g. Legacy2026">
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="createCMA()">Create CMA →</button>
+        </div>
+    </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p style="color:rgba(255,255,255,0.5);font-size:14px">Loading your CMAs...</p>
+</div>
+
+<!-- MAIN APP (hidden until auth confirmed) -->
+<div id="appContent" style="display:none">
+
+    <header class="header">
+        <div class="header-left">
+            <a href="../smarttools/" class="logo">🏠 Inside The Sphere</a>
+            <span class="breadcrumb">/ <span>CMA Builder</span></span>
+        </div>
+        <div class="header-right">
+            <span class="user-badge" id="userBadge">Loading...</span>
+            <a href="../smarttools/" class="btn btn-ghost">← Tools</a>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="page-title">
+            <div>
+                <h1>CMA Builder</h1>
+                <p>Create and manage your Comparative Market Analyses</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()">
+                + New CMA
+            </button>
+        </div>
+
+        <!-- CMA LIST -->
+        <div id="cmaList">
+            <!-- populated by JS -->
+        </div>
+    </main>
+</div>
+
+<script>
+    let currentUser = null;
+
+    // ── AUTH CHECK ──
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            currentUser = user;
+            const name = user.displayName || user.email.split('@')[0];
+            document.getElementById('userBadge').textContent = name;
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            loadCMAs();
+        } else {
+            window.location.href = '../login.html';
+        }
+    });
+
+    // ── LOAD CMAs FROM FIRESTORE ──
+    function loadCMAs() {
+        const list = document.getElementById('cmaList');
+        list.innerHTML = '<div class="loading-screen" style="min-height:200px"><div class="spinner"></div></div>';
+
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas')
+            .orderBy('createdAt', 'desc')
+            .get()
+            .then(snapshot => {
+                if (snapshot.empty) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📊</div>
+                            <h3>No CMAs yet</h3>
+                            <p>Create your first Comparative Market Analysis to get started</p>
+                            <button class="btn btn-primary" onclick="openModal()">+ Create your first CMA</button>
+                        </div>`;
+                    return;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'cma-grid';
+
+                snapshot.forEach(doc => {
+                    const cma = doc.data();
+                    const id = doc.id;
+                    const created = cma.createdAt?.toDate
+                        ? cma.createdAt.toDate().toLocaleDateString('en-CA', {month:'short',day:'numeric',year:'numeric'})
+                        : 'Recently';
+
+                    const card = document.createElement('div');
+                    card.className = 'cma-card';
+                    card.innerHTML = `
+                        <div class="cma-card-status ${cma.status === 'published' ? 'status-published' : 'status-draft'}">
+                            ${cma.status === 'published' ? '● Published' : '○ Draft'}
+                        </div>
+                        <h3>${cma.clientName || 'Unnamed Client'}</h3>
+                        <div class="address">${cma.address || 'No address set'}</div>
+                        <div class="cma-card-meta">
+                            <span>${cma.community || ''}</span>
+                            <span>${created}</span>
+                        </div>
+                        <div class="cma-card-actions">
+                            <button class="btn btn-primary" onclick="editCMA('${id}')">Edit CMA</button>
+                            ${cma.status === 'published'
+                                ? `<button class="btn btn-success" onclick="viewClient('${cma.slug}')">View Client Page</button>`
+                                : ''}
+                            <button class="btn btn-danger" onclick="deleteCMA('${id}', event)">Delete</button>
+                        </div>`;
+                    grid.appendChild(card);
+                });
+
+                list.innerHTML = '';
+                list.appendChild(grid);
+            })
+            .catch(err => {
+                console.error('Error loading CMAs:', err);
+                list.innerHTML = '<p style="color:rgba(255,255,255,0.4);text-align:center;padding:40px">Error loading CMAs. Please refresh.</p>';
+            });
+    }
+
+    // ── CREATE NEW CMA ──
+    function createCMA() {
+        const clientName = document.getElementById('new-client-name').value.trim();
+        const address = document.getElementById('new-address').value.trim();
+        const community = document.getElementById('new-community').value;
+        const date = document.getElementById('new-date').value;
+        const email = document.getElementById('new-email').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+
+        if (!clientName || !address) {
+            showToast('Please enter client name and address', 'error');
+            return;
+        }
+
+        // Generate a URL-friendly slug from address
+        const slug = address
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .substring(0, 40)
+            + '-' + Date.now().toString().slice(-5);
+
+        const cmaData = {
+            clientName,
+            address,
+            community,
+            appointmentDate: date,
+            clientEmail: email,
+            clientPassword: password,
+            slug,
+            status: 'draft',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            // Property details (filled in editor)
+            beds: '', baths: '', sqft: '', yearBuilt: '', garage: '',
+            lotSize: '', features: '',
+            // Market data (filled in editor)
+            absorption: '', domAvg: '', listToSale: '',
+            // Pricing (filled in editor)
+            priceLow: '', priceRec: '', priceHigh: '',
+            // Net sheet (filled in editor)
+            commission: '3.5', gst: '5', legalFees: '1800',
+            mortgageBalance: '', mortgagePenalty: '0', taxAdj: '0',
+            // Comparables stored as subcollection
+        };
+
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas')
+            .add(cmaData)
+            .then(docRef => {
+                closeModal();
+                showToast('CMA created successfully!');
+                // Go straight to the editor
+                window.location.href = `edit.html?id=${docRef.id}`;
+            })
+            .catch(err => {
+                console.error('Error creating CMA:', err);
+                showToast('Error creating CMA. Please try again.', 'error');
+            });
+    }
+
+    // ── EDIT CMA ──
+    function editCMA(id) {
+        window.location.href = `edit.html?id=${id}`;
+    }
+
+    // ── VIEW CLIENT PAGE ──
+    function viewClient(slug) {
+        window.open(`client/?slug=${slug}`, '_blank');
+    }
+
+    // ── DELETE CMA ──
+    function deleteCMA(id, event) {
+        event.stopPropagation();
+        if (!confirm('Delete this CMA? This cannot be undone.')) return;
+
+        db.collection('users').doc(currentUser.uid)
+            .collection('cmas').doc(id)
+            .delete()
+            .then(() => {
+                showToast('CMA deleted');
+                loadCMAs();
+            })
+            .catch(err => {
+                showToast('Error deleting CMA', 'error');
+            });
+    }
+
+    // ── MODAL ──
+    function openModal() {
+        document.getElementById('new-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('newCmaModal').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('newCmaModal').classList.remove('open');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('newCmaModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ── LOGOUT ──
+    function logout() {
+        if (confirm('Log out?')) {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+    }
+
+    // ── TOAST ──
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
+        t.className = 'toast show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => t.className = 'toast', 3000);
+    }
+</script>
+</body>
+</html>
