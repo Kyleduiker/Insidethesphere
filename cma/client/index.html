@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Evaluation Report — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../../js/firebase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0a0a0a;--dark:#1a1a2e;--red:#EA002A;--gold:#C9A84C;
+  --gray:#f8f8f8;--border:#e8e8e8;--text:#1a1a1a;--muted:#888;
+  --serif:'Playfair Display',Georgia,serif;--sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);color:var(--text);background:#fff;line-height:1.6}
+
+/* PASSWORD GATE */
+.gate{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--dark);position:relative;overflow:hidden;
+}
+.gate::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(234,0,42,.15),transparent 60%);
+}
+.gate-box{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:48px 40px;width:100%;max-width:420px;
+  position:relative;text-align:center;
+}
+.gate-logo{
+  font-family:var(--serif);font-size:1.6rem;color:#fff;margin-bottom:8px;
+}
+.gate-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:32px}
+.gate-address{
+  font-family:var(--serif);font-size:1.1rem;color:rgba(255,255,255,.8);
+  margin-bottom:32px;line-height:1.3;
+}
+.gate-label{
+  display:block;font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;text-align:left;
+}
+.gate-input{
+  width:100%;padding:14px 16px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;
+  font-size:16px;font-family:var(--sans);letter-spacing:.1em;
+  text-align:center;transition:all .2s;margin-bottom:16px;
+}
+.gate-input:focus{outline:none;border-color:rgba(234,0,42,.5);background:rgba(255,255,255,.1)}
+.gate-input::placeholder{color:rgba(255,255,255,.2);letter-spacing:.05em}
+.gate-btn{
+  width:100%;padding:14px;background:var(--red);border:none;border-radius:10px;
+  color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);
+  transition:all .2s;letter-spacing:.02em;
+}
+.gate-btn:hover{background:#c8001f}
+.gate-error{
+  color:#ff6b6b;font-size:13px;margin-top:12px;display:none;
+}
+
+/* MAIN REPORT */
+#report{display:none}
+
+/* COVER */
+.cover{position:relative;min-height:100vh;display:flex;flex-direction:column}
+.cover-photo{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:brightness(.45);
+}
+.cover-photo-placeholder{
+  position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2d3748);
+}
+.cover-content{
+  position:relative;z-index:2;flex:1;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:60px;
+  background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%);
+}
+.cover-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-bottom:14px;
+}
+.cover-address{
+  font-family:var(--serif);font-size:clamp(2rem,5vw,3.5rem);font-weight:700;
+  color:#fff;line-height:1.1;margin-bottom:8px;
+}
+.cover-community{font-size:16px;color:rgba(255,255,255,.55);margin-bottom:40px}
+.cover-agent-row{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:20px;
+  padding-top:28px;border-top:1px solid rgba(255,255,255,.15);
+}
+.cover-agent{display:flex;align-items:center;gap:14px}
+.cover-agent-photo{
+  width:52px;height:52px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,.3);flex-shrink:0;
+}
+.cover-agent-initials{
+  width:52px;height:52px;border-radius:50%;background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:16px;color:#fff;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.2);
+}
+.cover-agent-name{font-size:15px;font-weight:600;color:#fff}
+.cover-agent-title{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px}
+.cover-price-block{text-align:right}
+.cover-price-label{
+  font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin-bottom:4px;
+}
+.cover-price{font-family:var(--serif);font-size:2.4rem;font-weight:700;color:var(--gold)}
+
+/* SECTION WRAPPER */
+.section{padding:64px 0}
+.section-inner{max-width:980px;margin:0 auto;padding:0 40px}
+.section-alt{background:var(--gray)}
+.section-dark{background:var(--dark)}
+
+/* SECTION HEADERS */
+.eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--red);margin-bottom:8px;
+}
+.section-title{
+  font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.2rem);
+  font-weight:700;color:var(--black);margin-bottom:6px;
+}
+.section-title em{font-style:italic;color:var(--muted)}
+.section-sub{font-size:14px;color:var(--muted);margin-bottom:36px;max-width:560px}
+.dark-title{color:#fff}
+.dark-sub{color:rgba(255,255,255,.45)}
+
+/* JOURNEY / ROAD MAP */
+.journey-track{
+  display:flex;align-items:flex-start;position:relative;margin:40px 0 20px;
+  overflow-x:auto;padding-bottom:8px;
+}
+.journey-line{
+  position:absolute;top:24px;left:24px;right:24px;height:2px;
+  background:var(--border);z-index:0;
+}
+.journey-progress{
+  position:absolute;top:24px;left:24px;height:2px;
+  background:var(--red);z-index:1;transition:width .6s ease;
+}
+.journey-step{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  position:relative;z-index:2;flex:1;min-width:100px;
+}
+.step-circle{
+  width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;
+  transition:all .3s;
+}
+.step-done{background:var(--red);color:#fff}
+.step-active{
+  background:#fff;color:var(--red);
+  border:2px solid var(--red);
+  box-shadow:0 0 0 5px rgba(234,0,42,.1);
+}
+.step-future{background:#fff;color:#ccc;border:2px solid #e8e8e8}
+.step-name{
+  font-size:12px;font-weight:600;color:var(--black);
+  text-align:center;line-height:1.3;
+}
+.step-future .step-name{color:#bbb}
+.step-date{font-size:11px;color:var(--muted);text-align:center}
+.step-check{font-size:16px}
+
+/* CHECKLIST STRIP */
+.checklist-strip{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:18px 24px;display:flex;flex-wrap:wrap;gap:16px;margin-top:24px;
+}
+.check-item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text)}
+.check-done-icon{color:#22c55e;font-size:16px;line-height:1}
+.check-todo{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid #ddd;flex-shrink:0;
+}
+
+/* MARKET STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.stat-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:22px 20px;border-top:3px solid var(--red);
+}
+.stat-card.gold-accent{border-top-color:var(--gold)}
+.stat-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+.stat-value{
+  font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--black);
+}
+.stat-context{font-size:12px;color:#bbb;margin-top:4px}
+
+/* MARKET NARRATIVE */
+.narrative{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:24px 28px;font-size:15px;color:#444;line-height:1.75;
+  border-left:3px solid var(--red);
+}
+
+/* COMPARABLE CARDS */
+.comp-grid{display:flex;flex-direction:column;gap:20px}
+.comp-card{
+  background:#fff;border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;display:grid;grid-template-columns:280px 1fr;
+}
+.comp-photo{
+  position:relative;width:280px;height:200px;overflow:hidden;flex-shrink:0;
+}
+.comp-photo img{width:100%;height:100%;object-fit:cover}
+.comp-photo-placeholder{
+  width:100%;height:100%;background:linear-gradient(135deg,#f0f0f0,#e0e0e0);
+  display:flex;align-items:center;justify-content:center;color:#ccc;font-size:40px;
+}
+.comp-status-badge{
+  position:absolute;top:12px;left:12px;font-size:10px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;
+}
+.badge-sold{background:rgba(34,197,94,.9);color:#fff}
+.badge-active{background:rgba(59,130,246,.9);color:#fff}
+.badge-pending{background:rgba(234,179,8,.9);color:#fff}
+.badge-expired{background:rgba(239,68,68,.9);color:#fff}
+.badge-terminated{background:rgba(107,114,128,.9);color:#fff}
+.comp-info{padding:24px 28px}
+.comp-address{
+  font-family:var(--serif);font-size:1.2rem;font-weight:700;
+  color:var(--black);margin-bottom:4px;
+}
+.comp-community{font-size:13px;color:var(--muted);margin-bottom:16px}
+.comp-stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;
+}
+.comp-stat{text-align:center;padding:10px;background:var(--gray);border-radius:8px}
+.comp-stat-val{font-size:1rem;font-weight:700;color:var(--black)}
+.comp-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+.comp-price-row{
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--border);padding-top:14px;flex-wrap:wrap;gap:10px;
+}
+.comp-list-price{font-size:13px;color:var(--muted)}
+.comp-list-price span{font-weight:600;color:var(--text)}
+.comp-sale-price{
+  font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--red);
+}
+.comp-dom{
+  font-size:12px;color:var(--muted);
+  background:var(--gray);padding:4px 10px;border-radius:20px;
+}
+.comp-notes{
+  margin-top:10px;font-size:12px;color:var(--muted);
+  font-style:italic;line-height:1.5;
+}
+
+/* VALUE RANGE */
+.value-range{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+  border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  margin-top:28px;
+}
+.range-col{padding:28px 24px;text-align:center}
+.range-col.low{background:var(--gray)}
+.range-col.recommended{background:var(--dark);position:relative}
+.range-col.recommended::before{
+  content:'RECOMMENDED';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  background:var(--red);color:#fff;font-size:9px;font-weight:700;
+  letter-spacing:.1em;padding:4px 12px;border-radius:0 0 8px 8px;
+}
+.range-col.high{background:var(--gray)}
+.range-lbl{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:8px;
+}
+.low .range-lbl,.high .range-lbl{color:var(--muted)}
+.recommended .range-lbl{color:rgba(255,255,255,.45);margin-top:14px}
+.range-price{font-family:var(--serif);font-size:1.8rem;font-weight:700}
+.low .range-price,.high .range-price{color:var(--black)}
+.recommended .range-price{color:var(--gold);font-size:2.2rem}
+.range-context{font-size:12px;margin-top:5px}
+.low .range-context,.high .range-context{color:#bbb}
+.recommended .range-context{color:rgba(255,255,255,.4)}
+
+/* NET SHEET */
+.net-container{
+  background:var(--dark);border-radius:16px;padding:36px;max-width:680px;margin:0 auto;
+}
+.net-slider-section{text-align:center;margin-bottom:28px}
+.net-price-label{
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin-bottom:6px;
+}
+.net-price-display{
+  font-family:var(--serif);font-size:3rem;font-weight:700;color:#fff;
+  margin-bottom:4px;transition:all .15s;
+}
+.net-price-hint{font-size:12px;color:rgba(255,255,255,.35);margin-bottom:20px}
+input[type=range]{
+  width:100%;accent-color:var(--red);cursor:pointer;margin-bottom:6px;
+}
+.net-slider-labels{
+  display:flex;justify-content:space-between;font-size:11px;
+  color:rgba(255,255,255,.3);margin-bottom:24px;
+}
+.net-breakdown{border-top:1px solid rgba(255,255,255,.08);padding-top:20px}
+.net-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;
+}
+.net-row:last-child{border-bottom:none}
+.net-row-label{color:rgba(255,255,255,.45)}
+.net-row-val{font-weight:600;color:#fff}
+.net-row-val.deduct{color:#ff8888}
+.net-total{
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);
+  border-radius:10px;padding:18px 20px;display:flex;
+  justify-content:space-between;align-items:center;margin-top:16px;
+}
+.net-total-label{font-size:13px;color:rgba(255,255,255,.5)}
+.net-total-sub{font-size:11px;color:rgba(255,255,255,.25);margin-top:2px}
+.net-total-val{
+  font-family:var(--serif);font-size:2rem;font-weight:700;
+  color:var(--gold);transition:all .15s;
+}
+.net-disclaimer{
+  font-size:11px;color:rgba(255,255,255,.2);text-align:center;
+  margin-top:16px;line-height:1.5;
+}
+
+/* MARKETING */
+.marketing-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:20px;
+  margin-top:28px;
+}
+.marketing-item{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:24px 16px;text-align:center;
+}
+.marketing-icon{font-size:2rem;margin-bottom:10px}
+.marketing-name{font-size:13px;font-weight:600;color:var(--black)}
+.marketing-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* SELLING PROCESS */
+.process-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px;
+}
+.process-step{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:24px 20px;position:relative;
+}
+.process-num{
+  font-family:var(--serif);font-size:3rem;font-weight:700;
+  color:rgba(234,0,42,.1);line-height:1;margin-bottom:10px;
+}
+.process-title{font-size:14px;font-weight:700;color:var(--black);margin-bottom:5px}
+.process-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ABOUT */
+.about-layout{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:start}
+.about-photo-wrap{
+  width:200px;height:240px;border-radius:14px;overflow:hidden;flex-shrink:0;
+  background:var(--gray);display:flex;align-items:center;justify-content:center;
+}
+.about-photo-wrap img{width:100%;height:100%;object-fit:cover}
+.about-initials-big{
+  width:100%;height:100%;background:var(--dark);display:flex;
+  align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:3rem;font-weight:700;color:#fff;
+}
+.about-name{
+  font-family:var(--serif);font-size:1.8rem;font-weight:700;
+  color:var(--black);margin-bottom:4px;
+}
+.about-title{font-size:14px;color:var(--muted);margin-bottom:20px}
+.about-bio{font-size:15px;color:#444;line-height:1.7;margin-bottom:20px}
+.about-stats{display:flex;gap:28px;flex-wrap:wrap}
+.about-stat-val{
+  font-family:var(--serif);font-size:1.8rem;font-weight:700;color:var(--red);
+}
+.about-stat-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.about-contact{
+  display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;
+}
+.about-contact a{
+  padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;
+  text-decoration:none;transition:all .2s;
+}
+.btn-red-solid{background:var(--red);color:#fff}
+.btn-red-solid:hover{background:#c8001f}
+.btn-outline{border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--red);color:var(--red)}
+
+/* REVIEWS */
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:28px}
+.review-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:22px 20px;position:relative;
+}
+.review-stars{color:var(--gold);font-size:15px;letter-spacing:2px;margin-bottom:10px}
+.review-text{
+  font-size:14px;color:#444;line-height:1.65;font-style:italic;margin-bottom:14px;
+}
+.review-author{font-size:12px;font-weight:600;color:var(--black)}
+.review-location{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* SHELTER */
+.shelter-section{
+  background:#fff7f0;border-top:3px solid var(--red);
+  border-bottom:3px solid var(--red);
+}
+.shelter-inner{
+  display:grid;grid-template-columns:80px 1fr;gap:28px;align-items:center;
+  max-width:860px;margin:0 auto;
+}
+.shelter-logo{
+  width:80px;height:80px;background:var(--red);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;flex-shrink:0;
+}
+.shelter-title{
+  font-family:var(--serif);font-size:1.3rem;font-weight:700;
+  color:var(--black);margin-bottom:6px;
+}
+.shelter-text{font-size:14px;color:#555;line-height:1.65}
+
+/* CTA FOOTER */
+.cta-footer{
+  background:var(--dark);padding:48px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:24px;
+}
+.cta-heading{
+  font-family:var(--serif);font-size:1.8rem;font-weight:700;color:#fff;
+  margin-bottom:4px;
+}
+.cta-sub{font-size:14px;color:rgba(255,255,255,.4)}
+.cta-btns{display:flex;gap:10px;flex-wrap:wrap}
+.cta-btn{
+  padding:13px 22px;border-radius:10px;font-size:14px;font-weight:600;
+  text-decoration:none;cursor:pointer;border:none;font-family:var(--sans);
+  transition:all .2s;
+}
+.cta-btn-red{background:var(--red);color:#fff}
+.cta-btn-red:hover{background:#c8001f}
+.cta-btn-ghost{
+  background:rgba(255,255,255,.07);color:#fff;
+  border:1px solid rgba(255,255,255,.15);
+}
+.cta-btn-ghost:hover{background:rgba(255,255,255,.12)}
+
+/* STICKY TOP BAR (on scroll) */
+.sticky-bar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:12px 40px;display:flex;align-items:center;justify-content:space-between;
+  transform:translateY(-100%);transition:transform .3s;
+  box-shadow:0 2px 20px rgba(0,0,0,.08);
+}
+.sticky-bar.visible{transform:translateY(0)}
+.sticky-address{font-size:14px;font-weight:600;color:var(--black)}
+.sticky-price{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--gold)}
+.sticky-cta{
+  padding:8px 16px;background:var(--red);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  font-family:var(--sans);
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .cover-content{padding:30px}
+  .cover-address{font-size:1.8rem}
+  .section-inner{padding:0 20px}
+  .section{padding:44px 0}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .comp-card{grid-template-columns:1fr}
+  .comp-photo{width:100%;height:220px}
+  .comp-stats-row{grid-template-columns:repeat(2,1fr)}
+  .value-range{grid-template-columns:1fr}
+  .value-range .range-col.recommended::before{border-radius:8px 8px 0 0}
+  .about-layout{grid-template-columns:1fr}
+  .about-photo-wrap{width:120px;height:140px}
+  .process-grid{grid-template-columns:1fr 1fr}
+  .cta-footer{flex-direction:column;text-align:center}
+  .cta-btns{justify-content:center}
+  .sticky-bar{padding:10px 16px}
+  .journey-track{overflow-x:auto;padding-bottom:12px}
+  .checklist-strip{gap:10px}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr}
+  .process-grid{grid-template-columns:1fr}
+  .marketing-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate" class="gate">
+  <div class="gate-box">
+    <div class="gate-logo">Inside The Sphere</div>
+    <p class="gate-sub">Market Evaluation Report</p>
+    <div class="gate-address" id="gate-address">Loading...</div>
+    <label class="gate-label">Enter your access code</label>
+    <input type="password" class="gate-input" id="gate-password"
+           placeholder="••••••••"
+           onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="gate-btn" onclick="checkPassword()">View My Report</button>
+    <div class="gate-error" id="gate-error">Incorrect code — please try again</div>
+  </div>
+</div>
+
+<!-- STICKY BAR -->
+<div class="sticky-bar" id="sticky-bar">
+  <div>
+    <div class="sticky-address" id="sticky-address"></div>
+  </div>
+  <div class="sticky-price" id="sticky-price"></div>
+  <button class="sticky-cta" onclick="document.getElementById('cta-section').scrollIntoView({behavior:'smooth'})">
+    Contact Kyle
+  </button>
+</div>
+
+<!-- REPORT (hidden until password correct) -->
+<div id="report">
+
+  <!-- COVER -->
+  <div class="cover" id="cover-section">
+    <div id="cover-photo-wrap">
+      <div class="cover-photo-placeholder" id="cover-placeholder"></div>
+    </div>
+    <div class="cover-content">
+      <div class="cover-eyebrow">Comparative Market Analysis · Duiker Properties · Royal LePage Solutions</div>
+      <div class="cover-address" id="cover-address">Property Address</div>
+      <div class="cover-community" id="cover-community">Community, Calgary AB</div>
+      <div class="cover-agent-row">
+        <div class="cover-agent">
+          <div class="cover-agent-initials" id="cover-agent-initials">KD</div>
+          <div>
+            <div class="cover-agent-name">Kyle Duiker · Broker Delegate</div>
+            <div class="cover-agent-title">Royal LePage Solutions · 403-252-5900</div>
+          </div>
+        </div>
+        <div class="cover-price-block">
+          <div class="cover-price-label">Recommended list price</div>
+          <div class="cover-price" id="cover-price">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELLING JOURNEY -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="eyebrow">Your journey</div>
+      <div class="section-title">The home selling process</div>
+      <div class="section-sub" id="journey-prepared">Prepared for you by Kyle Duiker</div>
+      <div class="journey-track" id="journey-track">
+        <div class="journey-line"></div>
+        <div class="journey-progress" id="journey-progress"></div>
+      </div>
+      <div class="checklist-strip" id="checklist-strip"></div>
+    </div>
+  </div>
+
+  <!-- MARKET OVERVIEW -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="eyebrow">01 · Market overview</div>
+      <div class="section-title">SE Calgary <em>lake communities</em></div>
+      <div class="section-sub">Current market conditions as of your appointment date</div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Absorption rate</div>
+          <div class="stat-value" id="stat-absorption">—</div>
+          <div class="stat-context" id="stat-absorption-ctx">Last 30 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg. days on market</div>
+          <div class="stat-value" id="stat-dom">—</div>
+          <div class="stat-context">Sold listings · SE Calgary</div>
+        </div>
+        <div class="stat-card gold-accent">
+          <div class="stat-label">List-to-sale ratio</div>
+          <div class="stat-value" id="stat-lsr">—</div>
+          <div class="stat-context">Last 60 days</div>
+        </div>
+      </div>
+      <div class="narrative" id="market-narrative"></div>
+    </div>
+  </div>
+
+  <!-- COMPARABLE SALES -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="eyebrow">02 · Comparable sales</div>
+      <div class="section-title">The <em>evidence</em></div>
+      <div class="section-sub">Similar properties recently sold, active, and expired in your neighbourhood</div>
+      <div class="comp-grid" id="comp-grid"></div>
+    </div>
+  </div>
+
+  <!-- YOUR HOME'S VALUE -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="eyebrow">03 · Pricing strategy</div>
+      <div class="section-title">Your home's <em>estimated value</em></div>
+      <div class="section-sub">Based on adjusted comparable sales in your neighbourhood</div>
+      <div class="value-range" id="value-range">
+        <div class="range-col low">
+          <div class="range-lbl">Low end</div>
+          <div class="range-price" id="price-low">—</div>
+          <div class="range-context">Conservative pricing</div>
+        </div>
+        <div class="range-col recommended">
+          <div class="range-lbl">Recommended</div>
+          <div class="range-price" id="price-rec">—</div>
+          <div class="range-context">Optimal positioning</div>
+        </div>
+        <div class="range-col high">
+          <div class="range-lbl">High end</div>
+          <div class="range-price" id="price-high">—</div>
+          <div class="range-context">Maximum positioning</div>
+        </div>
+      </div>
+      <div class="narrative" style="margin-top:24px" id="price-rationale"></div>
+    </div>
+  </div>
+
+  <!-- NET SHEET -->
+  <div class="section section-dark">
+    <div class="section-inner">
+      <div class="eyebrow" style="color:rgba(255,255,255,.4)">04 · Net sheet</div>
+      <div class="section-title dark-title">What you <em style="color:var(--gold)">walk away with</em></div>
+      <div class="section-sub dark-sub">Drag the slider to explore how price affects your take-home</div>
+      <div class="net-container">
+        <div class="net-slider-section">
+          <div class="net-price-label">List price</div>
+          <div class="net-price-display" id="net-price-display">$0</div>
+          <div class="net-price-hint">Drag to explore different pricing scenarios</div>
+          <input type="range" id="net-slider" min="300000" max="2000000" step="5000" value="700000"
+                 oninput="updateNet(parseInt(this.value))">
+          <div class="net-slider-labels">
+            <span id="net-slider-low">$300k</span>
+            <span id="net-slider-high">$2M</span>
+          </div>
+        </div>
+        <div class="net-breakdown">
+          <div class="net-row"><span class="net-row-label">Commission + GST</span><span class="net-row-val deduct" id="net-comm-display">—</span></div>
+          <div class="net-row"><span class="net-row-label">Legal fees</span><span class="net-row-val deduct" id="net-legal-display">—</span></div>
+          <div class="net-row"><span class="net-row-label">Mortgage balance</span><span class="net-row-val deduct" id="net-mortgage-display">—</span></div>
+          <div class="net-row" id="net-penalty-row" style="display:none"><span class="net-row-label">Mortgage penalty</span><span class="net-row-val deduct" id="net-penalty-display">—</span></div>
+        </div>
+        <div class="net-total">
+          <div>
+            <div class="net-total-label">Estimated net proceeds</div>
+            <div class="net-total-sub">Before taxes · estimate only</div>
+          </div>
+          <div class="net-total-val" id="net-total-display">—</div>
+        </div>
+        <div class="net-disclaimer">This is an estimate only. Consult your lawyer and mortgage broker for exact figures. Royal LePage Solutions and Duiker Properties are not responsible for variations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKETING PLAN -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="eyebrow">05 · Marketing plan</div>
+      <div class="section-title">How we sell <em>your home</em></div>
+      <div class="section-sub">A comprehensive, multi-channel strategy designed for maximum exposure in the SE Calgary market</div>
+      <div class="marketing-grid">
+        <div class="marketing-item"><div class="marketing-icon">📸</div><div class="marketing-name">Professional photography</div><div class="marketing-desc">Twilight exterior, full interior suite</div></div>
+        <div class="marketing-item"><div class="marketing-icon">🎬</div><div class="marketing-name">Virtual tour</div><div class="marketing-desc">Matterport 3D walkthrough</div></div>
+        <div class="marketing-item"><div class="marketing-icon">🏠</div><div class="marketing-name">MLS launch</div><div class="marketing-desc">Coordinated for maximum impact</div></div>
+        <div class="marketing-item"><div class="marketing-icon">📱</div><div class="marketing-name">Social media</div><div class="marketing-desc">Targeted to SE Calgary buyers</div></div>
+        <div class="marketing-item"><div class="marketing-icon">📧</div><div class="marketing-name">Sphere outreach</div><div class="marketing-desc">554 qualified contacts</div></div>
+        <div class="marketing-item"><div class="marketing-icon">🚪</div><div class="marketing-name">Open house</div><div class="marketing-desc">Curated and pre-promoted</div></div>
+        <div class="marketing-item"><div class="marketing-icon">🌐</div><div class="marketing-name">RLP network</div><div class="marketing-desc">4 active Alberta markets</div></div>
+        <div class="marketing-item"><div class="marketing-icon">📊</div><div class="marketing-name">Print marketing</div><div class="marketing-desc">Feature sheets and signage</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME SELLING PROCESS -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="eyebrow">06 · The process</div>
+      <div class="section-title">Home selling <em>in 8 steps</em></div>
+      <div class="section-sub">What to expect from listing day to sold</div>
+      <div class="process-grid">
+        <div class="process-step"><div class="process-num">01</div><div class="process-title">Market evaluation</div><div class="process-desc">Review comparables, set your list price, and plan your timeline together.</div></div>
+        <div class="process-step"><div class="process-num">02</div><div class="process-title">Prepare your home</div><div class="process-desc">Staging advice, decluttering checklist, and minor repairs that maximize value.</div></div>
+        <div class="process-step"><div class="process-num">03</div><div class="process-title">Photography & launch</div><div class="process-desc">Professional photos, virtual tour, and coordinated MLS launch for maximum impact.</div></div>
+        <div class="process-step"><div class="process-num">04</div><div class="process-title">Showings</div><div class="process-desc">Managed showing schedule with feedback collected after every visit.</div></div>
+        <div class="process-step"><div class="process-num">05</div><div class="process-title">Offers & negotiations</div><div class="process-desc">Every offer presented in full with expert guidance on strategy and terms.</div></div>
+        <div class="process-step"><div class="process-num">06</div><div class="process-title">Under contract</div><div class="process-desc">Conditions, timelines, and inspector access all coordinated for you.</div></div>
+        <div class="process-step"><div class="process-num">07</div><div class="process-title">Closing</div><div class="process-desc">Lawyer coordination, final walkthrough, and key handover all managed seamlessly.</div></div>
+        <div class="process-step"><div class="process-num">08</div><div class="process-title">Sold</div><div class="process-desc">Funds deposited, keys transferred, and a Shelter Foundation donation in your name.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT KYLE -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="eyebrow">07 · Your agent</div>
+      <div class="section-title">Meet <em>Kyle Duiker</em></div>
+      <div class="about-layout" style="margin-top:32px">
+        <div class="about-photo-wrap" id="about-photo-wrap">
+          <div class="about-initials-big">KD</div>
+        </div>
+        <div>
+          <div class="about-name">Kyle Duiker</div>
+          <div class="about-title">Broker Delegate · Royal LePage Solutions · Licensed since 2010</div>
+          <div class="about-bio">Specializing exclusively in Southeast Calgary lake communities — Mahogany, Auburn Bay, Legacy, Cranston, Seton, and Chestermere. When you hire Kyle, you get someone who knows your neighbourhood, knows your buyers, and knows how to position your home to sell for maximum value.</div>
+          <div class="about-stats">
+            <div><div class="about-stat-val">180+</div><div class="about-stat-lbl">Homes sold</div></div>
+            <div><div class="about-stat-val">101.2%</div><div class="about-stat-lbl">Avg list-to-sale</div></div>
+            <div><div class="about-stat-val">2010</div><div class="about-stat-lbl">Licensed since</div></div>
+            <div><div class="about-stat-val">2021</div><div class="about-stat-lbl">Broker designation</div></div>
+          </div>
+          <div class="about-contact">
+            <a href="tel:4032525900" class="about-contact btn-red-solid" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:#fff;background:var(--red)">📞 403-252-5900</a>
+            <a href="mailto:kyleduiker@royallepage.ca" class="about-contact btn-outline" style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:var(--text);border:1.5px solid var(--border)">✉ kyleduiker@royallepage.ca</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENT REVIEWS -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="eyebrow">08 · Client reviews</div>
+      <div class="section-title">What clients <em>say</em></div>
+      <div class="reviews-grid">
+        <div class="review-card"><div class="review-stars">★★★★★</div><div class="review-text">"Kyle had our home sold in 8 days — well above asking. He knew exactly how to price it and the offer strategy was perfect. I wouldn't use anyone else."</div><div class="review-author">Auburn Bay</div><div class="review-location">2024</div></div>
+        <div class="review-card"><div class="review-stars">★★★★★</div><div class="review-text">"Kyle's data-driven approach and his knowledge of Mahogany specifically gave us complete confidence. Sold in 12 days at 102% of asking."</div><div class="review-author">Mahogany</div><div class="review-location">2024</div></div>
+        <div class="review-card"><div class="review-stars">★★★★★</div><div class="review-text">"First time selling and Kyle walked us through every step. We got $18,000 over our asking price. Highly recommend."</div><div class="review-author">Legacy</div><div class="review-location">2023</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHELTER FOUNDATION -->
+  <div class="section shelter-section" style="padding:36px 0">
+    <div class="shelter-inner" style="padding:0 40px">
+      <div class="shelter-logo">🏠</div>
+      <div>
+        <div class="shelter-title">Duiker Properties supports the Royal LePage Shelter Foundation</div>
+        <div class="shelter-text">A portion of every commission from your sale goes directly to the Royal LePage Shelter Foundation — Canada's largest public foundation dedicated to ending domestic violence and helping women and children find safety. When you sell with Kyle, you make a difference in someone's life.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA FOOTER -->
+  <div class="cta-footer" id="cta-section">
+    <div>
+      <div class="cta-heading">Ready to get started?</div>
+      <div class="cta-sub">Kyle Duiker · Broker Delegate · Royal LePage Solutions · kyleduiker@royallepage.ca</div>
+    </div>
+    <div class="cta-btns">
+      <a href="tel:4032525900" class="cta-btn cta-btn-red">📞 Call Kyle</a>
+      <a href="https://calendly.com/kyleduiker" target="_blank" class="cta-btn cta-btn-ghost">📅 Book a meeting</a>
+      <button class="cta-btn cta-btn-ghost" onclick="window.print()">↓ Download PDF</button>
+    </div>
+  </div>
+
+</div><!-- /report -->
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const slug = params.get('slug');
+let cmaData = null;
+let netParams = {};
+
+if (!slug) {
+  document.getElementById('gate-address').textContent = 'Report not found';
+}
+
+// Load CMA data (public — no auth required)
+db.collection('public_cmas').doc(slug).get().then(doc => {
+  if (!doc.exists) {
+    document.getElementById('gate-address').textContent = 'Report not found';
+    return;
+  }
+  cmaData = doc.data();
+  document.getElementById('gate-address').textContent =
+    cmaData.address || 'Your Property';
+}).catch(err => {
+  console.error(err);
+  document.getElementById('gate-address').textContent = 'Loading...';
+});
+
+// PASSWORD CHECK
+function checkPassword() {
+  const entered = document.getElementById('gate-password').value.trim();
+  if (!cmaData) { showError('Still loading — please wait a moment'); return; }
+  if (!entered) { showError('Please enter your access code'); return; }
+  if (entered.toLowerCase() === (cmaData.clientPassword || '').toLowerCase()) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('report').style.display = 'block';
+    populateReport();
+    window.scrollTo(0,0);
+  } else {
+    showError('Incorrect code — please try again');
+    document.getElementById('gate-password').value = '';
+    document.getElementById('gate-password').focus();
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('gate-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// POPULATE REPORT
+function populateReport() {
+  const d = cmaData;
+  const fmt = n => n ? '$' + Math.round(n).toLocaleString() : '—';
+
+  // Cover
+  document.getElementById('cover-address').textContent = d.address || '';
+  document.getElementById('cover-community').textContent =
+    (d.community || '') + ', SE Calgary · Prepared for ' + (d.clientName || '');
+  document.getElementById('cover-price').textContent = fmt(parseFloat(d.priceRec));
+  document.getElementById('sticky-address').textContent = d.address || '';
+  document.getElementById('sticky-price').textContent = fmt(parseFloat(d.priceRec));
+
+  if (d.propPhotoUrl) {
+    const img = document.createElement('img');
+    img.src = d.propPhotoUrl;
+    img.className = 'cover-photo';
+    img.alt = 'Property';
+    document.getElementById('cover-photo-wrap').innerHTML = '';
+    document.getElementById('cover-photo-wrap').appendChild(img);
+  }
+
+  // Journey
+  buildJourney(d.journeySteps || getDefaultSteps(d));
+
+  // Market
+  if (d.absorption) document.getElementById('stat-absorption').textContent = d.absorption + '%';
+  if (d.domAvg) document.getElementById('stat-dom').textContent = d.domAvg;
+  if (d.listToSale) document.getElementById('stat-lsr').textContent = d.listToSale + '%';
+  if (d.marketNarrative) document.getElementById('market-narrative').textContent = d.marketNarrative;
+
+  // Comps
+  buildComps(d.comps || []);
+
+  // Pricing
+  document.getElementById('price-low').textContent = fmt(parseFloat(d.priceLow));
+  document.getElementById('price-rec').textContent = fmt(parseFloat(d.priceRec));
+  document.getElementById('price-high').textContent = fmt(parseFloat(d.priceHigh));
+  if (d.priceRationale) document.getElementById('price-rationale').textContent = d.priceRationale;
+
+  // Net sheet params
+  const rec = parseFloat(d.priceRec) || 700000;
+  netParams = {
+    commission: parseFloat(d.commission) || 3.5,
+    gst: parseFloat(d.gst) || 5,
+    legal: parseFloat(d.legalFees) || 1800,
+    mortgage: parseFloat(d.mortgageBalance) || 0,
+    penalty: parseFloat(d.mortgagePenalty) || 0,
+    other: parseFloat(d.otherCosts) || 0
+  };
+
+  const slider = document.getElementById('net-slider');
+  const low = Math.max(200000, Math.round((rec * 0.8) / 10000) * 10000);
+  const high = Math.round((rec * 1.2) / 10000) * 10000;
+  slider.min = low;
+  slider.max = high;
+  slider.value = rec;
+  document.getElementById('net-slider-low').textContent = '$' + Math.round(low/1000) + 'k';
+  document.getElementById('net-slider-high').textContent = '$' + Math.round(high/1000) + 'k';
+
+  if (netParams.penalty > 0) document.getElementById('net-penalty-row').style.display = 'flex';
+
+  updateNet(rec);
+
+  // Sticky bar scroll
+  window.addEventListener('scroll', () => {
+    const bar = document.getElementById('sticky-bar');
+    if (window.scrollY > 400) bar.classList.add('visible');
+    else bar.classList.remove('visible');
+  });
+}
+
+// BUILD JOURNEY
+function getDefaultSteps(d) {
+  return [
+    { name: 'Market\nEvaluation', date: d.appointmentDate || '', done: true, active: false },
+    { name: 'Sign Listing\nAgreement', date: '', done: false, active: true },
+    { name: 'Photography\n& Launch', date: '', done: false, active: false },
+    { name: 'Showings\n& Offers', date: '', done: false, active: false },
+    { name: 'Conditions\nRemoved', date: '', done: false, active: false },
+    { name: 'Sold', date: '', done: false, active: false }
+  ];
+}
+
+function buildJourney(steps) {
+  const track = document.getElementById('journey-track');
+  const doneCount = steps.filter(s => s.done).length;
+  const pct = steps.length > 1 ? (doneCount / (steps.length - 1)) * 100 : 0;
+
+  document.getElementById('journey-progress').style.width = Math.min(pct, 90) + '%';
+
+  steps.forEach((step, i) => {
+    const el = document.createElement('div');
+    el.className = 'journey-step';
+    const cls = step.done ? 'step-done' : step.active ? 'step-active' : 'step-future';
+    const icon = step.done ? '<span class="step-check">✓</span>' : (i + 1);
+    const nameCls = step.done || step.active ? 'step-name' : 'step-name step-future';
+    el.innerHTML = `
+      <div class="step-circle ${cls}">${icon}</div>
+      <div class="${nameCls}">${step.name.replace(/\n/g, '<br>')}</div>
+      ${step.date ? `<div class="step-date">${formatDate(step.date)}</div>` : '<div class="step-date">—</div>'}`;
+    track.appendChild(el);
+  });
+
+  // Checklist
+  const strip = document.getElementById('checklist-strip');
+  steps.forEach(step => {
+    const item = document.createElement('div');
+    item.className = 'check-item';
+    item.innerHTML = step.done
+      ? `<span class="check-done-icon">✓</span> ${step.name.replace(/\n/g, ' ')}`
+      : `<div class="check-todo"></div> ${step.name.replace(/\n/g, ' ')}`;
+    strip.appendChild(item);
+  });
+}
+
+// BUILD COMPS
+function buildComps(comps) {
+  const grid = document.getElementById('comp-grid');
+  if (!comps.length) {
+    grid.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Comparables will appear here once added by your agent.</p>';
+    return;
+  }
+
+  const badgeClass = { sold:'badge-sold', active:'badge-active', pending:'badge-pending', expired:'badge-expired', terminated:'badge-terminated' };
+
+  comps.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'comp-card';
+    const price = parseFloat(c.price) || 0;
+    const psf = c.sqft > 0 ? Math.round(price / c.sqft) : 0;
+    const photoHtml = c.photoUrl
+      ? `<img src="${c.photoUrl}" alt="${c.address}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'comp-photo-placeholder\\'>🏠</div>'">`
+      : `<div class="comp-photo-placeholder">🏠</div>`;
+
+    card.innerHTML = `
+      <div class="comp-photo">
+        ${photoHtml}
+        <span class="comp-status-badge ${badgeClass[c.status] || ''}">${c.status || 'listing'}</span>
+      </div>
+      <div class="comp-info">
+        <div class="comp-address">${c.address || '—'}</div>
+        <div class="comp-community">${c.community || 'SE Calgary'}</div>
+        <div class="comp-stats-row">
+          <div class="comp-stat"><div class="comp-stat-val">${c.beds || '—'}</div><div class="comp-stat-lbl">Beds</div></div>
+          <div class="comp-stat"><div class="comp-stat-val">${c.baths || '—'}</div><div class="comp-stat-lbl">Baths</div></div>
+          <div class="comp-stat"><div class="comp-stat-val">${c.sqft ? c.sqft.toLocaleString() : '—'}</div><div class="comp-stat-lbl">Sq.ft.</div></div>
+          <div class="comp-stat"><div class="comp-stat-val">${psf ? '$'+psf : '—'}</div><div class="comp-stat-lbl">$/sf</div></div>
+        </div>
+        <div class="comp-price-row">
+          <div>
+            ${c.status === 'sold' && c.listPrice ? `<div class="comp-list-price">List: <span>$${Math.round(c.listPrice).toLocaleString()}</span></div>` : ''}
+            <div class="comp-sale-price">$${price.toLocaleString()}</div>
+          </div>
+          <div class="comp-dom">${c.dom ? c.dom + ' days' : '—'}</div>
+        </div>
+        ${c.notes ? `<div class="comp-notes">${c.notes}</div>` : ''}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// NET SHEET CALCULATOR
+function updateNet(price) {
+  const fmt = n => '-$' + Math.round(Math.abs(n)).toLocaleString();
+  const comm = Math.round(price * netParams.commission / 100);
+  const gst = Math.round(comm * netParams.gst / 100);
+  const totalComm = comm + gst;
+  const legal = netParams.legal || 0;
+  const mortgage = netParams.mortgage || 0;
+  const penalty = netParams.penalty || 0;
+  const other = netParams.other || 0;
+  const net = Math.max(0, price - totalComm - legal - mortgage - penalty - other);
+
+  document.getElementById('net-price-display').textContent = '$' + Math.round(price).toLocaleString();
+  document.getElementById('net-comm-display').textContent = fmt(totalComm);
+  document.getElementById('net-legal-display').textContent = fmt(legal);
+  document.getElementById('net-mortgage-display').textContent = mortgage ? fmt(mortgage) : '$0';
+  if (netParams.penalty > 0) document.getElementById('net-penalty-display').textContent = fmt(penalty);
+  document.getElementById('net-total-display').textContent = '$' + Math.round(net).toLocaleString();
+}
+
+// HELPERS
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return d; }
+}
+</script>
+</body>
+</html>
