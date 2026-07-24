@@ -1,4 +1,3 @@
-// Firebase Configuration for Inside the Sphere
 const firebaseConfig = {
   apiKey: "AIzaSyAcHeHQdUmVwQls3RNGIJNNDjUGyAekgnM",
   authDomain: "inside-the-sphere.firebaseapp.com",
@@ -9,9 +8,10 @@ const firebaseConfig = {
   measurementId: "G-H3Y4X2HEMB"
 };
 
-// Initialize Firebase (v8 compatible format)
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-// Create shortcuts for easy use
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
