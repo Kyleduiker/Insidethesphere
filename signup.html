@@ -1,495 +1,557 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Inside The Sphere</title>
-    
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Your Firebase Config -->
-    <script src="js/firebase-config.js"></script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account - Inside The Sphere</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#fff;color:#1a1a1a;min-height:100vh;
+  display:flex;align-items:stretch;
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #0a0f1c;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow-x: hidden;
-        }
+/* LEFT PANEL */
+.left{
+  width:45%;flex-shrink:0;background:#1a1a2e;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:48px;position:relative;overflow:hidden;
+}
+.left::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 0% 0%,rgba(234,0,42,.2),transparent 60%),
+             radial-gradient(ellipse at 100% 100%,rgba(96,165,250,.15),transparent 60%);
+}
+.left-content{position:relative;z-index:1}
+.left-logo{
+  font-size:1.2rem;font-weight:700;color:#fff;
+  margin-bottom:48px;display:flex;align-items:center;gap:8px;
+}
+.left-headline{
+  font-size:2.2rem;font-weight:700;color:#fff;
+  line-height:1.2;margin-bottom:16px;
+}
+.left-headline span{color:#C9A84C}
+.left-sub{font-size:15px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:40px}
+.left-features{display:flex;flex-direction:column;gap:14px}
+.feature{display:flex;align-items:flex-start;gap:12px}
+.feature-icon{
+  width:32px;height:32px;border-radius:8px;background:rgba(234,0,42,.15);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+  border:1px solid rgba(234,0,42,.2);
+}
+.feature-text{font-size:13px;color:rgba(255,255,255,.6);line-height:1.4}
+.feature-text strong{color:#fff;display:block;font-size:13px;margin-bottom:1px}
+.left-footer{
+  position:relative;z-index:1;
+  font-size:12px;color:rgba(255,255,255,.25);
+}
 
-        /* Animated background matching your site */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #1a2332, #2d3748, #1a2332, #0a0f1c);
-            background-size: 400% 400%;
-            animation: gradientShift 8s ease infinite;
-            z-index: -1;
-        }
+/* RIGHT PANEL */
+.right{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:48px 40px;background:#fff;
+}
+.form-wrap{width:100%;max-width:420px}
+.form-header{margin-bottom:32px}
+.form-header h1{font-size:1.6rem;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.form-header p{font-size:14px;color:#888}
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+/* STEP INDICATOR */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:28px}
+.step-item{display:flex;align-items:center;gap:6px;flex:1}
+.step-item:last-child{flex:none}
+.step-circle{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;flex-shrink:0;transition:all .3s;
+}
+.step-circle.done{background:#22c55e;color:#fff}
+.step-circle.active{background:#1a1a2e;color:#fff}
+.step-circle.future{background:#f5f5f5;color:#bbb;border:1px solid #eee}
+.step-label{font-size:11px;font-weight:600;color:#888;white-space:nowrap}
+.step-label.active{color:#1a1a1a}
+.step-line{flex:1;height:1px;background:#eee;margin:0 8px}
 
-        .signup-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 420px;
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-        }
+/* FORM */
+.form-step{display:none}
+.form-step.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-        .back-home {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+.fg{margin-bottom:16px}
+.fg label{
+  display:block;font-size:12px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:#888;margin-bottom:6px;
+}
+.fg input,.fg select{
+  width:100%;padding:12px 14px;background:#f9f9f9;
+  border:1.5px solid #eee;border-radius:10px;
+  font-size:15px;color:#1a1a1a;font-family:inherit;
+  transition:all .15s;
+}
+.fg input:focus,.fg select:focus{
+  outline:none;border-color:#1a1a2e;background:#fff;
+  box-shadow:0 0 0 3px rgba(26,26,46,.06);
+}
+.fg input::placeholder{color:#ccc}
+.fg select option{background:#fff}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-        .back-home:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.1);
-            text-decoration: none;
-        }
+.pw-strength{
+  height:3px;border-radius:2px;margin-top:6px;
+  background:#eee;overflow:hidden;
+}
+.pw-strength-fill{
+  height:100%;border-radius:2px;width:0;transition:all .3s;
+}
+.pw-hint{font-size:11px;color:#bbb;margin-top:4px}
 
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+.btn-next{
+  width:100%;padding:14px;background:#1a1a2e;border:none;
+  border-radius:10px;color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .2s;margin-top:8px;
+}
+.btn-next:hover{background:#2d3748;transform:translateY(-1px)}
+.btn-next:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-        .subtitle {
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 32px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
+.btn-google{
+  width:100%;padding:12px;background:#fff;border:1.5px solid #eee;
+  border-radius:10px;color:#1a1a1a;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:16px;
+}
+.btn-google:hover{border-color:#ccc;background:#f9f9f9}
 
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
+.divider{
+  display:flex;align-items:center;gap:12px;
+  font-size:12px;color:#bbb;margin:16px 0;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#eee}
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-            font-size: 14px;
-        }
+.back-link{
+  background:none;border:none;color:#888;font-size:13px;
+  cursor:pointer;font-family:inherit;padding:0;
+  display:flex;align-items:center;gap:4px;margin-bottom:20px;
+}
+.back-link:hover{color:#1a1a1a}
 
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            font-size: 16px;
-            color: #ffffff;
-            transition: all 0.3s ease;
-        }
+.signin-link{
+  text-align:center;font-size:13px;color:#888;margin-top:20px;
+}
+.signin-link a{color:#1a1a2e;font-weight:600;text-decoration:none}
+.signin-link a:hover{text-decoration:underline}
 
-        input[type="text"]::placeholder,
-        input[type="email"]::placeholder,
-        input[type="password"]::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
+.error-box{
+  background:#fff5f5;border:1px solid #fecaca;border-radius:8px;
+  padding:10px 12px;font-size:13px;color:#dc2626;
+  margin-bottom:14px;display:none;
+}
+.success-box{
+  background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+  padding:10px 12px;font-size:13px;color:#16a34a;
+  margin-bottom:14px;display:none;
+}
 
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #60a5fa;
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-        }
+.plan-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.plan-card{
+  border:2px solid #eee;border-radius:10px;padding:14px;
+  cursor:pointer;transition:all .15s;position:relative;
+}
+.plan-card:hover{border-color:#ccc}
+.plan-card.selected{border-color:#1a1a2e;background:#f8f8ff}
+.plan-card .plan-name{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:2px}
+.plan-card .plan-price{font-size:20px;font-weight:700;color:#1a1a2e}
+.plan-card .plan-price span{font-size:12px;font-weight:400;color:#888}
+.plan-card .plan-desc{font-size:11px;color:#888;margin-top:4px;line-height:1.4}
+.plan-badge{
+  position:absolute;top:-1px;right:10px;
+  background:#1a1a2e;color:#fff;font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:0 0 6px 6px;
+}
+.plan-trial{
+  font-size:11px;color:#888;text-align:center;margin-top:8px;
+}
+.plan-trial strong{color:#1a1a1a}
 
-        .signup-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            color: white;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
+/* LOADING */
+.spinner{
+  width:20px;height:20px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block;
+  vertical-align:middle;margin-right:8px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        .signup-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .signup-btn:hover::before {
-            left: 100%;
-        }
-
-        .signup-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.3);
-        }
-
-        .signup-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .signup-btn:disabled:hover {
-            box-shadow: none;
-        }
-
-        .google-btn {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffffff;
-            padding: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .google-btn:hover {
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-1px);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 24px 0;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 13px;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .divider span {
-            padding: 0 16px;
-        }
-
-        .footer-links {
-            margin-top: 24px;
-        }
-
-        .footer-links a {
-            color: #60a5fa;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: #93c5fd;
-            text-decoration: underline;
-        }
-
-        .password-requirements {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 4px;
-            line-height: 1.4;
-        }
-
-        .password-strength {
-            margin-top: 8px;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            display: none;
-        }
-
-        .strength-weak {
-            background: rgba(248, 113, 113, 0.2);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            color: #fca5a5;
-        }
-
-        .strength-medium {
-            background: rgba(251, 191, 36, 0.2);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            color: #fde047;
-        }
-
-        .strength-strong {
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: #86efac;
-        }
-
-        /* Responsive design */
-        @media (max-width: 480px) {
-            .signup-container {
-                margin: 20px;
-                padding: 32px 24px;
-            }
-            
-            .back-home {
-                top: 20px;
-                left: 20px;
-                font-size: 13px;
-            }
-        }
-
-        /* Floating particles effect */
-        .particle {
-            position: absolute;
-            background: rgba(96, 165, 250, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .particle:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            top: 10%;
-            left: 20%;
-            animation-delay: 0s;
-        }
-
-        .particle:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            top: 70%;
-            right: 20%;
-            animation-delay: 2s;
-        }
-
-        .particle:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            bottom: 20%;
-            left: 10%;
-            animation-delay: 4s;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.1;
-            }
-            50% {
-                transform: translateY(-20px) rotate(180deg);
-                opacity: 0.3;
-            }
-        }
-    </style>
+/* RESPONSIVE */
+@media(max-width:768px){
+  .left{display:none}
+  .right{padding:32px 20px}
+}
+</style>
 </head>
 <body>
-    <!-- Floating particles for visual appeal -->
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    
-    <a href="index.html" class="back-home">← Back to Home</a>
-    
-    <div class="signup-container">
-        <div class="logo">🏠 Inside The Sphere</div>
-        <div class="subtitle">Create your account to access powerful real estate tools</div>
-        
-        <!-- Signup Form -->
-        <form id="signupForm">
-            <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" placeholder="Enter your full name" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="signupEmail">Email Address</label>
-                <input type="email" id="signupEmail" placeholder="Enter your email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="signupPassword">Password</label>
-                <input type="password" id="signupPassword" placeholder="Create a strong password" required>
-                <div class="password-requirements">
-                    Minimum 6 characters with letters and numbers
-                </div>
-                <div id="passwordStrength" class="password-strength"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-            </div>
-            
-            <button type="submit" id="signupButton" class="signup-btn">
-                Create Your Account
-            </button>
-        </form>
-        
-        <div class="divider">
-            <span>or sign up with</span>
-        </div>
-        
-        <button id="googleSignupBtn" class="google-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Google
-        </button>
-        
-        <div class="footer-links">
-            <a href="login.html">Already have an account? Sign in</a>
-        </div>
+
+<div class="left">
+  <div class="left-content">
+    <div class="left-logo">🏠 Inside The Sphere</div>
+    <div class="left-headline">The tools that live inside your <span>real estate business</span></div>
+    <div class="left-sub">Built for SE Calgary agents who want to present like a luxury firm and close more listings.</div>
+    <div class="left-features">
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <div class="feature-text"><strong>Interactive CMA Builder</strong>Password-protected client pages with live net sheet slider</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📧</div>
+        <div class="feature-text"><strong>Newsletter Builder</strong>Send branded market updates to your sphere in minutes</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📋</div>
+        <div class="feature-text"><strong>Listing & Buyer Checklists</strong>Branded process guides for every transaction</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-text"><strong>More tools coming</strong>Offer tracker, listing pages, market reports</div>
+      </div>
+    </div>
+  </div>
+  <div class="left-footer">© 2026 Inside The Sphere · Duiker Properties · Royal LePage Solutions</div>
+</div>
+
+<div class="right">
+  <div class="form-wrap">
+
+    <div class="form-header">
+      <h1 id="step-title">Create your account</h1>
+      <p id="step-sub">Get started — it takes less than 2 minutes</p>
     </div>
 
-    <script>
-        // Password strength checker
-        document.getElementById('signupPassword').addEventListener('input', function() {
-            const password = this.value;
-            const strengthDiv = document.getElementById('passwordStrength');
-            
-            if (password.length === 0) {
-                strengthDiv.style.display = 'none';
-                return;
-            }
-            
-            let strength = 0;
-            if (password.length >= 6) strength++;
-            if (password.match(/[a-z]/)) strength++;
-            if (password.match(/[A-Z]/)) strength++;
-            if (password.match(/[0-9]/)) strength++;
-            if (password.match(/[^a-zA-Z0-9]/)) strength++;
-            
-            strengthDiv.style.display = 'block';
-            
-            if (strength < 3) {
-                strengthDiv.className = 'password-strength strength-weak';
-                strengthDiv.textContent = 'Weak password - add more characters and numbers';
-            } else if (strength < 4) {
-                strengthDiv.className = 'password-strength strength-medium';
-                strengthDiv.textContent = 'Medium strength - consider adding special characters';
-            } else {
-                strengthDiv.className = 'password-strength strength-strong';
-                strengthDiv.textContent = 'Strong password ✓';
-            }
-        });
+    <!-- STEP INDICATORS -->
+    <div class="steps" id="step-indicators" style="display:none">
+      <div class="step-item">
+        <div class="step-circle active" id="si-1">1</div>
+        <div class="step-label active" id="sl-1">Account</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle future" id="si-2">2</div>
+        <div class="step-label" id="sl-2">Your info</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-circle future" id="si-3">3</div>
+        <div class="step-label" id="sl-3">Plan</div>
+      </div>
+    </div>
 
-        // Handle email/password signup
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('signupEmail').value.trim();
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            // Simple validation
-            if (!fullName) {
-                alert('Please enter your full name.');
-                return;
-            }
-            
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long.');
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                alert('Passwords do not match.');
-                return;
-            }
-            
-            console.log('Starting signup process...');
-            
-            // Create account
-            firebase.auth().createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    console.log('Account created successfully');
-                    alert('Account created successfully! Please sign in.');
-                    window.location.href = 'login.html';
-                })
-                .catch((error) => {
-                    console.log('Signup error:', error);
-                    alert('Error: ' + error.message);
-                });
-        });
+    <div class="error-box" id="error-box"></div>
+    <div class="success-box" id="success-box"></div>
 
-        // Handle Google signup
-        document.getElementById('googleSignupBtn').addEventListener('click', function() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            
-            firebase.auth().signInWithPopup(provider)
-                .then((result) => {
-                    console.log('Google signup successful');
-                    alert('Account created successfully! Please sign in.');
-                    window.location.href = 'login.html';
-                })
-                .catch((error) => {
-                    console.log('Google signup error:', error);
-                    if (error.code === 'auth/popup-closed-by-user') {
-                        alert('Sign-up was cancelled. Please try again.');
-                    } else {
-                        alert('Google sign-up failed. Please try again.');
-                    }
-                });
-        });
-    </script>
+    <!-- STEP 1: ACCOUNT -->
+    <div class="form-step active" id="step-1">
+      <div class="btn-google" onclick="googleSignup()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </div>
+      <div class="divider">or use email</div>
+      <div class="fg">
+        <label>Email address</label>
+        <input type="email" id="s1-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')goStep2()">
+      </div>
+      <div class="fg">
+        <label>Password</label>
+        <input type="password" id="s1-password" placeholder="Min. 6 characters" oninput="checkPw(this.value)" onkeydown="if(event.key==='Enter')goStep2()">
+        <div class="pw-strength"><div class="pw-strength-fill" id="pw-fill"></div></div>
+        <div class="pw-hint" id="pw-hint">At least 6 characters</div>
+      </div>
+      <button class="btn-next" onclick="goStep2()">Continue →</button>
+      <div class="signin-link">Already have an account? <a href="login.html">Sign in</a></div>
+    </div>
+
+    <!-- STEP 2: PERSONAL INFO -->
+    <div class="form-step" id="step-2">
+      <button class="back-link" onclick="goBack(1)">← Back</button>
+      <div class="fg-row">
+        <div class="fg">
+          <label>First name</label>
+          <input type="text" id="s2-first" placeholder="Kyle" onkeydown="if(event.key==='Enter')goStep3()">
+        </div>
+        <div class="fg">
+          <label>Last name</label>
+          <input type="text" id="s2-last" placeholder="Duiker" onkeydown="if(event.key==='Enter')goStep3()">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Brokerage</label>
+        <input type="text" id="s2-brokerage" placeholder="Royal LePage Solutions" onkeydown="if(event.key==='Enter')goStep3()">
+      </div>
+      <div class="fg">
+        <label>Phone</label>
+        <input type="tel" id="s2-phone" placeholder="403-000-0000" onkeydown="if(event.key==='Enter')goStep3()">
+      </div>
+      <div class="fg">
+        <label>City / market</label>
+        <select id="s2-city">
+          <option value="">Select your market</option>
+          <option>Calgary — SE</option>
+          <option>Calgary — SW</option>
+          <option>Calgary — NW</option>
+          <option>Calgary — NE</option>
+          <option>Calgary — Central</option>
+          <option>Okotoks</option>
+          <option>Airdrie</option>
+          <option>Cochrane</option>
+          <option>Chestermere</option>
+          <option>Other Alberta</option>
+        </select>
+      </div>
+      <button class="btn-next" onclick="goStep3()">Continue →</button>
+    </div>
+
+    <!-- STEP 3: PLAN -->
+    <div class="form-step" id="step-3">
+      <button class="back-link" onclick="goBack(2)">← Back</button>
+      <div class="plan-cards">
+        <div class="plan-card selected" id="plan-free" onclick="selectPlan('free')">
+          <div class="plan-name">Free trial</div>
+          <div class="plan-price">$0<span>/14 days</span></div>
+          <div class="plan-desc">Full access, no credit card needed</div>
+        </div>
+        <div class="plan-card" id="plan-pro" onclick="selectPlan('pro')">
+          <div class="plan-badge">Most popular</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">$49<span>/month</span></div>
+          <div class="plan-desc">Unlimited CMAs, all tools, client pages</div>
+        </div>
+      </div>
+      <div class="plan-trial"><strong>Start free.</strong> No credit card required for the trial. Upgrade any time.</div>
+      <button class="btn-next" id="create-btn" onclick="createAccount()" style="margin-top:16px">
+        Create my account →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let selectedPlan = 'free';
+let currentStep = 1;
+
+// Check if already logged in
+firebase.auth().onAuthStateChanged(user => {
+  if (user) window.location.href = 'smarttools/';
+});
+
+// PASSWORD STRENGTH
+function checkPw(pw) {
+  const fill = document.getElementById('pw-fill');
+  const hint = document.getElementById('pw-hint');
+  let strength = 0;
+  if (pw.length >= 6) strength++;
+  if (pw.match(/[A-Z]/)) strength++;
+  if (pw.match(/[0-9]/)) strength++;
+  if (pw.match(/[^a-zA-Z0-9]/)) strength++;
+  const colors = ['', '#ef4444', '#f59e0b', '#22c55e', '#16a34a'];
+  const widths = ['0%', '25%', '50%', '75%', '100%'];
+  const hints = ['', 'Too short', 'Could be stronger', 'Good password', 'Strong password ✓'];
+  fill.style.width = widths[strength];
+  fill.style.background = colors[strength];
+  hint.textContent = pw.length === 0 ? 'At least 6 characters' : hints[strength];
+}
+
+// STEP NAVIGATION
+function showStepIndicators() {
+  document.getElementById('step-indicators').style.display = 'flex';
+}
+
+function updateStepUI(step) {
+  for (let i = 1; i <= 3; i++) {
+    const circle = document.getElementById('si-'+i);
+    const label = document.getElementById('sl-'+i);
+    if (i < step) {
+      circle.className = 'step-circle done';
+      circle.textContent = '✓';
+    } else if (i === step) {
+      circle.className = 'step-circle active';
+      circle.textContent = i;
+      label.className = 'step-label active';
+    } else {
+      circle.className = 'step-circle future';
+      circle.textContent = i;
+      label.className = 'step-label';
+    }
+  }
+}
+
+function goStep2() {
+  const email = document.getElementById('s1-email').value.trim();
+  const pw = document.getElementById('s1-password').value;
+  if (!email || !email.includes('@')) { showError('Please enter a valid email address'); return; }
+  if (pw.length < 6) { showError('Password must be at least 6 characters'); return; }
+  hideError();
+  document.getElementById('step-1').classList.remove('active');
+  document.getElementById('step-2').classList.add('active');
+  document.getElementById('step-title').textContent = 'Tell us about yourself';
+  document.getElementById('step-sub').textContent = 'This pre-fills your profile across all tools';
+  showStepIndicators();
+  updateStepUI(2);
+  currentStep = 2;
+  document.getElementById('s2-first').focus();
+}
+
+function goStep3() {
+  const first = document.getElementById('s2-first').value.trim();
+  const last = document.getElementById('s2-last').value.trim();
+  if (!first || !last) { showError('Please enter your first and last name'); return; }
+  hideError();
+  document.getElementById('step-2').classList.remove('active');
+  document.getElementById('step-3').classList.add('active');
+  document.getElementById('step-title').textContent = 'Choose your plan';
+  document.getElementById('step-sub').textContent = 'Start free, upgrade any time';
+  updateStepUI(3);
+  currentStep = 3;
+}
+
+function goBack(step) {
+  document.getElementById('step-'+(step+1)).classList.remove('active');
+  document.getElementById('step-'+step).classList.add('active');
+  updateStepUI(step);
+  currentStep = step;
+  if (step === 1) {
+    document.getElementById('step-indicators').style.display = 'none';
+    document.getElementById('step-title').textContent = 'Create your account';
+    document.getElementById('step-sub').textContent = 'Get started — it takes less than 2 minutes';
+  } else if (step === 2) {
+    document.getElementById('step-title').textContent = 'Tell us about yourself';
+    document.getElementById('step-sub').textContent = 'This pre-fills your profile across all tools';
+  }
+  hideError();
+}
+
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.getElementById('plan-free').classList.toggle('selected', plan === 'free');
+  document.getElementById('plan-pro').classList.toggle('selected', plan === 'pro');
+}
+
+// CREATE ACCOUNT
+function createAccount() {
+  const email = document.getElementById('s1-email').value.trim();
+  const pw = document.getElementById('s1-password').value;
+  const first = document.getElementById('s2-first').value.trim();
+  const last = document.getElementById('s2-last').value.trim();
+  const brokerage = document.getElementById('s2-brokerage').value.trim();
+  const phone = document.getElementById('s2-phone').value.trim();
+  const city = document.getElementById('s2-city').value;
+
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Creating your account...';
+  hideError();
+
+  firebase.auth().createUserWithEmailAndPassword(email, pw)
+    .then(cred => {
+      const user = cred.user;
+      // Save full profile to Firestore
+      return db.collection('users').doc(user.uid).set({
+        email: user.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        plan: selectedPlan,
+        planStarted: firebase.firestore.FieldValue.serverTimestamp(),
+        profileComplete: false,
+        agentProfile: {
+          firstName: first,
+          lastName: last,
+          brokerage: brokerage,
+          phone: phone,
+          city: city,
+          email: user.email,
+          photoUrls: { headshot: '', logo: '', team: '' },
+          reviews: [],
+          accentColor: '#EA002A',
+          goldColor: '#C9A84C'
+        }
+      });
+    })
+    .then(() => {
+      // Redirect to profile setup
+      window.location.href = 'profile-setup.html';
+    })
+    .catch(err => {
+      console.error(err);
+      btn.disabled = false;
+      btn.innerHTML = 'Create my account →';
+      if (err.code === 'auth/email-already-in-use') {
+        showError('An account with this email already exists. <a href="login.html" style="color:#dc2626;font-weight:700">Sign in instead →</a>');
+      } else if (err.code === 'auth/invalid-email') {
+        showError('Please enter a valid email address.');
+      } else {
+        showError('Something went wrong — ' + err.message);
+      }
+    });
+}
+
+// GOOGLE SIGNUP
+function googleSignup() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      // Check if profile exists already
+      return db.collection('users').doc(user.uid).get().then(doc => {
+        if (!doc.exists) {
+          const nameParts = (user.displayName || '').split(' ');
+          const first = nameParts[0] || '';
+          const last = nameParts.slice(1).join(' ') || '';
+          return db.collection('users').doc(user.uid).set({
+            email: user.email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            plan: 'free',
+            planStarted: firebase.firestore.FieldValue.serverTimestamp(),
+            profileComplete: false,
+            agentProfile: {
+              firstName: first,
+              lastName: last,
+              email: user.email,
+              brokerage: '',
+              phone: '',
+              city: '',
+              photoUrls: { headshot: user.photoURL || '', logo: '', team: '' },
+              reviews: [],
+              accentColor: '#EA002A',
+              goldColor: '#C9A84C'
+            }
+          }).then(() => window.location.href = 'profile-setup.html');
+        } else {
+          // Existing user — send to dashboard
+          window.location.href = 'smarttools/';
+        }
+      });
+    })
+    .catch(err => {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showError('Google sign-up failed. Please try again.');
+      }
+    });
+}
+
+// HELPERS
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+</script>
 </body>
 </html>
