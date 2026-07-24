@@ -670,12 +670,7 @@ function collectData() {
     if (el) data[id] = el.value;
   });
   data.reviews = reviews;
-  // Only save URLs not base64 data
-  data.photoUrls = {
-    headshot: photoUrls.headshot?.startsWith('https://') ? photoUrls.headshot : '',
-    logo: photoUrls.logo?.startsWith('https://') ? photoUrls.logo : '',
-    team: photoUrls.team?.startsWith('https://') ? photoUrls.team : ''
-  };
+  data.photoUrls = photoUrls;
   data.accentColor = selectedColor;
   data.goldColor = selectedGold;
   return data;
@@ -719,44 +714,50 @@ function setSaveStatus(s) {
   else { el.textContent = 'All saved'; el.className = 'save-status'; }
 }
 
-// PHOTO UPLOAD
+// PHOTO UPLOAD — Firebase Storage
 function handlePhotoUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
 
-  // Show progress
   const prog = document.getElementById(key + '-progress');
   const fill = document.getElementById(key + '-progress-fill');
   if (prog) prog.style.display = 'block';
+  if (fill) fill.style.width = '0%';
 
-  // Read as base64 and store directly in Firestore
-  // (For production, Firebase Storage would be better but requires billing)
-  const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = e.target.result;
-    photoUrls[key] = base64;
-    showPhotoPreview(key, base64);
-    if (fill) fill.style.width = '100%';
-    setTimeout(() => { if (prog) prog.style.display = 'none'; }, 800);
-    markDirty();
-    showToast('Photo uploaded', 'success');
-  };
-  reader.onprogress = e => {
-    if (fill && e.lengthComputable) {
-      fill.style.width = (e.loaded / e.total * 80) + '%';
+  const ext = file.name.split('.').pop();
+  const path = `users/${currentUser.uid}/profile/${key}_${Date.now()}.${ext}`;
+  const ref = storage.ref(path);
+  const task = ref.put(file);
+
+  task.on('state_changed',
+    snap => {
+      const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
+      if (fill) fill.style.width = pct + '%';
+    },
+    err => {
+      console.error(err);
+      if (prog) prog.style.display = 'none';
+      showToast('Upload failed — ' + err.message, 'error');
+    },
+    () => {
+      task.snapshot.ref.getDownloadURL().then(url => {
+        photoUrls[key] = url;
+        showPhotoPreview(key, url);
+        if (prog) prog.style.display = 'none';
+        saveProfile();
+        showToast('Photo saved to profile', 'success');
+      });
     }
-  };
-  reader.readAsDataURL(file);
+  );
 }
 
 function showPhotoPreview(key, src) {
   const inner = document.getElementById(key + '-inner');
   const upload = document.getElementById(key + '-upload');
   if (!inner || !upload) return;
-
   const isCircle = key === 'headshot';
   inner.innerHTML = `
-    <div style="position:relative">
+    <div style="position:relative;display:inline-block">
       <img src="${src}" class="photo-preview${isCircle ? ' circle' : ''}" alt="${key}">
       <button class="photo-remove" onclick="removePhoto('${key}',event)">✕</button>
     </div>
@@ -863,25 +864,27 @@ function selectGold(color, chip) {
 function updatePreview() {
   const first = document.getElementById('firstName')?.value || 'Kyle';
   const last = document.getElementById('lastName')?.value || 'Duiker';
-  const title = document.getElementById('title')?.value || 'Broker Delegate';
+  const titleVal = document.getElementById('title')?.value || 'Broker Delegate';
   const brokerage = document.getElementById('brokerage')?.value || 'Royal LePage Solutions';
   const phone = document.getElementById('phone')?.value || '403-252-5900';
   const initials = (first.charAt(0) + last.charAt(0)).toUpperCase();
 
-  document.getElementById('preview-name').textContent = `${first} ${last} · ${title}`;
-  document.getElementById('preview-title').textContent = `${brokerage} · ${phone}`;
-  document.getElementById('preview-initials').textContent = initials;
+  const nameEl = document.getElementById('preview-name');
+  const titleEl = document.getElementById('preview-title');
+  if (nameEl) nameEl.textContent = `${first} ${last} · ${titleVal}`;
+  if (titleEl) titleEl.textContent = `${brokerage} · ${phone}`;
 
-  const logoEl = document.getElementById('preview-logo');
-  if (photoUrls.headshot) {
-    document.getElementById('preview-photo-wrap').innerHTML =
-      `<img src="${photoUrls.headshot}" class="preview-headshot" alt="Headshot">`;
-  } else {
-    document.getElementById('preview-photo-wrap').innerHTML =
-      `<div class="preview-initials" id="preview-initials">${initials}</div>`;
+  const photoWrap = document.getElementById('preview-photo-wrap');
+  if (photoWrap) {
+    if (photoUrls.headshot && photoUrls.headshot.startsWith('https://')) {
+      photoWrap.innerHTML = `<img src="${photoUrls.headshot}" class="preview-headshot" alt="Headshot">`;
+    } else {
+      photoWrap.innerHTML = `<div class="preview-initials">${initials}</div>`;
+    }
   }
 
-  if (photoUrls.logo && logoEl) {
+  const logoEl = document.getElementById('preview-logo');
+  if (logoEl && photoUrls.logo && photoUrls.logo.startsWith('https://')) {
     logoEl.src = photoUrls.logo;
     logoEl.style.display = 'block';
   }
