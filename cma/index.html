@@ -1,720 +1,547 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMA Builder - Inside The Sphere</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMA Builder — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --obs:#0F0F0F;--esp:#2C2420;--stone:#8C8479;
+  --parch:#EDE8E0;--ivory:#F7F4EF;--border:#D9D3CB;
+  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height:100vh;display:flex}
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="../js/firebase-config.js"></script>
+/* SIDEBAR */
+.sidebar{
+  width:220px;flex-shrink:0;background:#fff;
+  border-right:0.5px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:100;
+}
+.sb-logo{padding:22px 20px 18px;border-bottom:0.5px solid var(--border)}
+.sb-logo-text{
+  font-family:var(--serif);font-size:1rem;font-weight:300;
+  color:var(--obs);letter-spacing:.04em;line-height:1.2;
+  text-decoration:none;display:block;
+}
+.sb-logo-text span{color:var(--copper)}
+.sb-logo-sub{
+  font-size:8px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--border);margin-top:3px;
+}
+.sb-section{
+  font-size:8px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--border);
+  padding:14px 20px 5px;
+}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;font-size:13px;font-weight:400;
+  color:var(--stone);border-left:2px solid transparent;
+  transition:all .12s;text-decoration:none;
+}
+.sb-item:hover{color:var(--obs);background:var(--ivory)}
+.sb-item.active{color:var(--obs);font-weight:500;border-left-color:var(--copper);background:var(--ivory)}
+.sb-item.soon{opacity:.4;pointer-events:none}
+.sb-soon{font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--border);margin-left:auto}
+.sb-footer{
+  margin-top:auto;padding:14px 20px;
+  border-top:0.5px solid var(--border);
+}
+.sb-agent{
+  display:flex;align-items:center;gap:10px;
+  padding:8px;border-radius:2px;cursor:pointer;
+  text-decoration:none;transition:background .12s;
+}
+.sb-agent:hover{background:var(--ivory)}
+.sb-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0}
+.sb-initials{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--copper);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em;
+}
+.sb-name{font-size:12px;font-weight:500;color:var(--obs)}
+.sb-role{font-size:10px;color:var(--stone);margin-top:1px}
+.sb-logout{
+  width:100%;margin-top:8px;padding:8px;
+  border:0.5px solid var(--border);background:transparent;border-radius:2px;
+  font-size:10px;font-weight:500;color:var(--stone);cursor:pointer;
+  font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  transition:all .12s;
+}
+.sb-logout:hover{border-color:var(--obs);color:var(--obs)}
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0f1c;
-            color: #ffffff;
-            min-height: 100vh;
-        }
+/* TOPBAR */
+.topbar{
+  background:#fff;border-bottom:0.5px solid var(--border);
+  padding:0 36px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:13px;font-weight:500;color:var(--obs)}
+.btn-new{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 18px;background:var(--obs);border:none;border-radius:2px;
+  font-size:11px;font-weight:500;color:#fff;cursor:pointer;
+  font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  transition:background .12s;
+}
+.btn-new:hover{background:var(--esp)}
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(45deg, #1a2332, #2d3748, #1a2332, #0a0f1c);
-            background-size: 400% 400%;
-            animation: gradientShift 8s ease infinite;
-            z-index: -1;
-        }
+/* PAGE */
+.page{padding:36px;flex:1}
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+/* CMA TABLE */
+.cma-table{
+  background:#fff;border:0.5px solid var(--border);
+  margin-bottom:32px;
+}
+.cma-header-row{
+  display:grid;grid-template-columns:1fr 140px 110px 110px 110px 120px;
+  gap:0;background:var(--ivory);
+  border-bottom:0.5px solid var(--border);
+  padding:10px 20px;
+}
+.col-lbl{
+  font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--stone);
+}
+.cma-row{
+  display:grid;grid-template-columns:1fr 140px 110px 110px 110px 120px;
+  gap:0;align-items:center;
+  padding:16px 20px;border-bottom:0.5px solid var(--border);
+  transition:background .12s;cursor:pointer;
+}
+.cma-row:last-child{border-bottom:none}
+.cma-row:hover{background:var(--ivory)}
+.cma-address{
+  font-family:var(--serif);font-size:1rem;
+  font-weight:400;color:var(--obs);line-height:1.2;
+}
+.cma-client{font-size:11px;color:var(--stone);margin-top:3px}
+.cma-community{font-size:12px;color:var(--stone)}
+.cma-date{font-size:12px;color:var(--stone)}
+.cma-price{font-family:var(--serif);font-size:1rem;font-weight:400;color:var(--champ)}
+.status-badge{
+  display:inline-block;font-size:9px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;
+}
+.s-pub{background:rgba(74,92,78,.08);color:var(--sage);border:0.5px solid rgba(74,92,78,.2)}
+.s-draft{background:var(--ivory);color:var(--stone);border:0.5px solid var(--border)}
+.cma-actions{display:flex;gap:6px;align-items:center}
+.act-btn{
+  font-size:10px;font-weight:500;letter-spacing:.06em;
+  padding:5px 10px;border-radius:2px;cursor:pointer;
+  font-family:var(--sans);transition:all .12s;border:none;
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.act-edit{background:var(--obs);color:#fff}
+.act-edit:hover{background:var(--esp)}
+.act-view{background:var(--ivory);color:var(--stone);border:0.5px solid var(--border)}
+.act-view:hover{color:var(--obs);border-color:var(--obs)}
+.act-del{background:transparent;color:#D9D3CB;border:none;font-size:14px;padding:4px 6px}
+.act-del:hover{color:#c0392b}
 
-        /* HEADER */
-        .header {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+/* EMPTY */
+.empty{
+  padding:64px 20px;text-align:center;
+  background:#fff;border:0.5px solid var(--border);
+}
+.empty-title{
+  font-family:var(--serif);font-size:1.6rem;font-weight:300;
+  color:var(--obs);margin-bottom:8px;
+}
+.empty-sub{font-size:13px;color:var(--stone);margin-bottom:24px;line-height:1.6}
 
-        .header-left { display: flex; align-items: center; gap: 16px; }
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,15,15,.5);
+  z-index:200;display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:all .2s;
+}
+.modal-overlay.open{opacity:1;visibility:visible}
+.modal{
+  background:#fff;border-radius:2px;width:100%;max-width:540px;
+  margin:20px;animation:mIn .2s ease;
+}
+@keyframes mIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{
+  padding:20px 24px;border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{
+  font-family:var(--serif);font-size:1.3rem;font-weight:300;color:var(--obs);
+}
+.modal-close{
+  background:none;border:none;font-size:18px;color:var(--stone);
+  cursor:pointer;padding:4px;transition:color .12s;
+}
+.modal-close:hover{color:var(--obs)}
+.modal-body{padding:24px}
+.fg{margin-bottom:16px}
+.fg:last-child{margin-bottom:0}
+.fg label{
+  display:block;font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);margin-bottom:6px;
+}
+.fg input,.fg select{
+  width:100%;padding:10px 12px;background:var(--ivory);
+  border:0.5px solid var(--border);border-radius:2px;
+  font-size:14px;color:var(--obs);font-family:var(--sans);
+  transition:all .12s;
+}
+.fg input:focus,.fg select:focus{
+  outline:none;border-color:var(--obs);background:#fff;
+}
+.fg input::placeholder{color:var(--border)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-footer{
+  padding:16px 24px;border-top:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+}
+.btn-cancel{
+  padding:9px 18px;background:transparent;border:0.5px solid var(--border);
+  border-radius:2px;font-size:12px;font-weight:500;color:var(--stone);
+  cursor:pointer;font-family:var(--sans);letter-spacing:.06em;
+  transition:all .12s;
+}
+.btn-cancel:hover{border-color:var(--obs);color:var(--obs)}
+.btn-create{
+  padding:9px 20px;background:var(--obs);border:none;border-radius:2px;
+  font-size:12px;font-weight:500;color:#fff;cursor:pointer;
+  font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  transition:background .12s;
+}
+.btn-create:hover{background:var(--esp)}
+.btn-create:disabled{opacity:.5;cursor:not-allowed}
 
-        .logo {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-        }
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;right:20px;background:var(--obs);
+  color:#fff;border-radius:2px;padding:10px 16px;
+  font-size:12px;font-weight:500;z-index:500;
+  transform:translateY(50px);opacity:0;transition:all .25s;
+  letter-spacing:.04em;
+}
+.toast.show{transform:translateY(0);opacity:1}
 
-        .breadcrumb {
-            color: rgba(255,255,255,0.4);
-            font-size: 13px;
-        }
+/* LOADING */
+.loading{
+  margin-left:220px;display:flex;align-items:center;
+  justify-content:center;min-height:100vh;flex-direction:column;gap:14px;
+}
+.spinner{
+  width:28px;height:28px;border:2px solid var(--border);
+  border-top-color:var(--copper);border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        .breadcrumb span { color: rgba(255,255,255,0.7); }
-
-        .header-right { display: flex; align-items: center; gap: 10px; }
-
-        .user-badge {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            color: white;
-        }
-
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .btn-ghost {
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.7);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
-        .btn-danger {
-            background: rgba(248,113,113,0.15);
-            color: #fca5a5;
-            border: 1px solid rgba(248,113,113,0.3);
-        }
-
-        .btn-danger:hover { background: rgba(248,113,113,0.25); }
-
-        .btn-success {
-            background: rgba(34,197,94,0.15);
-            color: #86efac;
-            border: 1px solid rgba(34,197,94,0.3);
-        }
-
-        .btn-success:hover { background: rgba(34,197,94,0.25); }
-
-        /* LOADING */
-        .loading-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            gap: 16px;
-        }
-
-        .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #60a5fa;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* MAIN LAYOUT */
-        .main { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
-
-        /* PAGE TITLE */
-        .page-title {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .page-title h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .page-title p {
-            color: rgba(255,255,255,0.5);
-            font-size: 14px;
-            margin-top: 4px;
-        }
-
-        /* CMA LIST */
-        .cma-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .cma-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 22px;
-            transition: all 0.2s;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cma-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa);
-        }
-
-        .cma-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(96,165,250,0.3);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.3);
-        }
-
-        .cma-card-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 3px 10px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-        }
-
-        .status-draft {
-            background: rgba(251,191,36,0.15);
-            color: #fde68a;
-            border: 1px solid rgba(251,191,36,0.3);
-        }
-
-        .status-published {
-            background: rgba(34,197,94,0.15);
-            color: #86efac;
-            border: 1px solid rgba(34,197,94,0.3);
-        }
-
-        .cma-card h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .cma-card .address {
-            font-size: 13px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 14px;
-        }
-
-        .cma-card-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            border-top: 1px solid rgba(255,255,255,0.07);
-            padding-top: 12px;
-            margin-top: 4px;
-        }
-
-        .cma-card-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 12px;
-        }
-
-        .cma-card-actions .btn { font-size: 12px; padding: 6px 12px; }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed rgba(255,255,255,0.1);
-            border-radius: 16px;
-        }
-
-        .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
-        .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: rgba(255,255,255,0.7); }
-        .empty-state p { color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 24px; }
-
-        /* MODAL */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            z-index: 500;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-overlay.open { display: flex; }
-
-        .modal {
-            background: #131929;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 20px;
-            padding: 32px;
-            width: 100%;
-            max-width: 500px;
-            position: relative;
-        }
-
-        .modal h2 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .modal p.modal-sub {
-            color: rgba(255,255,255,0.4);
-            font-size: 13px;
-            margin-bottom: 24px;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px; right: 20px;
-            background: rgba(255,255,255,0.08);
-            border: none;
-            color: rgba(255,255,255,0.6);
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
-
-        /* FORM */
-        .form-group { margin-bottom: 18px; }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 7px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 11px 14px;
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 10px;
-            color: #fff;
-            font-size: 14px;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #60a5fa;
-            background: rgba(255,255,255,0.1);
-            box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
-        }
-
-        .form-group input::placeholder,
-        .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
-
-        .form-group select option { background: #1a2332; }
-
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.07);
-        }
-
-        /* TOAST */
-        .toast {
-            position: fixed;
-            bottom: 24px; right: 24px;
-            background: #1a2744;
-            border: 1px solid rgba(96,165,250,0.3);
-            border-radius: 10px;
-            padding: 12px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            z-index: 1000;
-            transform: translateY(80px);
-            opacity: 0;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.error { border-color: rgba(248,113,113,0.4); }
-
-        /* RESPONSIVE */
-        @media (max-width: 600px) {
-            .page-title { flex-direction: column; }
-            .form-row { grid-template-columns: 1fr; }
-            .cma-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main,.loading{margin-left:0}
+  .cma-header-row,.cma-row{grid-template-columns:1fr 80px 80px}
+  .cma-header-row > *:nth-child(n+4),.cma-row > *:nth-child(n+4){display:none}
+  .page{padding:20px}
+}
+</style>
 </head>
 <body>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- NEW CMA MODAL -->
-<div class="modal-overlay" id="newCmaModal">
-    <div class="modal">
-        <button class="modal-close" onclick="closeModal()">✕</button>
-        <h2>New CMA</h2>
-        <p class="modal-sub">Start a new Comparative Market Analysis</p>
-
-        <div class="form-group">
-            <label>Client name(s)</label>
-            <input type="text" id="new-client-name" placeholder="John & Sarah Smith">
-        </div>
-
-        <div class="form-group">
-            <label>Property address</label>
-            <input type="text" id="new-address" placeholder="570 Legacy Circle SE, Calgary">
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Community</label>
-                <select id="new-community">
-                    <option value="">Select community</option>
-                    <option>Mahogany</option>
-                    <option>Auburn Bay</option>
-                    <option>Seton</option>
-                    <option>Cranston</option>
-                    <option>Legacy</option>
-                    <option>Chestermere</option>
-                    <option>Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Appointment date</label>
-                <input type="date" id="new-date">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Client email (for sending CMA)</label>
-            <input type="email" id="new-email" placeholder="client@email.com">
-        </div>
-
-        <div class="form-group">
-            <label>Client password <span style="color:rgba(255,255,255,0.3);font-weight:400">(you give this to them)</span></label>
-            <input type="text" id="new-password" placeholder="e.g. Legacy2026">
-        </div>
-
-        <div class="modal-footer">
-            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="createCMA()">Create CMA →</button>
-        </div>
-    </div>
-</div>
-
 <!-- LOADING -->
-<div id="loadingScreen" class="loading-screen">
-    <div class="spinner"></div>
-    <p style="color:rgba(255,255,255,0.5);font-size:14px">Loading your CMAs...</p>
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--stone)">Loading...</p>
 </div>
 
-<!-- MAIN APP (hidden until auth confirmed) -->
-<div id="appContent" style="display:none">
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar" style="display:none">
+  <div class="sb-logo">
+    <a href="../smarttools/" class="sb-logo-text">Inside The <span>Sphere</span></a>
+    <div class="sb-logo-sub">Real Estate Tools</div>
+  </div>
+  <div class="sb-section">Tools</div>
+  <a href="../smarttools/" class="sb-item"><span>◻</span> Dashboard</a>
+  <a href="../cma/" class="sb-item active"><span>◻</span> CMA Builder</a>
+  <a href="../newsletter/" class="sb-item"><span>◻</span> Newsletter</a>
+  <a href="../Bold-trail-newsletter/" class="sb-item"><span>◻</span> Bold Trail</a>
+  <div class="sb-section">Coming soon</div>
+  <div class="sb-item soon"><span>◻</span> Listing Checklist <span class="sb-soon">Soon</span></div>
+  <div class="sb-item soon"><span>◻</span> Buyer Checklist <span class="sb-soon">Soon</span></div>
+  <div class="sb-item soon"><span>◻</span> Market Reports <span class="sb-soon">Soon</span></div>
+  <div class="sb-footer">
+    <a href="../profile.html" class="sb-agent" id="sb-agent">
+      <div class="sb-initials" id="sb-initials">KD</div>
+      <div>
+        <div class="sb-name" id="sb-name">Kyle Duiker</div>
+        <div class="sb-role" id="sb-role">Broker Delegate</div>
+      </div>
+    </a>
+    <button class="sb-logout" onclick="doLogout()">Log out</button>
+  </div>
+</nav>
 
-    <header class="header">
-        <div class="header-left">
-            <a href="../smarttools/" class="logo">🏠 Inside The Sphere</a>
-            <span class="breadcrumb">/ <span>CMA Builder</span></span>
-        </div>
-        <div class="header-right">
-            <span class="user-badge" id="userBadge">Loading...</span>
-            <a href="../smarttools/" class="btn btn-ghost">← Tools</a>
-            <button class="btn btn-danger" onclick="logout()">Logout</button>
-        </div>
-    </header>
+<!-- MAIN -->
+<div class="main" id="main" style="display:none">
+  <div class="topbar">
+    <div class="topbar-title">CMA Builder</div>
+    <button class="btn-new" onclick="openModal()">+ New CMA</button>
+  </div>
+  <div class="page">
+    <div id="cma-container"></div>
+  </div>
+</div>
 
-    <main class="main">
-        <div class="page-title">
-            <div>
-                <h1>CMA Builder</h1>
-                <p>Create and manage your Comparative Market Analyses</p>
-            </div>
-            <button class="btn btn-primary" onclick="openModal()">
-                + New CMA
-            </button>
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New market evaluation</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg-row">
+        <div class="fg">
+          <label>Client name(s)</label>
+          <input id="m-client" placeholder="John & Sarah Smith">
         </div>
-
-        <!-- CMA LIST -->
-        <div id="cmaList">
-            <!-- populated by JS -->
+        <div class="fg">
+          <label>Appointment date</label>
+          <input type="date" id="m-date">
         </div>
-    </main>
+      </div>
+      <div class="fg">
+        <label>Property address</label>
+        <input id="m-address" placeholder="264 Mahogany Cove SE, Calgary">
+      </div>
+      <div class="fg-row">
+        <div class="fg">
+          <label>Community</label>
+          <select id="m-community">
+            <option value="">Select community</option>
+            <option>Mahogany</option><option>Auburn Bay</option>
+            <option>Seton</option><option>Cranston</option>
+            <option>Legacy</option><option>Chestermere</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Client email</label>
+          <input type="email" id="m-email" placeholder="client@email.com">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Client page password</label>
+        <input id="m-password" placeholder="e.g. Mahogany2026">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-create" id="btn-create" onclick="createCMA()">Create CMA →</button>
+    </div>
+  </div>
 </div>
 
 <script>
-    let currentUser = null;
+let currentUser = null;
+let cmas = [];
 
-    // ── AUTH CHECK ──
-    firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {
-            currentUser = user;
-            const name = user.displayName || user.email.split('@')[0];
-            document.getElementById('userBadge').textContent = name;
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
-            loadCMAs();
-        } else {
-            window.location.href = '../login.html';
-        }
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { window.location.href = '../login.html'; return; }
+  currentUser = user;
+  loadSidebar(user);
+  loadCMAs(user);
+});
+
+function loadSidebar(user) {
+  db.collection('users').doc(user.uid).get().then(doc => {
+    if (!doc.exists) return;
+    const p = doc.data().agentProfile || {};
+    const first = p.firstName || user.displayName?.split(' ')[0] || 'Kyle';
+    const last  = p.lastName  || '';
+    const title = p.title || 'Agent';
+    const initials = ((first.charAt(0)) + (last.charAt(0)||'')).toUpperCase();
+    const headshot = p.photoUrls?.headshot || '';
+
+    document.getElementById('sb-name').textContent = [first,last].filter(Boolean).join(' ');
+    document.getElementById('sb-role').textContent = title;
+    document.getElementById('sb-initials').textContent = initials;
+
+    if (headshot) {
+      const init = document.getElementById('sb-initials');
+      const img = document.createElement('img');
+      img.src = headshot; img.className = 'sb-avatar'; img.alt = first;
+      img.onerror = () => img.replaceWith(init);
+      init.replaceWith(img);
+    }
+  }).catch(console.error);
+}
+
+function loadCMAs(user) {
+  db.collection('users').doc(user.uid).collection('cmas')
+    .orderBy('updatedAt','desc').get()
+    .then(snap => {
+      cmas = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      renderCMAs();
+    })
+    .catch(console.error)
+    .finally(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('main').style.display = 'flex';
     });
+}
 
-    // ── LOAD CMAs FROM FIRESTORE ──
-    function loadCMAs() {
-        const list = document.getElementById('cmaList');
-        list.innerHTML = '<div class="loading-screen" style="min-height:200px"><div class="spinner"></div></div>';
+function renderCMAs() {
+  const container = document.getElementById('cma-container');
+  if (!cmas.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-title">No market evaluations yet</div>
+        <div class="empty-sub">Create your first CMA and send a private,<br>password-protected report to your client.</div>
+        <button class="btn-new" onclick="openModal()">+ Create your first CMA</button>
+      </div>`;
+    return;
+  }
 
-        db.collection('users').doc(currentUser.uid)
-            .collection('cmas')
-            .orderBy('createdAt', 'desc')
-            .get()
-            .then(snapshot => {
-                if (snapshot.empty) {
-                    list.innerHTML = `
-                        <div class="empty-state">
-                            <div class="icon">📊</div>
-                            <h3>No CMAs yet</h3>
-                            <p>Create your first Comparative Market Analysis to get started</p>
-                            <button class="btn btn-primary" onclick="openModal()">+ Create your first CMA</button>
-                        </div>`;
-                    return;
-                }
+  const fmt = v => v ? '$'+Math.round(parseFloat(v)).toLocaleString() : '—';
+  const fmtDate = d => {
+    if (!d) return '—';
+    try { return new Date(d+'T12:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}); }
+    catch { return d; }
+  };
 
-                const grid = document.createElement('div');
-                grid.className = 'cma-grid';
+  container.innerHTML = `
+    <div class="cma-table">
+      <div class="cma-header-row">
+        <div class="col-lbl">Address</div>
+        <div class="col-lbl">Community</div>
+        <div class="col-lbl">Date</div>
+        <div class="col-lbl">Price</div>
+        <div class="col-lbl">Status</div>
+        <div class="col-lbl">Actions</div>
+      </div>
+      ${cmas.map(c => {
+        const pub = c.status === 'published';
+        const slug = c.slug || '';
+        return `<div class="cma-row">
+          <div>
+            <div class="cma-address">${c.address || 'No address'}</div>
+            <div class="cma-client">${c.clientName || ''}</div>
+          </div>
+          <div class="cma-community">${c.community || '—'}</div>
+          <div class="cma-date">${fmtDate(c.appointmentDate)}</div>
+          <div class="cma-price">${fmt(c.priceRec)}</div>
+          <div><span class="status-badge ${pub?'s-pub':'s-draft'}">${pub?'Published':'Draft'}</span></div>
+          <div class="cma-actions">
+            <a href="edit.html?id=${c.id}" class="act-btn act-edit">Edit</a>
+            ${slug ? `<a href="client/?slug=${slug}" target="_blank" class="act-btn act-view">View</a>` : ''}
+            <button class="act-btn act-del" onclick="deleteCMA('${c.id}',event)" title="Delete">✕</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
 
-                snapshot.forEach(doc => {
-                    const cma = doc.data();
-                    const id = doc.id;
-                    const created = cma.createdAt?.toDate
-                        ? cma.createdAt.toDate().toLocaleDateString('en-CA', {month:'short',day:'numeric',year:'numeric'})
-                        : 'Recently';
+// MODAL
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-date').valueAsDate = new Date();
+  setTimeout(() => document.getElementById('m-client').focus(), 100);
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  ['m-client','m-address','m-email','m-password'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('m-community').selectedIndex = 0;
+}
 
-                    const card = document.createElement('div');
-                    card.className = 'cma-card';
-                    card.innerHTML = `
-                        <div class="cma-card-status ${cma.status === 'published' ? 'status-published' : 'status-draft'}">
-                            ${cma.status === 'published' ? '● Published' : '○ Draft'}
-                        </div>
-                        <h3>${cma.clientName || 'Unnamed Client'}</h3>
-                        <div class="address">${cma.address || 'No address set'}</div>
-                        <div class="cma-card-meta">
-                            <span>${cma.community || ''}</span>
-                            <span>${created}</span>
-                        </div>
-                        <div class="cma-card-actions">
-                            <button class="btn btn-primary" onclick="editCMA('${id}')">Edit CMA</button>
-                            ${cma.status === 'published'
-                                ? `<button class="btn btn-success" onclick="viewClient('${cma.slug}')">View Client Page</button>`
-                                : ''}
-                            <button class="btn btn-danger" onclick="deleteCMA('${id}', event)">Delete</button>
-                        </div>`;
-                    grid.appendChild(card);
-                });
+function generateSlug(address, date) {
+  const addr = (address || '').toLowerCase()
+    .replace(/[^a-z0-9\s]/g,'').trim()
+    .replace(/\s+/g,'-').slice(0,40);
+  const num = Math.floor(Math.random() * 90000) + 10000;
+  return addr + '-' + num;
+}
 
-                list.innerHTML = '';
-                list.appendChild(grid);
-            })
-            .catch(err => {
-                console.error('Error loading CMAs:', err);
-                list.innerHTML = '<p style="color:rgba(255,255,255,0.4);text-align:center;padding:40px">Error loading CMAs. Please refresh.</p>';
-            });
-    }
+function createCMA() {
+  const client   = document.getElementById('m-client').value.trim();
+  const address  = document.getElementById('m-address').value.trim();
+  const date     = document.getElementById('m-date').value;
+  const community= document.getElementById('m-community').value;
+  const email    = document.getElementById('m-email').value.trim();
+  const password = document.getElementById('m-password').value.trim();
 
-    // ── CREATE NEW CMA ──
-    function createCMA() {
-        const clientName = document.getElementById('new-client-name').value.trim();
-        const address = document.getElementById('new-address').value.trim();
-        const community = document.getElementById('new-community').value;
-        const date = document.getElementById('new-date').value;
-        const email = document.getElementById('new-email').value.trim();
-        const password = document.getElementById('new-password').value.trim();
+  if (!address) { showToast('Please enter the property address'); return; }
+  if (!password) { showToast('Please set a client password'); return; }
 
-        if (!clientName || !address) {
-            showToast('Please enter client name and address', 'error');
-            return;
-        }
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true; btn.textContent = 'Creating...';
 
-        // Generate a URL-friendly slug from address
-        const slug = address
-            .toLowerCase()
-            .replace(/[^a-z0-9\s]/g, '')
-            .trim()
-            .replace(/\s+/g, '-')
-            .substring(0, 40)
-            + '-' + Date.now().toString().slice(-5);
+  const slug = generateSlug(address, date);
+  const now = firebase.firestore.FieldValue.serverTimestamp();
 
-        const cmaData = {
-            clientName,
-            address,
-            community,
-            appointmentDate: date,
-            clientEmail: email,
-            clientPassword: password,
-            slug,
-            status: 'draft',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            // Property details (filled in editor)
-            beds: '', baths: '', sqft: '', yearBuilt: '', garage: '',
-            lotSize: '', features: '',
-            // Market data (filled in editor)
-            absorption: '', domAvg: '', listToSale: '',
-            // Pricing (filled in editor)
-            priceLow: '', priceRec: '', priceHigh: '',
-            // Net sheet (filled in editor)
-            commission: '3.5', gst: '5', legalFees: '1800',
-            mortgageBalance: '', mortgagePenalty: '0', taxAdj: '0',
-            // Comparables stored as subcollection
-        };
+  db.collection('users').doc(currentUser.uid).collection('cmas').add({
+    clientName: client, address, appointmentDate: date,
+    community, clientEmail: email, clientPassword: password,
+    slug, status: 'draft', agentId: currentUser.uid,
+    createdAt: now, updatedAt: now,
+  })
+  .then(ref => {
+    closeModal();
+    btn.disabled = false; btn.textContent = 'Create CMA →';
+    window.location.href = `edit.html?id=${ref.id}`;
+  })
+  .catch(err => {
+    console.error(err);
+    btn.disabled = false; btn.textContent = 'Create CMA →';
+    showToast('Error creating CMA — please try again');
+  });
+}
 
-        db.collection('users').doc(currentUser.uid)
-            .collection('cmas')
-            .add(cmaData)
-            .then(docRef => {
-                closeModal();
-                showToast('CMA created successfully!');
-                // Go straight to the editor
-                window.location.href = `edit.html?id=${docRef.id}`;
-            })
-            .catch(err => {
-                console.error('Error creating CMA:', err);
-                showToast('Error creating CMA. Please try again.', 'error');
-            });
-    }
+function deleteCMA(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this CMA? This cannot be undone.')) return;
+  db.collection('users').doc(currentUser.uid).collection('cmas').doc(id).delete()
+    .then(() => {
+      cmas = cmas.filter(c => c.id !== id);
+      renderCMAs();
+      showToast('CMA deleted');
+    })
+    .catch(err => { console.error(err); showToast('Error deleting CMA'); });
+}
 
-    // ── EDIT CMA ──
-    function editCMA(id) {
-        window.location.href = `edit.html?id=${id}`;
-    }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
 
-    // ── VIEW CLIENT PAGE ──
-    function viewClient(slug) {
-        window.open(`client/?slug=${slug}`, '_blank');
-    }
-
-    // ── DELETE CMA ──
-    function deleteCMA(id, event) {
-        event.stopPropagation();
-        if (!confirm('Delete this CMA? This cannot be undone.')) return;
-
-        db.collection('users').doc(currentUser.uid)
-            .collection('cmas').doc(id)
-            .delete()
-            .then(() => {
-                showToast('CMA deleted');
-                loadCMAs();
-            })
-            .catch(err => {
-                showToast('Error deleting CMA', 'error');
-            });
-    }
-
-    // ── MODAL ──
-    function openModal() {
-        document.getElementById('new-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('newCmaModal').classList.add('open');
-    }
-
-    function closeModal() {
-        document.getElementById('newCmaModal').classList.remove('open');
-    }
-
-    // Close modal on overlay click
-    document.getElementById('newCmaModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
-
-    // ── LOGOUT ──
-    function logout() {
-        if (confirm('Log out?')) {
-            firebase.auth().signOut().then(() => {
-                window.location.href = '../login.html';
-            });
-        }
-    }
-
-    // ── TOAST ──
-    function showToast(msg, type) {
-        const t = document.getElementById('toast');
-        t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
-        t.className = 'toast show' + (type === 'error' ? ' error' : '');
-        setTimeout(() => t.className = 'toast', 3000);
-    }
+function doLogout() {
+  if (confirm('Log out?')) {
+    firebase.auth().signOut().then(() => window.location.href = '../login.html');
+  }
+}
 </script>
 </body>
 </html>
