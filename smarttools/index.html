@@ -4,242 +4,432 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'dashboard';</script>
 <script src="../js/profile.js"></script>
-<script src="../js/header.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:'Inter',sans-serif;
-  background:#F7F4EF;color:#0F0F0F;min-height:100vh;
+
+/* ── PALETTE ── */
+:root{
+  --obs:    #0F0F0F;
+  --esp:    #2C2420;
+  --stone:  #8C8479;
+  --parch:  #EDE8E0;
+  --ivory:  #F7F4EF;
+  --border: #D9D3CB;
+  --champ:  #C9A96E;
+  --copper: #A0714F;
+  --sage:   #4A5C4E;
+  --serif:  'Cormorant Garamond',Georgia,serif;
+  --sans:   'Inter',-apple-system,sans-serif;
 }
 
-/* HEADER */
-.header{
-  background:#0F0F0F;border-bottom:1px solid rgba(217,211,203,.15);
-  padding:0 40px;display:flex;align-items:center;
-  justify-content:space-between;height:60px;
-  position:sticky;top:0;z-index:100;
+body{
+  font-family:var(--sans);
+  background:var(--ivory);
+  color:var(--obs);
+  min-height:100vh;
+  display:flex;
 }
-.header-logo{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.1rem;font-weight:300;
-  color:#F7F4EF;letter-spacing:.04em;
-  text-decoration:none;display:flex;align-items:center;gap:8px;
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:#fff;
+  border-right:0.5px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:100;
 }
-.header-logo span{color:#C9A96E}
-.header-nav{display:flex;align-items:center;gap:6px}
-.header-profile{
-  display:flex;align-items:center;gap:9px;
-  padding:5px 12px 5px 5px;border-radius:2px;cursor:pointer;
-  text-decoration:none;transition:background .15s;
-  border:0.5px solid rgba(217,211,203,.2);
+.sidebar-logo{
+  padding:24px 20px 20px;
+  border-bottom:0.5px solid var(--border);
 }
-.header-profile:hover{background:rgba(247,244,239,.06)}
-.profile-avatar{
-  width:30px;height:30px;border-radius:50%;
-  object-fit:cover;border:1.5px solid rgba(217,211,203,.2);flex-shrink:0;
+.logo-text{
+  font-family:var(--serif);
+  font-size:1rem;font-weight:300;
+  color:var(--obs);letter-spacing:.04em;
+  line-height:1.2;
 }
-.profile-initials{
-  width:30px;height:30px;border-radius:50%;
-  background:#A0714F;color:#F7F4EF;
+.logo-text span{color:var(--copper)}
+.logo-sub{
+  font-size:9px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--stone);margin-top:3px;
+}
+
+.sidebar-section{
+  font-size:8px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--border);padding:16px 20px 6px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;cursor:pointer;
+  font-size:13px;font-weight:400;color:var(--stone);
+  border-left:2px solid transparent;
+  transition:all .12s;text-decoration:none;
+}
+.nav-item:hover{color:var(--obs);background:var(--ivory)}
+.nav-item.active{
+  color:var(--obs);font-weight:500;
+  border-left-color:var(--copper);
+  background:var(--ivory);
+}
+.nav-item.soon{opacity:.45;cursor:default;pointer-events:none}
+.nav-icon{
+  width:16px;text-align:center;font-size:13px;flex-shrink:0;
+}
+.nav-soon{
+  font-size:8px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--border);margin-left:auto;
+}
+
+.sidebar-footer{
+  margin-top:auto;
+  padding:16px 20px;
+  border-top:0.5px solid var(--border);
+}
+.agent-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:2px;
+  cursor:pointer;text-decoration:none;
+  transition:background .12s;
+}
+.agent-card:hover{background:var(--ivory)}
+.agent-avatar{
+  width:32px;height:32px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  border:1.5px solid var(--border);
+}
+.agent-initials{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--copper);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em;
+  font-size:10px;font-weight:600;flex-shrink:0;
+  letter-spacing:.04em;
 }
-.profile-name{font-size:12px;font-weight:400;color:rgba(247,244,239,.7)}
-.header-btn{
-  padding:7px 14px;border-radius:2px;font-size:11px;
-  font-weight:500;cursor:pointer;border:none;
-  font-family:'Inter',sans-serif;transition:all .15s;text-decoration:none;
-  display:inline-flex;align-items:center;gap:5px;
+.agent-info{min-width:0}
+.agent-name{
+  font-size:12px;font-weight:500;color:var(--obs);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.agent-role{font-size:10px;color:var(--stone);margin-top:1px}
+.logout-btn{
+  width:100%;margin-top:8px;
+  padding:8px;border:0.5px solid var(--border);
+  background:transparent;border-radius:2px;
+  font-size:11px;font-weight:500;
+  color:var(--stone);cursor:pointer;
+  font-family:var(--sans);transition:all .12s;
   letter-spacing:.06em;text-transform:uppercase;
 }
-.btn-ghost{
-  background:transparent;
-  color:rgba(247,244,239,.4);
-  border:0.5px solid rgba(217,211,203,.15);
-}
-.btn-ghost:hover{color:rgba(247,244,239,.7);border-color:rgba(217,211,203,.3)}
+.logout-btn:hover{border-color:var(--obs);color:var(--obs)}
 
-/* LOADING */
-.loading{
-  min-height:100vh;display:flex;align-items:center;
-  justify-content:center;flex-direction:column;gap:14px;
+/* ── MAIN ── */
+.main{
+  margin-left:220px;flex:1;
+  min-height:100vh;
+  display:flex;flex-direction:column;
 }
-.spinner{
-  width:32px;height:32px;border:2px solid #EDE8E0;
-  border-top-color:#A0714F;border-radius:50%;
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
 
-/* HERO */
-.hero{
-  background:#2C2420;padding:52px 40px;
+/* TOP BAR */
+.topbar{
+  background:#fff;
+  border-bottom:0.5px solid var(--border);
+  padding:0 36px;height:56px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{
+  font-size:13px;font-weight:500;color:var(--obs);
+  letter-spacing:.02em;
+}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-plan{
+  font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);padding:4px 10px;
+  border:0.5px solid var(--border);border-radius:2px;
+}
+.topbar-new-cma{
+  padding:8px 16px;background:var(--obs);
+  border:none;border-radius:2px;
+  font-size:11px;font-weight:500;
+  color:#fff;cursor:pointer;
+  font-family:var(--sans);text-decoration:none;
+  letter-spacing:.08em;text-transform:uppercase;
+  transition:background .12s;display:inline-flex;align-items:center;gap:6px;
+}
+.topbar-new-cma:hover{background:var(--esp)}
+
+/* PAGE CONTENT */
+.page{padding:36px}
+
+/* WELCOME STRIP */
+.welcome{margin-bottom:32px}
+.welcome-greet{
+  font-size:10px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--stone);margin-bottom:5px;
+}
+.welcome-name{
+  font-family:var(--serif);
+  font-size:2rem;font-weight:300;
+  color:var(--obs);line-height:1.1;
+}
+.welcome-name em{font-style:italic;color:var(--copper)}
+
+/* STAT CARDS */
+.stat-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);
+  border:0.5px solid var(--border);
+  margin-bottom:36px;
+}
+.stat-card{
+  background:#fff;padding:20px 22px;
   position:relative;overflow:hidden;
 }
-.hero::before{
-  content:'';position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse at 0% 100%,rgba(160,113,79,.12),transparent 55%),
-    radial-gradient(ellipse at 100% 0%,rgba(201,169,110,.07),transparent 55%);
+.stat-card::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:1.5px;
+  background:transparent;transition:background .2s;
 }
-.hero-content{position:relative;z-index:1;max-width:1100px;margin:0 auto}
-.hero-greeting{
-  font-size:10px;color:rgba(201,169,110,.45);
-  margin-bottom:8px;letter-spacing:.18em;
-  text-transform:uppercase;font-weight:400;
+.stat-card:hover::after{background:var(--copper)}
+.stat-label{
+  font-size:9px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--stone);margin-bottom:10px;
 }
-.hero-title{
-  font-family:'Cormorant Garamond',serif;
-  font-size:clamp(1.8rem,3vw,2.6rem);font-weight:300;
-  color:#F7F4EF;margin-bottom:4px;letter-spacing:.01em;
+.stat-value{
+  font-family:var(--serif);
+  font-size:2.4rem;font-weight:300;
+  color:var(--obs);line-height:1;
 }
-.hero-title span{color:#C9A96E;font-style:italic}
-.hero-sub{font-size:13px;color:rgba(237,232,224,.3);letter-spacing:.03em}
-.hero-stats{
-  display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;
+.stat-value.gold{color:var(--champ)}
+.stat-value.copper{color:var(--copper)}
+.stat-sub{
+  font-size:11px;color:var(--stone);
+  margin-top:5px;
 }
-.hero-stat{
-  background:rgba(247,244,239,.04);
-  border:0.5px solid rgba(217,211,203,.12);
-  border-radius:2px;padding:16px 20px;
+
+/* SECTION HEADER */
+.sec-header{
+  display:flex;align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:14px;
 }
-.hero-stat-val{
-  font-family:'Cormorant Garamond',serif;
-  font-size:2rem;font-weight:300;color:#F7F4EF;line-height:1;
+.sec-title{
+  font-size:9px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--stone);
 }
-.hero-stat-val.gold{color:#C9A96E}
-.hero-stat-lbl{
-  font-size:9px;color:rgba(237,232,224,.28);
-  margin-top:4px;letter-spacing:.1em;text-transform:uppercase;
+.sec-link{
+  font-size:11px;color:var(--stone);
+  text-decoration:none;letter-spacing:.04em;
+  transition:color .12s;
+}
+.sec-link:hover{color:var(--obs)}
+
+/* TOOL GRID */
+.tool-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:0.5px solid var(--border);
+  margin-bottom:36px;
+}
+.tool-card{
+  background:#fff;padding:24px;
+  display:flex;flex-direction:column;
+  border-top:2px solid transparent;
+  transition:background .15s;
+  position:relative;
+}
+.tool-card:hover{background:var(--ivory)}
+.tool-card.t-obs{border-top-color:var(--obs)}
+.tool-card.t-cop{border-top-color:var(--copper)}
+.tool-card.t-sage{border-top-color:var(--sage)}
+.tool-card.t-soon{opacity:.5;border-top-color:var(--border)}
+.tool-card.t-soon:hover{background:#fff}
+
+.tool-mono{
+  font-family:var(--serif);
+  font-size:1.1rem;font-weight:400;
+  color:var(--stone);
+  margin-bottom:14px;
+  letter-spacing:.06em;
+}
+.tool-card.t-obs .tool-mono{color:var(--obs)}
+.tool-card.t-cop .tool-mono{color:var(--copper)}
+.tool-card.t-sage .tool-mono{color:var(--sage)}
+.tool-name{
+  font-family:var(--serif);
+  font-size:1.15rem;font-weight:400;
+  color:var(--obs);margin-bottom:6px;
+  line-height:1.2;
+}
+.tool-cat{
+  font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);margin-bottom:10px;
+}
+.tool-desc{
+  font-size:12px;color:var(--stone);
+  line-height:1.6;flex:1;margin-bottom:18px;
+}
+.tool-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;
+  text-decoration:none;color:var(--obs);
+  border-bottom:0.5px solid var(--border);
+  padding-bottom:2px;transition:all .12s;
+  align-self:flex-start;
+}
+.tool-cta:hover{color:var(--copper);border-color:var(--copper)}
+.tool-cta.cop{color:var(--copper);border-color:rgba(160,113,79,.3)}
+.tool-soon-tag{
+  font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--border);
+}
+
+/* RECENT CMAS */
+.cma-list{
+  background:#fff;
+  border:0.5px solid var(--border);
+  margin-bottom:36px;
+}
+.cma-row{
+  display:grid;
+  grid-template-columns:1fr 120px 100px 80px 90px;
+  gap:16px;align-items:center;
+  padding:14px 20px;
+  border-bottom:0.5px solid var(--border);
+  transition:background .12s;
+}
+.cma-row:last-child{border-bottom:none}
+.cma-row:hover{background:var(--ivory)}
+.cma-row.header-row{
+  background:var(--ivory);
+  border-bottom:0.5px solid var(--border);
+}
+.cma-row.header-row:hover{background:var(--ivory)}
+.col-label{
+  font-size:9px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--stone);
+}
+.cma-address{
+  font-family:var(--serif);
+  font-size:1rem;font-weight:400;
+  color:var(--obs);line-height:1.2;
+}
+.cma-client{font-size:12px;color:var(--stone);margin-top:2px}
+.cma-community{font-size:12px;color:var(--stone)}
+.cma-date{font-size:12px;color:var(--stone)}
+.cma-price{
+  font-family:var(--serif);
+  font-size:1rem;font-weight:400;color:var(--champ);
+}
+.cma-status{
+  display:inline-block;
+  font-size:9px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;
+}
+.status-pub{
+  background:rgba(74,92,78,.08);
+  color:var(--sage);border:0.5px solid rgba(74,92,78,.2);
+}
+.status-draft{
+  background:var(--ivory);
+  color:var(--stone);border:0.5px solid var(--border);
 }
 
 /* PROFILE BANNER */
 .profile-banner{
-  background:#fff;border:0.5px solid #D9D3CB;border-left:2px solid #A0714F;
-  border-radius:2px;padding:14px 20px;
-  display:flex;align-items:center;justify-content:space-between;gap:14px;
-  margin:28px 40px 0;max-width:1100px;
+  background:#fff;
+  border:0.5px solid var(--border);
+  border-left:2px solid var(--copper);
+  padding:16px 20px;
+  display:flex;align-items:center;
+  justify-content:space-between;gap:16px;
+  margin-bottom:28px;
 }
-.profile-banner-text{font-size:13px;color:#8C8479}
-.profile-banner-text strong{display:block;font-size:13px;color:#0F0F0F;margin-bottom:2px}
-.profile-banner-btn{
-  padding:8px 16px;background:#A0714F;border:none;border-radius:2px;
-  font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;
-  font-family:'Inter',sans-serif;white-space:nowrap;text-decoration:none;
-  display:inline-block;letter-spacing:.1em;text-transform:uppercase;
-  transition:background .15s;
+.banner-text strong{
+  display:block;font-size:13px;
+  font-weight:500;color:var(--obs);margin-bottom:3px;
 }
-.profile-banner-btn:hover{background:#8a6040}
-
-/* MAIN */
-.main{max-width:1100px;margin:0 auto;padding:36px 40px}
-
-/* SECTION LABEL */
-.section-label{
-  font-size:9px;font-weight:600;letter-spacing:.18em;
-  text-transform:uppercase;color:#8C8479;margin-bottom:16px;
-}
-
-/* TOOL GRID */
-.tools-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:1px;background:#D9D3CB;
-  border:0.5px solid #D9D3CB;
-  margin-bottom:1px;
-}
-
-/* TOOL CARD */
-.tool-card{
-  background:#fff;padding:24px;
-  transition:all .2s;position:relative;
-  display:flex;flex-direction:column;
-  border-top:2px solid transparent;
-}
-.tool-card:hover{background:#FDFCFA}
-.tool-card.obsidian-top{border-top-color:#0F0F0F}
-.tool-card.copper-top{border-top-color:#A0714F}
-.tool-card.sage-top{border-top-color:#4A5C4E}
-.tool-card-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
-.tool-icon-lux{
-  width:40px;height:40px;border-radius:2px;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.1rem;font-weight:400;
-  flex-shrink:0;
-  border:0.5px solid #D9D3CB;
-  color:#0F0F0F;background:#F7F4EF;
-  letter-spacing:.02em;
-}
-.tool-icon-lux.copper{background:#A0714F;color:#F7F4EF;border-color:#A0714F}
-.tool-icon-lux.sage{background:#4A5C4E;color:#F7F4EF;border-color:#4A5C4E}
-.tool-icon-lux.obs{background:#0F0F0F;color:#C9A96E;border-color:#0F0F0F}
-.tool-meta{}
-.tool-category{
-  font-size:9px;font-weight:600;letter-spacing:.1em;
-  text-transform:uppercase;color:#8C8479;margin-bottom:4px;
-}
-.tool-name{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.15rem;font-weight:400;color:#0F0F0F;line-height:1.2;
-}
-.tool-desc{font-size:13px;color:#8C8479;line-height:1.6;flex:1;margin-bottom:18px}
-.tool-action{margin-top:auto}
-.tool-btn{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:9px 16px;border-radius:2px;font-size:10px;font-weight:500;
-  text-decoration:none;transition:all .15s;border:none;cursor:pointer;
-  font-family:'Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;
-}
-.tool-btn.primary{background:#0F0F0F;color:#F7F4EF}
-.tool-btn.primary:hover{background:#2C2420}
-.tool-btn.copper{background:#A0714F;color:#F7F4EF}
-.tool-btn.copper:hover{background:#8a6040}
-
-/* COMING SOON */
-.tool-card.soon{opacity:.55}
-.tool-card.soon:hover{background:#fff}
-.soon-badge{
-  display:inline-block;font-size:9px;font-weight:600;
+.banner-text span{font-size:12px;color:var(--stone)}
+.banner-btn{
+  padding:8px 16px;background:var(--copper);
+  border:none;border-radius:2px;
+  font-size:10px;font-weight:500;color:#fff;
+  cursor:pointer;font-family:var(--sans);
+  white-space:nowrap;text-decoration:none;
   letter-spacing:.1em;text-transform:uppercase;
-  background:#F7F4EF;color:#8C8479;border:0.5px solid #D9D3CB;
-  padding:3px 9px;border-radius:2px;margin-bottom:12px;
+  transition:background .12s;
 }
-.tool-card.soon .tool-btn{
-  background:#F7F4EF;color:#D9D3CB;border:0.5px solid #D9D3CB;
-  cursor:not-allowed;
-}
+.banner-btn:hover{background:#8a6040}
 
-/* DIVIDER */
-.divider{height:1px;background:#D9D3CB;margin:8px 0 28px}
-
-/* QUICK LINKS */
-.quick-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px}
-.quick-link{
-  display:flex;align-items:center;gap:6px;
-  padding:8px 14px;background:#fff;
-  border:0.5px solid #D9D3CB;
-  border-radius:2px;font-size:12px;font-weight:400;
-  color:#8C8479;text-decoration:none;transition:all .15s;
-  letter-spacing:.02em;
+/* LOADING */
+.loading{
+  margin-left:220px;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;flex-direction:column;gap:14px;
 }
-.quick-link:hover{border-color:#0F0F0F;color:#0F0F0F}
+.spinner{
+  width:28px;height:28px;
+  border:2px solid var(--border);
+  border-top-color:var(--copper);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* EMPTY STATE */
+.empty{
+  padding:48px 20px;text-align:center;
+  background:#fff;border:0.5px solid var(--border);
+}
+.empty-title{
+  font-family:var(--serif);
+  font-size:1.3rem;font-weight:300;
+  color:var(--obs);margin-bottom:6px;
+}
+.empty-sub{font-size:13px;color:var(--stone);margin-bottom:20px}
+.empty-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 20px;background:var(--obs);
+  border:none;border-radius:2px;
+  font-size:11px;font-weight:500;color:#fff;
+  cursor:pointer;font-family:var(--sans);
+  text-decoration:none;letter-spacing:.08em;
+  text-transform:uppercase;transition:background .12s;
+}
+.empty-btn:hover{background:var(--esp)}
 
 /* RESPONSIVE */
-@media(max-width:768px){
-  .header{padding:0 16px}
-  .hero{padding:36px 20px}
-  .main{padding:24px 16px}
-  .tools-grid{grid-template-columns:1fr}
-  .profile-banner{margin:16px 20px 0;flex-direction:column}
-  .hero-stats{gap:10px}
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .loading{margin-left:0}
+  .stat-row{grid-template-columns:1fr 1fr}
+  .tool-grid{grid-template-columns:1fr}
+  .cma-row{grid-template-columns:1fr 80px}
+  .cma-row > *:nth-child(n+3){display:none}
+  .page{padding:20px}
 }
 </style>
 </head>
@@ -248,234 +438,303 @@ body{
 <!-- LOADING -->
 <div id="loading" class="loading">
   <div class="spinner"></div>
-  <p style="color:#888;font-size:14px">Loading your dashboard...</p>
+  <p style="font-size:13px;color:var(--stone)">Loading your dashboard...</p>
 </div>
 
-<!-- APP -->
-<div id="app" style="display:none">
-
-<div id="sphere-header"></div>
-
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-content">
-    <div class="hero-greeting" id="hero-greeting">Good morning</div>
-    <div class="hero-title">Welcome back, <span id="hero-name">Kyle</span></div>
-    <div class="hero-sub">Your real estate tools — all in one place</div>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="hero-stat-val" id="stat-cmas">—</div>
-        <div class="hero-stat-lbl">CMAs created</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-val gold" id="stat-published">—</div>
-        <div class="hero-stat-lbl">Published to clients</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-val" id="stat-plan">Free trial</div>
-        <div class="hero-stat-lbl">Current plan</div>
-      </div>
-    </div>
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar" style="display:none">
+  <div class="sidebar-logo">
+    <div class="logo-text">Inside The <span>Sphere</span></div>
+    <div class="logo-sub">Real Estate Tools</div>
   </div>
-</div>
 
-<!-- PROFILE COMPLETE BANNER -->
-<div class="profile-banner" id="profile-banner" style="display:none">
-  <div>
-    <div class="profile-banner-text">
-      <strong>Complete your agent profile</strong>
-      Your headshot, bio, and reviews appear on every CMA you send to clients
-    </div>
+  <div class="sidebar-section">Tools</div>
+  <a href="" class="nav-item active" id="nav-dashboard">
+    <span class="nav-icon">⊞</span> Dashboard
+  </a>
+  <a href="../cma/" class="nav-item" id="nav-cma">
+    <span class="nav-icon">◫</span> CMA Builder
+  </a>
+  <a href="../newsletter/" class="nav-item" id="nav-newsletter">
+    <span class="nav-icon">◻</span> Newsletter
+  </a>
+  <a href="../Bold-trail-newsletter/" class="nav-item" id="nav-boldtrail">
+    <span class="nav-icon">◻</span> Bold Trail
+  </a>
+
+  <div class="sidebar-section">Coming soon</div>
+  <div class="nav-item soon">
+    <span class="nav-icon">◻</span> Listing Checklist
+    <span class="nav-soon">Soon</span>
   </div>
-  <a href="../profile.html" class="profile-banner-btn">Complete profile →</a>
-</div>
+  <div class="nav-item soon">
+    <span class="nav-icon">◻</span> Buyer Checklist
+    <span class="nav-soon">Soon</span>
+  </div>
+  <div class="nav-item soon">
+    <span class="nav-icon">◻</span> Market Reports
+    <span class="nav-soon">Soon</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="../profile.html" class="agent-card" id="agent-card">
+      <div class="agent-initials" id="sidebar-initials">KD</div>
+      <div class="agent-info">
+        <div class="agent-name" id="sidebar-name">Kyle Duiker</div>
+        <div class="agent-role" id="sidebar-role">Broker Delegate</div>
+      </div>
+    </a>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
+  </div>
+</nav>
 
 <!-- MAIN -->
-<main class="main">
+<div class="main" id="main" style="display:none">
 
-  <div class="section-label">Your tools</div>
-
-  <div class="tools-grid">
-
-    <!-- CMA BUILDER -->
-    <div class="tool-card obsidian-top">
-      <div class="tool-card-top">
-        <div class="tool-icon-lux obs">CMA</div>
-        <div class="tool-meta">
-          <div class="tool-category">Market Evaluation</div>
-          <div class="tool-name">CMA Builder</div>
-        </div>
-      </div>
-      <div class="tool-desc">Interactive Comparative Market Analysis reports with password-protected client pages, live net sheet slider, and a selling journey roadmap.</div>
-      <div class="tool-action">
-        <a href="../cma/" class="tool-btn primary">Open CMA Builder →</a>
-      </div>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <span class="topbar-plan" id="topbar-plan">Free trial</span>
+      <a href="../cma/" class="topbar-new-cma">+ New CMA</a>
     </div>
-
-    <!-- NEWSLETTER BUILDER -->
-    <div class="tool-card copper-top">
-      <div class="tool-card-top">
-        <div class="tool-icon-lux copper">NL</div>
-        <div class="tool-meta">
-          <div class="tool-category">Email Marketing</div>
-          <div class="tool-name">Newsletter Builder</div>
-        </div>
-      </div>
-      <div class="tool-desc">Branded market update newsletters to your sphere. Professional templates, contact management, and campaign tracking.</div>
-      <div class="tool-action">
-        <a href="../newsletter/" class="tool-btn copper">Open Newsletter →</a>
-      </div>
-    </div>
-
-    <!-- BOLD TRAIL NEWSLETTER -->
-    <div class="tool-card sage-top">
-      <div class="tool-card-top">
-        <div class="tool-icon-lux sage">BT</div>
-        <div class="tool-meta">
-          <div class="tool-category">Email Marketing</div>
-          <div class="tool-name">Bold Trail Newsletter</div>
-        </div>
-      </div>
-      <div class="tool-desc">Specialized newsletter builder for Bold Trail (RLP Sphere) users. Design and deploy branded campaigns directly through your Bold Trail platform.</div>
-      <div class="tool-action">
-        <a href="../Bold-trail-newsletter/" class="tool-btn primary">Open Bold Trail →</a>
-      </div>
-    </div>
-
-    <!-- LISTING CHECKLIST — COMING SOON -->
-    <div class="tool-card soon">
-      <div class="soon-badge">Coming soon</div>
-      <div class="tool-card-top">
-        <div class="tool-icon-lux">LS</div>
-        <div class="tool-meta">
-          <div class="tool-category">Transaction Tools</div>
-          <div class="tool-name">Listing Checklist</div>
-        </div>
-      </div>
-      <div class="tool-desc">Branded seller process guide — from listing appointment to sold. Share with clients so they always know what's happening and what's next.</div>
-      <div class="tool-action">
-        <button class="tool-btn" disabled>Coming soon</button>
-      </div>
-    </div>
-
-    <!-- BUYER CHECKLIST — COMING SOON -->
-    <div class="tool-card soon">
-      <div class="soon-badge">Coming soon</div>
-      <div class="tool-card-top">
-        <div class="tool-icon-lux">BC</div>
-        <div class="tool-meta">
-          <div class="tool-category">Transaction Tools</div>
-          <div class="tool-name">Buyer Checklist</div>
-        </div>
-      </div>
-      <div class="tool-desc">Step-by-step buyer process guide — pre-approval to possession. Keeps clients informed and positions you as the professional who has everything organized.</div>
-      <div class="tool-action">
-        <button class="tool-btn" disabled>Coming soon</button>
-      </div>
-    </div>
-
-    <!-- MARKET REPORTS — COMING SOON -->
-    <div class="tool-card soon">
-      <div class="soon-badge">Coming soon</div>
-      <div class="tool-card-top">
-        <div class="tool-icon-lux">MR</div>
-        <div class="tool-meta">
-          <div class="tool-category">Market Intelligence</div>
-          <div class="tool-name">Monthly Market Reports</div>
-        </div>
-      </div>
-      <div class="tool-desc">Auto-generated monthly neighbourhood market reports. Send to your sphere with one click to stay top of mind as the SE Calgary market expert.</div>
-      <div class="tool-action">
-        <button class="tool-btn" disabled>Coming soon</button>
-      </div>
-    </div>
-
   </div>
 
-  <div class="divider"></div>
-  <div class="section-label">Quick links</div>
+  <!-- PAGE -->
+  <div class="page">
 
-  <div class="quick-links">
-    <a href="../cma/" class="quick-link">📊 All CMAs</a>
-    <a href="../cma/index.html?new=1" class="quick-link">+ New CMA</a>
-    <a href="../profile.html" class="quick-link">👤 Profile & Account</a>
-    
-    <a href="../newsletter/" class="quick-link">📧 Newsletter builder</a>
-  </div>
+    <!-- PROFILE COMPLETE BANNER -->
+    <div class="profile-banner" id="profile-banner" style="display:none">
+      <div class="banner-text">
+        <strong>Complete your agent profile</strong>
+        <span>Your headshot, bio, and reviews appear on every CMA you send to clients</span>
+      </div>
+      <a href="../profile-setup.html" class="banner-btn">Set up profile →</a>
+    </div>
 
-</main>
-</div><!-- /app -->
+    <!-- WELCOME -->
+    <div class="welcome">
+      <div class="welcome-greet" id="welcome-greet">Good morning</div>
+      <div class="welcome-name">Welcome back, <em id="welcome-name">Kyle</em></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">CMAs created</div>
+        <div class="stat-value" id="stat-cmas">—</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Published to clients</div>
+        <div class="stat-value gold" id="stat-pub">—</div>
+        <div class="stat-sub">Active reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sphere contacts</div>
+        <div class="stat-value copper">554</div>
+        <div class="stat-sub">SE Calgary</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current plan</div>
+        <div class="stat-value" id="stat-plan" style="font-size:1.4rem;padding-top:8px">Free trial</div>
+        <div class="stat-sub"><a href="../profile.html" style="color:var(--copper);text-decoration:none;font-size:11px;letter-spacing:.04em">Upgrade →</a></div>
+      </div>
+    </div>
+
+    <!-- RECENT CMAS -->
+    <div class="sec-header">
+      <div class="sec-title">Recent CMAs</div>
+      <a href="../cma/" class="sec-link">View all →</a>
+    </div>
+    <div class="cma-list" id="cma-list">
+      <div class="cma-row header-row">
+        <div class="col-label">Address</div>
+        <div class="col-label">Community</div>
+        <div class="col-label">Date</div>
+        <div class="col-label">Price</div>
+        <div class="col-label">Status</div>
+      </div>
+      <div id="cma-rows">
+        <div class="empty">
+          <div class="empty-title">No CMAs yet</div>
+          <div class="empty-sub">Create your first market evaluation report</div>
+          <a href="../cma/" class="empty-btn">+ Create CMA</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="sec-header">
+      <div class="sec-title">Your tools</div>
+    </div>
+    <div class="tool-grid">
+
+      <div class="tool-card t-obs">
+        <div class="tool-mono">CMA</div>
+        <div class="tool-cat">Market evaluation</div>
+        <div class="tool-name">CMA Builder</div>
+        <div class="tool-desc">Interactive market analysis reports with password-protected client pages, live net sheet, and selling journey roadmap.</div>
+        <a href="../cma/" class="tool-cta">Open CMA Builder →</a>
+      </div>
+
+      <div class="tool-card t-cop">
+        <div class="tool-mono" style="color:var(--copper)">NL</div>
+        <div class="tool-cat">Email marketing</div>
+        <div class="tool-name">Newsletter Builder</div>
+        <div class="tool-desc">Branded market update newsletters to your sphere. Templates, contact management, and campaign tracking.</div>
+        <a href="../newsletter/" class="tool-cta cop">Open Newsletter →</a>
+      </div>
+
+      <div class="tool-card t-sage">
+        <div class="tool-mono" style="color:var(--sage)">BT</div>
+        <div class="tool-cat">Email marketing</div>
+        <div class="tool-name">Bold Trail Newsletter</div>
+        <div class="tool-desc">Newsletter builder for Bold Trail (RLP Sphere) users. Design and deploy branded campaigns directly.</div>
+        <a href="../Bold-trail-newsletter/" class="tool-cta">Open Bold Trail →</a>
+      </div>
+
+      <div class="tool-card t-soon">
+        <div class="tool-mono">LS</div>
+        <div class="tool-cat">Transaction tools</div>
+        <div class="tool-name">Listing Checklist</div>
+        <div class="tool-desc">Branded seller process guide from listing appointment to sold. Keep clients informed at every step.</div>
+        <span class="tool-soon-tag">Coming soon</span>
+      </div>
+
+      <div class="tool-card t-soon">
+        <div class="tool-mono">BC</div>
+        <div class="tool-cat">Transaction tools</div>
+        <div class="tool-name">Buyer Checklist</div>
+        <div class="tool-desc">Step-by-step buyer guide from pre-approval to possession. Positions you as the organized professional.</div>
+        <span class="tool-soon-tag">Coming soon</span>
+      </div>
+
+      <div class="tool-card t-soon">
+        <div class="tool-mono">MR</div>
+        <div class="tool-cat">Market intelligence</div>
+        <div class="tool-name">Monthly Market Reports</div>
+        <div class="tool-desc">Auto-generated neighbourhood market reports. Send to your sphere with one click.</div>
+        <span class="tool-soon-tag">Coming soon</span>
+      </div>
+
+    </div>
+
+  </div><!-- /page -->
+</div><!-- /main -->
 
 <script>
 let currentUser = null;
 
 firebase.auth().onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = '../login.html';
-    return;
-  }
+  if (!user) { window.location.href = '../login.html'; return; }
   currentUser = user;
   loadDashboard(user);
 });
 
 function loadDashboard(user) {
-  // Set greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('hero-greeting').textContent = greeting;
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('welcome-greet').textContent = greet;
 
-  // Load profile from Firestore
   db.collection('users').doc(user.uid).get()
     .then(doc => {
-      let firstName = '';
+      let firstName = user.displayName?.split(' ')[0] || 'there';
+      let lastName = '';
       let initials = 'KD';
-      let headshotUrl = '';
+      let headshot = '';
+      let title = 'Agent';
+      let plan = 'free';
       let profileComplete = false;
-      let plan = 'Free trial';
 
       if (doc.exists) {
         const data = doc.data();
-        const profile = data.agentProfile || {};
-        firstName = profile.firstName || user.displayName?.split(' ')[0] || 'there';
-        const lastName = profile.lastName || '';
-        initials = ((firstName.charAt(0)) + (lastName.charAt(0) || '')).toUpperCase() || 'KD';
-        headshotUrl = profile.photoUrls?.headshot || '';
+        const p = data.agentProfile || {};
+        firstName = p.firstName || firstName;
+        lastName = p.lastName || '';
+        title = p.title || 'Agent';
+        headshot = p.photoUrls?.headshot || '';
+        plan = data.plan || 'free';
         profileComplete = data.profileComplete || false;
-        plan = data.plan === 'pro' ? 'Pro' : data.plan === 'team' ? 'Team' : 'Free trial';
-      } else {
-        firstName = user.displayName?.split(' ')[0] || 'there';
+        initials = ((firstName.charAt(0)) + (lastName.charAt(0) || '')).toUpperCase();
       }
 
-      // Update hero
-      document.getElementById('hero-name').textContent = firstName;
-      document.getElementById('stat-plan').textContent = plan;
+      // Welcome
+      document.getElementById('welcome-name').textContent = firstName;
 
-      // Nav handled by js/header.js
+      // Sidebar
+      document.getElementById('sidebar-name').textContent = [firstName, lastName].filter(Boolean).join(' ');
+      document.getElementById('sidebar-role').textContent = title;
+      document.getElementById('sidebar-initials').textContent = initials;
 
-      // Show profile banner if incomplete
+      if (headshot) {
+        const av = document.getElementById('sidebar-initials');
+        const img = document.createElement('img');
+        img.src = headshot;
+        img.className = 'agent-avatar';
+        img.alt = firstName;
+        img.onerror = () => img.replaceWith(av);
+        av.replaceWith(img);
+      }
+
+      // Plan
+      const planLabel = {free:'Free trial',pro:'Pro',team:'Team'}[plan] || 'Free trial';
+      document.getElementById('topbar-plan').textContent = planLabel;
+      document.getElementById('stat-plan').textContent = planLabel;
+
+      // Profile banner
       if (!profileComplete) {
         document.getElementById('profile-banner').style.display = 'flex';
       }
 
-      // Load CMA stats
-      return db.collection('users').doc(user.uid).collection('cmas').get();
+      // Load CMAs
+      return db.collection('users').doc(user.uid).collection('cmas')
+        .orderBy('updatedAt', 'desc').limit(5).get();
     })
-    .then(snapshot => {
-      if (snapshot) {
-        const total = snapshot.size;
-        const published = snapshot.docs.filter(d => d.data().status === 'published').length;
-        document.getElementById('stat-cmas').textContent = total;
-        document.getElementById('stat-published').textContent = published;
+    .then(snap => {
+      const total = snap ? snap.size : 0;
+      const pub = snap ? snap.docs.filter(d => d.data().status === 'published').length : 0;
+      document.getElementById('stat-cmas').textContent = total || '0';
+      document.getElementById('stat-pub').textContent = pub || '0';
+
+      if (snap && snap.size > 0) {
+        const fmt = v => v ? '$' + Math.round(parseFloat(v)).toLocaleString() : '—';
+        const fmtDate = d => {
+          if (!d) return '—';
+          try { return new Date(d).toLocaleDateString('en-CA',{month:'short',day:'numeric'}); }
+          catch { return d; }
+        };
+        document.getElementById('cma-rows').innerHTML = snap.docs.map(doc => {
+          const d = doc.data();
+          const pub = d.status === 'published';
+          return `<div class="cma-row">
+            <div>
+              <div class="cma-address">${d.address || 'No address'}</div>
+              <div class="cma-client">${d.clientName || ''}</div>
+            </div>
+            <div class="cma-community">${d.community || '—'}</div>
+            <div class="cma-date">${fmtDate(d.appointmentDate)}</div>
+            <div class="cma-price">${fmt(d.priceRec)}</div>
+            <div><span class="cma-status ${pub?'status-pub':'status-draft'}">${pub?'Published':'Draft'}</span></div>
+          </div>`;
+        }).join('');
       }
     })
     .catch(err => console.error(err))
     .finally(() => {
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('main').style.display = 'flex';
     });
 }
 
-// Logout handled by js/header.js (sphereLogout)
+function doLogout() {
+  if (confirm('Log out of Inside The Sphere?')) {
+    firebase.auth().signOut().then(() => {
+      window.location.href = '../login.html';
+    });
+  }
+}
 </script>
 </body>
 </html>
