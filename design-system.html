@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside The Sphere — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ── DESIGN TOKENS ── */
+:root{
+  /* 2026 Luxury Palette — APPROVED */
+  --obsidian:  #0F0F0F;   /* Near black — primary dark */
+  --espresso:  #2C2420;   /* Warm dark brown — hero backgrounds */
+  --stone:     #8C8479;   /* Secondary text, labels */
+  --parchment: #EDE8E0;   /* Alternate section backgrounds */
+  --ivory:     #F7F4EF;   /* Primary page background */
+  --border:    #D9D3CB;   /* All borders — warm grey */
+  --champagne: #C9A96E;   /* Gold — prices, net proceeds */
+  --copper:    #A0714F;   /* Primary accent — eyebrows, CTAs */
+  --sage:      #4A5C4E;   /* Use sparingly */
+  --oxblood:   #6B2737;   /* Rare accent only */
+  --rlp-red:   #E31837;   /* RLP client pages ONLY */
+  /* Aliases for backwards compat */
+  --text:    #0F0F0F;
+  --muted:   #8C8479;
+  --light:   #D9D3CB;
+  --white:   #F7F4EF;
+  --off:     #EDE8E0;
+  --gold:    #C9A96E;
+
+  /* Typography */
+  --serif:   'Cormorant Garamond', Georgia, serif;
+  --sans:    'Inter', -apple-system, sans-serif;
+
+  /* Spacing scale */
+  --s1:  4px;
+  --s2:  8px;
+  --s3:  12px;
+  --s4:  16px;
+  --s5:  24px;
+  --s6:  32px;
+  --s7:  48px;
+  --s8:  64px;
+  --s9:  80px;
+  --s10: 120px;
+
+  /* Border radius — intentionally minimal for luxury */
+  --r1:  2px;   /* buttons, tags, cards */
+  --r2:  4px;   /* inputs */
+  --r3:  8px;   /* avatars, small elements */
+
+  /* Shadows — subtle only */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 24px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.12);
+
+  /* Transitions */
+  --t1: .15s ease;
+  --t2: .25s ease;
+  --t3: .4s ease;
+}
+
+/* ── SYSTEM STYLES ── */
+body{
+  font-family:var(--sans);
+  background:var(--white);
+  color:var(--text);
+  line-height:1.6;
+}
+
+/* ── LAYOUT ── */
+.ds-header{
+  background:var(--espresso);
+  padding:var(--s7) var(--s8);
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;
+  justify-content:space-between;
+}
+.ds-logo{
+  font-family:var(--serif);
+  font-size:1.4rem;font-weight:300;
+  color:var(--white);letter-spacing:.04em;
+}
+.ds-logo span{color:var(--gold)}
+.ds-version{
+  font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+}
+
+.ds-nav{
+  background:var(--off);
+  border-bottom:1px solid var(--border);
+  padding:0 var(--s8);
+  display:flex;gap:0;
+  overflow-x:auto;
+}
+.ds-nav a{
+  display:block;padding:var(--s4) var(--s5);
+  font-size:12px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all var(--t1);
+}
+.ds-nav a:hover{color:var(--text);border-color:var(--border)}
+.ds-nav a.active{color:var(--copper);border-color:var(--copper)}
+
+.ds-main{max-width:1100px;margin:0 auto;padding:var(--s8)}
+
+.ds-section{margin-bottom:var(--s10)}
+.ds-section-title{
+  font-family:var(--serif);
+  font-size:2rem;font-weight:300;
+  color:var(--obsidian);margin-bottom:var(--s2);
+  padding-bottom:var(--s4);
+  border-bottom:1px solid var(--border);
+}
+.ds-section-sub{
+  font-size:13px;color:var(--muted);
+  margin-bottom:var(--s7);line-height:1.6;
+}
+
+.ds-group{margin-bottom:var(--s7)}
+.ds-group-title{
+  font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--light);margin-bottom:var(--s5);
+}
+
+.ds-row{display:flex;gap:var(--s5);flex-wrap:wrap;align-items:flex-start;margin-bottom:var(--s5)}
+.ds-col{flex:1;min-width:200px}
+
+/* ── TOKENS DISPLAY ── */
+.token-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:var(--s4);
+}
+.color-chip{
+  border:1px solid var(--border);
+  border-radius:var(--r1);
+  overflow:hidden;
+}
+.color-swatch{height:80px}
+.color-info{
+  padding:var(--s3) var(--s4);
+  background:var(--white);
+}
+.color-name{
+  font-size:12px;font-weight:600;
+  color:var(--text);margin-bottom:2px;
+}
+.color-hex{font-size:11px;color:var(--muted);font-family:monospace}
+.color-use{font-size:10px;color:var(--light);margin-top:3px;line-height:1.4}
+
+/* ── TYPOGRAPHY DISPLAY ── */
+.type-sample{margin-bottom:var(--s6)}
+.type-meta{
+  font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--light);margin-bottom:var(--s3);
+  padding-bottom:var(--s2);
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;
+}
+.type-spec{font-family:monospace;font-size:10px;color:var(--muted)}
+
+/* ── COMPONENTS ── */
+.comp-demo{
+  background:var(--off);
+  border:1px solid var(--border);
+  border-radius:var(--r1);
+  padding:var(--s7);
+  margin-bottom:var(--s4);
+  position:relative;
+}
+.comp-demo.dark{background:var(--espresso)}
+.comp-label{
+  position:absolute;top:var(--s3);right:var(--s3);
+  font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--light);
+  background:var(--white);
+  padding:2px 8px;border-radius:20px;
+  border:1px solid var(--border);
+}
+.comp-label.dark-label{background:rgba(255,255,255,.1);color:rgba(255,255,255,.4);border-color:rgba(255,255,255,.1)}
+
+/* Buttons */
+.btn-luxury{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  padding:12px 28px;
+  font-size:11px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;
+  font-family:var(--sans);
+  border-radius:var(--r1);
+  cursor:pointer;transition:all var(--t1);
+  text-decoration:none;
+}
+.btn-primary-lux{
+  background:var(--copper);color:var(--white);border:none;
+}
+.btn-primary-lux:hover{background:#c8001f}
+.btn-ghost-dark{
+  background:transparent;color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.2);
+}
+.btn-ghost-dark:hover{border-color:rgba(255,255,255,.5);color:var(--white)}
+.btn-ghost-light{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);
+}
+.btn-ghost-light:hover{border-color:var(--text);color:var(--text)}
+.btn-outline-red{
+  background:transparent;color:var(--copper);
+  border:1px solid var(--red);
+}
+.btn-outline-red:hover{background:var(--copper);color:var(--white)}
+
+/* Form inputs */
+.input-luxury{
+  width:100%;
+  padding:12px 16px;
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--r2);
+  font-size:14px;font-family:var(--sans);
+  color:var(--text);
+  transition:all var(--t1);
+  outline:none;
+}
+.input-luxury:focus{
+  border-color:var(--obsidian);
+  box-shadow:0 0 0 3px rgba(26,26,46,.06);
+}
+.input-luxury::placeholder{color:var(--light)}
+.input-luxury.dark-input{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(255,255,255,.15);
+  color:var(--white);
+}
+.input-luxury.dark-input:focus{
+  border-color:rgba(255,255,255,.4);
+  box-shadow:none;
+}
+.input-luxury.dark-input::placeholder{color:rgba(255,255,255,.2)}
+
+.form-label-lux{
+  display:block;
+  font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;
+}
+
+/* Cards */
+.card-luxury{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--r1);
+  padding:var(--s6);
+  position:relative;
+  overflow:hidden;
+}
+.card-luxury::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:2px;
+  background:var(--copper);
+  opacity:0;transition:opacity var(--t1);
+}
+.card-luxury:hover::before{opacity:1}
+.card-luxury.gold-top::before{background:var(--gold);opacity:1}
+.card-luxury.navy-card{
+  background:var(--espresso);
+  border-color:transparent;
+}
+
+/* Eyebrow */
+.eyebrow-lux{
+  font-size:9px;font-weight:600;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:var(--copper);margin-bottom:8px;
+  display:block;
+}
+
+/* Section title patterns */
+.title-display{
+  font-family:var(--serif);
+  font-size:3rem;font-weight:300;
+  color:var(--obsidian);line-height:1.1;
+  letter-spacing:.01em;
+}
+.title-display em{font-style:italic;color:var(--muted)}
+.title-section{
+  font-family:var(--serif);
+  font-size:2rem;font-weight:300;
+  color:var(--obsidian);line-height:1.15;
+}
+.title-card{
+  font-family:var(--serif);
+  font-size:1.3rem;font-weight:400;
+  color:var(--obsidian);line-height:1.2;
+}
+.title-line-accent{
+  width:40px;height:1px;
+  background:var(--copper);
+  margin:var(--s4) 0 var(--s6);
+}
+
+/* Stat display */
+.stat-luxury{padding:var(--s6) var(--s5)}
+.stat-lux-val{
+  font-family:var(--serif);
+  font-size:3.5rem;font-weight:300;
+  color:var(--obsidian);line-height:1;
+  margin-bottom:6px;
+}
+.stat-lux-val.red{color:var(--copper)}
+.stat-lux-val.gold{color:var(--gold)}
+.stat-lux-val.white{color:var(--white)}
+.stat-lux-label{
+  font-size:9px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+}
+.stat-lux-label.white-label{color:rgba(255,255,255,.35)}
+
+/* Status tags */
+.tag-luxury{
+  display:inline-block;
+  font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;
+}
+.tag-sold{background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)}
+.tag-active{background:rgba(37,99,235,.08);color:#2563eb;border:1px solid rgba(37,99,235,.2)}
+.tag-expired{background:rgba(234,0,42,.08);color:var(--copper);border:1px solid rgba(234,0,42,.2)}
+.tag-pending{background:rgba(201,168,76,.1);color:#92650a;border:1px solid rgba(201,168,76,.2)}
+.tag-dark{background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
+
+/* Divider */
+.divider-lux{height:1px;background:var(--border);margin:var(--s7) 0}
+.divider-lux.narrow{width:48px;margin-left:0}
+.divider-lux.red{background:var(--copper);width:40px}
+
+/* Price display */
+.price-display{
+  font-family:var(--serif);
+  font-size:2.5rem;font-weight:300;
+  color:var(--gold);letter-spacing:.02em;
+}
+
+/* Section stripe */
+.stripe{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  margin-bottom:var(--s5);
+}
+.stripe-col{background:var(--white);padding:var(--s6) var(--s5)}
+.stripe-col.dark-col{background:var(--espresso)}
+
+/* Spacing demo */
+.space-demo{display:flex;gap:var(--s4);flex-wrap:wrap;align-items:flex-end}
+.space-block{
+  background:var(--copper);opacity:.15;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:var(--text);
+  letter-spacing:.06em;
+}
+
+/* DO / DON'T */
+.dos-donts{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5)}
+.do-box,.dont-box{
+  border-radius:var(--r1);
+  padding:var(--s5);
+  font-size:13px;line-height:1.6;
+}
+.do-box{
+  background:#f0fdf4;border:1px solid #bbf7d0;
+}
+.dont-box{
+  background:#fff5f5;border:1px solid #fecaca;
+}
+.do-label{
+  font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:#16a34a;margin-bottom:var(--s3);display:block;
+}
+.dont-label{
+  font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--copper);margin-bottom:var(--s3);display:block;
+}
+
+/* Rating badge */
+.rating{
+  display:inline-flex;align-items:center;gap:var(--s3);
+  padding:var(--s3) var(--s5);
+  border-radius:var(--r1);
+  font-size:13px;font-weight:600;
+  margin-bottom:var(--s5);
+}
+.rating-good{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a}
+.rating-ok{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.rating-low{background:#fff5f5;border:1px solid #fecaca;color:var(--copper)}
+
+@media(max-width:768px){
+  .ds-main{padding:var(--s5)}
+  .ds-header{padding:var(--s5)}
+  .stripe{grid-template-columns:1fr}
+  .dos-donts{grid-template-columns:1fr}
+  .token-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="ds-header">
+  <div class="ds-logo">Inside The <span>Sphere</span> — Design System</div>
+  <div class="ds-version">Version 2.0 · July 2026 · 2026 Luxury Palette</div>
+</header>
+
+<nav class="ds-nav">
+  <a href="#tokens" class="active">Tokens</a>
+  <a href="#typography">Typography</a>
+  <a href="#components">Components</a>
+  <a href="#patterns">Patterns</a>
+  <a href="#rules">Rules</a>
+  <a href="#ratings">Page Ratings</a>
+</nav>
+
+<main class="ds-main">
+
+<!-- ══ TOKENS ══════════════════════════════════ -->
+<section class="ds-section" id="tokens">
+  <div class="ds-section-title">Design Tokens</div>
+  <div class="ds-section-sub">These values are the foundation of every page. Never deviate from them. When in doubt, use less color — not more.</div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Color palette</div>
+    <div class="token-grid">
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#0F0F0F"></div>
+        <div class="color-info">
+          <div class="color-name">Obsidian</div>
+          <div class="color-hex">#0F0F0F · --obsidian</div>
+          <div class="color-use">Near black — primary dark text, tool card top borders, logo text</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#2C2420"></div>
+        <div class="color-info">
+          <div class="color-name">Espresso</div>
+          <div class="color-hex">#2C2420 · --espresso</div>
+          <div class="color-use">Hero backgrounds, net sheet, gate fallback, CTA footer, cover sections</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#8C8479"></div>
+        <div class="color-info">
+          <div class="color-name">Warm Stone</div>
+          <div class="color-hex">#8C8479 · --stone</div>
+          <div class="color-use">Secondary text, labels, form label text, muted descriptions</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#EDE8E0"></div>
+        <div class="color-info">
+          <div class="color-name">Parchment</div>
+          <div class="color-hex">#EDE8E0 · --parchment</div>
+          <div class="color-use">Alternate section backgrounds, form inputs, sidebar</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#F7F4EF;border:1px solid #D9D3CB"></div>
+        <div class="color-info">
+          <div class="color-name">Ivory</div>
+          <div class="color-hex">#F7F4EF · --ivory</div>
+          <div class="color-use">Primary page background — warm white, never pure #fff on platform</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#D9D3CB"></div>
+        <div class="color-info">
+          <div class="color-name">Border</div>
+          <div class="color-hex">#D9D3CB · --border</div>
+          <div class="color-use">All borders, dividers, grid lines — warm grey, never cool grey</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#C9A96E"></div>
+        <div class="color-info">
+          <div class="color-name">Champagne</div>
+          <div class="color-hex">#C9A96E · --champagne</div>
+          <div class="color-use">Recommended price, net proceeds, premium stat highlights — gold moments only</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#A0714F"></div>
+        <div class="color-info">
+          <div class="color-name">Copper</div>
+          <div class="color-hex">#A0714F · --copper</div>
+          <div class="color-use">Primary platform accent — eyebrow labels, accent lines, hover states, CTAs</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#4A5C4E"></div>
+        <div class="color-info">
+          <div class="color-name">Deep Sage</div>
+          <div class="color-hex">#4A5C4E · --sage</div>
+          <div class="color-use">Use sparingly — nature-grounded accent, tool card tops, secondary tags</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#6B2737"></div>
+        <div class="color-info">
+          <div class="color-name">Oxblood</div>
+          <div class="color-hex">#6B2737 · --oxblood</div>
+          <div class="color-use">Rare accent only — 1-2 elements per page maximum. Old money gravitas.</div>
+        </div>
+      </div>
+      <div class="color-chip">
+        <div class="color-swatch" style="background:#E31837"></div>
+        <div class="color-info">
+          <div class="color-name">RLP Red</div>
+          <div class="color-hex">#E31837 · RLP brand only</div>
+          <div class="color-use">CMA CLIENT PAGES ONLY — official RLP red from brand book. Never on platform UI.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Spacing scale</div>
+    <div class="space-demo">
+      <div><div class="space-block" style="width:4px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">4</div></div>
+      <div><div class="space-block" style="width:8px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">8</div></div>
+      <div><div class="space-block" style="width:12px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">12</div></div>
+      <div><div class="space-block" style="width:16px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">16</div></div>
+      <div><div class="space-block" style="width:24px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">24</div></div>
+      <div><div class="space-block" style="width:32px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">32</div></div>
+      <div><div class="space-block" style="width:48px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">48</div></div>
+      <div><div class="space-block" style="width:64px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">64</div></div>
+      <div><div class="space-block" style="width:80px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">80</div></div>
+      <div><div class="space-block" style="width:120px;height:32px"></div><div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center">120</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">Section padding: 80px vertical. Card padding: 32px. Inner spacing: 16–24px. Always use generous whitespace — luxury breathes.</p>
+  </div>
+</section>
+
+<!-- ══ TYPOGRAPHY ══════════════════════════════ -->
+<section class="ds-section" id="typography">
+  <div class="ds-section-title">Typography</div>
+  <div class="ds-section-sub">Two typefaces only. Cormorant Garamond for everything the client sees in display size. Inter for everything functional — labels, body, UI. Never mix them at the same hierarchy level.</div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Cormorant Garamond — display type</div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Display / Hero address</span><span class="type-spec">serif · 300 · clamp(2.4rem, 5vw, 4rem) · ls .01em</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);font-weight:300;color:var(--obsidian);line-height:1.05;letter-spacing:.01em">264 Mahogany Cove SE</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Section title</span><span class="type-spec">serif · 300 · 2.8rem · with italic em</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--obsidian);line-height:1.15">The <em style="font-style:italic;color:var(--muted)">evidence</em></div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Card title</span><span class="type-spec">serif · 400 · 1.4rem</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;color:var(--obsidian)">138 Mahogany Cove SE</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Price display</span><span class="type-spec">serif · 300 · 2.5rem · gold</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;color:var(--gold);letter-spacing:.02em">$699,900</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Stat value</span><span class="type-spec">serif · 300 · 3.5rem</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--obsidian);line-height:1">68<span style="font-size:1.8rem">%</span></div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Review quote</span><span class="type-spec">serif · 300 · 1.05rem · italic · ls .01em</span></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:300;font-style:italic;color:var(--text);line-height:1.7">"Kyle had our home sold in 8 days — well above asking. The offer strategy was perfect."</div>
+    </div>
+  </div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Inter — functional type</div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Eyebrow label</span><span class="type-spec">sans · 600 · 9px · ls .22em · uppercase · red</span></div>
+      <div style="font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--copper)">01 · Market overview</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Section subtitle</span><span class="type-spec">sans · 400 · 14px · muted</span></div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.65;max-width:520px">Current market conditions as of your appointment date — SE Calgary lake communities.</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Body text</span><span class="type-spec">sans · 400 · 15px · text · lh 1.75</span></div>
+      <div style="font-size:15px;color:var(--text);line-height:1.75;max-width:560px">Specializing exclusively in SE Calgary lake communities — Mahogany, Auburn Bay, Legacy, Cranston, Seton, and Chestermere. When you hire Kyle, you're hiring a specialist, not a generalist.</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Form label</span><span class="type-spec">sans · 600 · 10px · ls .12em · uppercase · muted</span></div>
+      <label class="form-label-lux">Seller name(s)</label>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Button text</span><span class="type-spec">sans · 500 · 11px · ls .16em · uppercase</span></div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase">View Report →</div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-meta"><span>Card section label</span><span class="type-spec">sans · 700 · 10px · ls .14em · uppercase · light</span></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--light)">Personal information</div>
+    </div>
+  </div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Typography rules</div>
+    <div class="dos-donts">
+      <div class="do-box">
+        <span class="do-label">✓ Do</span>
+        Use serif for addresses, prices, stats, section titles, and review quotes<br><br>
+        Use italic serif for the second word in section titles: "The <em>evidence</em>"<br><br>
+        Keep eyebrow labels at 9px with generous letter-spacing<br><br>
+        Use weight 300 for large display type — thin weights read as luxury<br><br>
+        Line height 1.05–1.15 for display, 1.6–1.75 for body
+      </div>
+      <div class="dont-box">
+        <span class="dont-label">✗ Don't</span>
+        Never use bold serif — it looks editorial, not luxury<br><br>
+        Never use more than 2 typefaces on any page<br><br>
+        Never set eyebrow labels larger than 10px<br><br>
+        Never use text-transform: uppercase on serif type<br><br>
+        Never center large blocks of body text
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMPONENTS ══════════════════════════════ -->
+<section class="ds-section" id="components">
+  <div class="ds-section-title">Components</div>
+  <div class="ds-section-sub">Reusable patterns with exact specifications. Copy these exactly — don't improvise.</div>
+
+  <!-- BUTTONS -->
+  <div class="ds-group">
+    <div class="ds-group-title">Buttons</div>
+    <div class="comp-demo dark">
+      <div class="comp-label dark-label">On dark backgrounds</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-luxury btn-primary-lux">View Report →</button>
+        <button class="btn-luxury btn-ghost-dark">📞 Call Kyle</button>
+        <button class="btn-luxury btn-ghost-dark">📅 Book a meeting</button>
+        <button class="btn-luxury btn-ghost-dark">↓ Download PDF</button>
+      </div>
+    </div>
+    <div class="comp-demo">
+      <div class="comp-label">On light backgrounds</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-luxury btn-primary-lux">Open CMA Builder →</button>
+        <button class="btn-luxury btn-ghost-light">← Dashboard</button>
+        <button class="btn-luxury btn-outline-red">Save changes</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Border radius: 2px always. Letter spacing: .16em. No rounded buttons on this platform. Never full-width buttons except on mobile.</p>
+  </div>
+
+  <!-- EYEBROW + TITLE PATTERN -->
+  <div class="ds-group">
+    <div class="ds-group-title">Section header pattern</div>
+    <div class="comp-demo">
+      <div class="comp-label">Standard section header</div>
+      <span class="eyebrow-lux">02 · Comparable sales</span>
+      <div class="title-section">The <em style="font-style:italic;color:var(--muted)">evidence</em></div>
+      <div class="title-line-accent"></div>
+      <p style="font-size:14px;color:var(--muted);max-width:480px">Similar properties recently sold, active, and expired in your neighbourhood.</p>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Always: eyebrow → serif title → 40px red accent line → subtitle. Never skip the accent line. Number eyebrows on client pages (01, 02, 03...).</p>
+  </div>
+
+  <!-- STAT BLOCKS -->
+  <div class="ds-group">
+    <div class="ds-group-title">Stat blocks</div>
+    <div class="comp-demo">
+      <div class="comp-label">Three-column stat stripe — client page</div>
+      <div class="stripe">
+        <div class="stripe-col">
+          <div class="stat-lux-label">Absorption rate</div>
+          <div class="stat-lux-val red" style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--copper);line-height:1;margin:8px 0 4px">68%</div>
+          <div style="font-size:12px;color:var(--muted)">Last 30 days</div>
+        </div>
+        <div class="stripe-col">
+          <div class="stat-lux-label">Avg. days on market</div>
+          <div class="stat-lux-val" style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--obsidian);line-height:1;margin:8px 0 4px">17</div>
+          <div style="font-size:12px;color:var(--muted)">Sold listings</div>
+        </div>
+        <div class="stripe-col">
+          <div class="stat-lux-label">List-to-sale ratio</div>
+          <div class="stat-lux-val gold" style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--gold);line-height:1;margin:8px 0 4px">98.4%</div>
+          <div style="font-size:12px;color:var(--muted)">Last 60 days</div>
+        </div>
+      </div>
+    </div>
+    <div class="comp-demo dark">
+      <div class="comp-label dark-label">On dark — dashboard hero</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:16px 20px;border-radius:2px">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--white);line-height:1">3</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:4px">CMAs created</div>
+        </div>
+        <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:16px 20px;border-radius:2px">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--gold);line-height:1">2</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:4px">Published</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS TAGS -->
+  <div class="ds-group">
+    <div class="ds-group-title">Status tags</div>
+    <div class="comp-demo">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <span class="tag-luxury tag-sold">Sold</span>
+        <span class="tag-luxury tag-active">Active</span>
+        <span class="tag-luxury tag-pending">Pending</span>
+        <span class="tag-luxury tag-expired">Expired</span>
+        <span class="tag-luxury" style="background:rgba(100,116,139,.08);color:#475569;border:1px solid rgba(100,116,139,.2)">Terminated</span>
+      </div>
+    </div>
+    <div class="comp-demo dark">
+      <div style="display:flex;gap:10px">
+        <span class="tag-luxury tag-dark">Draft</span>
+        <span class="tag-luxury" style="background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.25)">Published</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM INPUTS -->
+  <div class="ds-group">
+    <div class="ds-group-title">Form inputs</div>
+    <div class="comp-demo">
+      <div style="max-width:400px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="form-label-lux">Property address</label>
+          <input class="input-luxury" placeholder="570 Legacy Circle SE, Calgary">
+        </div>
+        <div>
+          <label class="form-label-lux">Client page password</label>
+          <input class="input-luxury" type="password" placeholder="e.g. Legacy2026">
+        </div>
+      </div>
+    </div>
+    <div class="comp-demo dark">
+      <div style="max-width:380px">
+        <div style="font-size:9px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:20px">Private Market Evaluation</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--white);margin-bottom:24px;letter-spacing:.01em">264 Mahogany Cove SE</div>
+        <div style="width:40px;height:1px;background:rgba(255,255,255,.2);margin-bottom:24px"></div>
+        <input class="input-luxury dark-input" placeholder="Access code" style="max-width:300px;text-align:center;letter-spacing:.1em;margin-bottom:12px">
+        <button class="btn-luxury btn-ghost-dark" style="width:auto">View Report →</button>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ PATTERNS ════════════════════════════════ -->
+<section class="ds-section" id="patterns">
+  <div class="ds-section-title">Layout Patterns</div>
+  <div class="ds-section-sub">These are the recurring structural patterns. Use them consistently across every page.</div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Dark / light alternation — client page</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8;max-width:600px">
+      Client pages alternate section backgrounds in this order:<br>
+      <strong style="color:var(--text)">White → Off-white → White → Off-white → Navy (net sheet) → White → Off-white → Navy (shelter) → Navy (footer)</strong><br><br>
+      Never two navy sections in a row. Never two off-white sections in a row. The contrast rhythm keeps the page feeling dynamic without being chaotic.
+    </div>
+  </div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Grid lines — cards and comps</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8;max-width:600px">
+      Instead of individual cards with box-shadows, use a grid line approach: set <code style="font-family:monospace;background:var(--off);padding:2px 6px;border-radius:2px">gap:1px;background:var(--border)</code> on the container and <code style="font-family:monospace;background:var(--off);padding:2px 6px;border-radius:2px">background:var(--white)</code> on each child. The border color bleeds through the gap creating clean editorial grid lines. This is what makes comps and stats look like a luxury magazine spread.
+    </div>
+  </div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Max content widths</div>
+    <div style="font-size:13px;color:var(--muted);line-height:2">
+      Page max-width: <strong style="color:var(--text)">960px</strong> centered<br>
+      Section inner padding: <strong style="color:var(--text)">48px horizontal</strong><br>
+      Net sheet max-width: <strong style="color:var(--text)">680px</strong> centered<br>
+      Form max-width: <strong style="color:var(--text)">760px</strong><br>
+      Gate card max-width: <strong style="color:var(--text)">480px</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ══ RULES ═══════════════════════════════════ -->
+<section class="ds-section" id="rules">
+  <div class="ds-section-title">Non-Negotiable Rules</div>
+  <div class="ds-section-sub">These rules apply to every page, every time. No exceptions.</div>
+
+  <div class="dos-donts">
+    <div class="do-box" style="margin-bottom:16px">
+      <span class="do-label">✓ Always</span>
+      Border radius 2px on cards, buttons, tags — never rounded<br><br>
+      Cormorant Garamond for any text over 1.2rem<br><br>
+      Red eyebrow label above every section title<br><br>
+      40px red accent line below every section title<br><br>
+      80px vertical padding on client page sections<br><br>
+      Gold for recommended prices and net proceeds — nothing else<br><br>
+      Generous whitespace — when in doubt, add more space<br><br>
+      Property photo as the gate background<br><br>
+      "Prepared for [Name]" on the password gate<br><br>
+      Client name in presentation type label on cover
+    </div>
+    <div class="dont-box">
+      <span class="dont-label">✗ Never</span>
+      No rounded corners (border-radius > 4px) on major elements<br><br>
+      No drop shadows except subtle hover states<br><br>
+      No gradient backgrounds except the gate overlay and hero<br><br>
+      No bullet points in client-facing copy<br><br>
+      No emoji in client-facing sections (CTA buttons excepted)<br><br>
+      No "Inside The Sphere" branding on the client page gate<br><br>
+      No centered body text longer than 2 lines<br><br>
+      No more than 3 fonts or 5 font weights total<br><br>
+      No red for anything other than accent/CTA — not errors, not warnings<br><br>
+      No gradient icon squares (replace with simple SVG or text initials)
+    </div>
+  </div>
+
+  <div class="divider-lux"></div>
+
+  <div class="ds-group">
+    <div class="ds-group-title">Dev rules</div>
+    <div style="font-size:13px;color:var(--muted);line-height:2">
+      Every new page includes <code style="font-family:monospace;background:var(--off);padding:2px 6px">&lt;script src="/js/profile.js"&gt;</code> and <code style="font-family:monospace;background:var(--off);padding:2px 6px">&lt;script src="/js/header.js"&gt;</code><br>
+      Set <code style="font-family:monospace;background:var(--off);padding:2px 6px">window.sphereActivePage</code> to the correct nav key<br>
+      Client pages do not use header.js — they are standalone<br>
+      Rate every page out of 10 before shipping — minimum 8/10
+    </div>
+  </div>
+</section>
+
+<!-- ══ RATINGS ═════════════════════════════════ -->
+<section class="ds-section" id="ratings">
+  <div class="ds-section-title">Page Ratings</div>
+  <div class="ds-section-sub">Honest assessment of every page built so far. Updated as pages improve.</div>
+
+  <div style="display:flex;flex-direction:column;gap:24px">
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">signup.html — Create Account</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/signup.html</div>
+        </div>
+        <span class="rating rating-ok">7 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> Split layout, clean form, step indicators.<br>
+        <strong style="color:var(--text)">Improve:</strong> Replace feature list with one elegant sentence. Refine step indicators to thin lines. Add a subtle property photo on the left panel.
+      </div>
+    </div>
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">profile-setup.html — Onboarding</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/profile-setup.html</div>
+        </div>
+        <span class="rating rating-ok">6.5 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> 5-step flow, skip option, good structure.<br>
+        <strong style="color:var(--text)">Improve:</strong> Replace emoji step icons with thin SVG. More generous spacing. Warmer background.
+      </div>
+    </div>
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">smarttools/index.html — Dashboard</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/smarttools/</div>
+        </div>
+        <span class="rating rating-ok">7.5 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> Dark navy hero, clean tool cards, stat blocks, quick links.<br>
+        <strong style="color:var(--text)">Improve:</strong> Replace gradient icon squares with monogram initials or SVG. Ghost coming-soon cards more. Add serif to stat numbers in hero.
+      </div>
+    </div>
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">profile.html — Profile & Account</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/profile.html</div>
+        </div>
+        <span class="rating rating-ok">7 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> Clean layout, good sidebar, all sections present.<br>
+        <strong style="color:var(--text)">Improve:</strong> Swap grey background for off-white (#f8f7f5). Add serif to section titles. More breathing room between form groups.
+      </div>
+    </div>
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">cma/edit.html — CMA Editor</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/cma/edit.html</div>
+        </div>
+        <span class="rating rating-low">6 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> Good section structure, auto-save, comparables table.<br>
+        <strong style="color:var(--text)">Improve:</strong> Biggest gap — dark JARVIS aesthetic doesn't match platform. Rebuild in clean white to match profile.html. This is the most-used page.
+      </div>
+    </div>
+
+    <div class="card-luxury">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">cma/client/ — Password Gate</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/cma/client/</div>
+        </div>
+        <span class="rating rating-ok">6.5 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> No platform branding, good type, presentation type label.<br>
+        <strong style="color:var(--text)">Improve:</strong> Property photo not loading (need propPhotoUrl field in editor). More vertical breathing room. Photo is the whole point.
+      </div>
+    </div>
+
+    <div class="card-luxury gold-top">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--obsidian)">cma/client/ — Report</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">insidethesphere.com/cma/client/ (after password)</div>
+        </div>
+        <span class="rating rating-good">8 / 10</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">What works:</strong> Cormorant Garamond throughout, editorial layout, comp cards, value range, net sheet slider, reviews from profile, Shelter Foundation.<br>
+        <strong style="color:var(--text)">Improve:</strong> Add MLS photo URLs to comp cards. Comp photos are the biggest visual upgrade. With real data and photos this is a 9.5.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="divider-lux"></div>
+  <p style="font-size:13px;color:var(--muted)"><strong style="color:var(--text)">Target:</strong> Every client-facing page should reach 9/10 before being shown to a seller. Every backend page should reach 8/10 before inviting other agents.</p>
+
+</section>
+
+</main>
+
+<script>
+// Active nav on scroll
+const sections = document.querySelectorAll('.ds-section');
+const navLinks = document.querySelectorAll('.ds-nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>
