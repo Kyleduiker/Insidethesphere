@@ -381,48 +381,28 @@ body{
 
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar" style="display:none">
-  <div class="sidebar-logo">
-    <div class="logo-text">Inside The <span>Sphere</span></div>
-    <div class="logo-sub">Real Estate Tools</div>
+  <div class="sb-logo">
+    <a href="" class="sb-logo-text">Inside The <span>Sphere</span></a>
+    <div class="sb-logo-sub">Real Estate Tools</div>
   </div>
-
-  <div class="sidebar-section">Tools</div>
-  <a href="" class="nav-item active" id="nav-dashboard">
-    <span class="nav-icon">⊞</span> Dashboard
-  </a>
-  <a href="../cma/" class="nav-item" id="nav-cma">
-    <span class="nav-icon">◫</span> CMA Builder
-  </a>
-  <a href="../newsletter/" class="nav-item" id="nav-newsletter">
-    <span class="nav-icon">◻</span> Newsletter
-  </a>
-  <a href="../Bold-trail-newsletter/" class="nav-item" id="nav-boldtrail">
-    <span class="nav-icon">◻</span> Bold Trail
-  </a>
-
-  <div class="sidebar-section">Coming soon</div>
-  <div class="nav-item soon">
-    <span class="nav-icon">◻</span> Listing Checklist
-    <span class="nav-soon">Soon</span>
-  </div>
-  <div class="nav-item soon">
-    <span class="nav-icon">◻</span> Buyer Checklist
-    <span class="nav-soon">Soon</span>
-  </div>
-  <div class="nav-item soon">
-    <span class="nav-icon">◻</span> Market Reports
-    <span class="nav-soon">Soon</span>
-  </div>
-
-  <div class="sidebar-footer">
-    <a href="../profile.html" class="agent-card" id="agent-card">
-      <div class="agent-initials" id="sidebar-initials">KD</div>
-      <div class="agent-info">
-        <div class="agent-name" id="sidebar-name">Kyle Duiker</div>
-        <div class="agent-role" id="sidebar-role">Broker Delegate</div>
+  <div class="sb-section">Tools</div>
+  <a href="" class="sb-item active" id="nav-dashboard"><span>◻</span> Dashboard</a>
+  <a href="../cma/" class="sb-item" id="nav-cma"><span>◻</span> CMA Builder</a>
+  <a href="../newsletter/" class="sb-item" id="nav-newsletter"><span>◻</span> Newsletter</a>
+  <a href="../Bold-trail-newsletter/" class="sb-item" id="nav-boldtrail"><span>◻</span> Bold Trail</a>
+  <div class="sb-section">Coming soon</div>
+  <div class="sb-item soon"><span>◻</span> Listing Checklist <span class="sb-soon-tag">Soon</span></div>
+  <div class="sb-item soon"><span>◻</span> Buyer Checklist <span class="sb-soon-tag">Soon</span></div>
+  <div class="sb-item soon"><span>◻</span> Market Reports <span class="sb-soon-tag">Soon</span></div>
+  <div class="sb-footer">
+    <a href="../profile.html" class="sb-agent" id="sb-agent">
+      <div class="sb-initials" id="sb-initials">KD</div>
+      <div>
+        <div class="sb-name" id="sb-name">Kyle Duiker</div>
+        <div class="sb-role" id="sb-role">Broker Delegate</div>
       </div>
     </a>
-    <button class="logout-btn" onclick="doLogout()">Log out</button>
+    <button class="sb-logout" onclick="doLogout()">Log out</button>
   </div>
 </nav>
 
