@@ -12,52 +12,60 @@
 <script src="../js/profile.js"></script>
 <script src="../js/header.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#f8f8f8;color:#1a1a1a;min-height:100vh;
+  font-family:'Inter',sans-serif;
+  background:#F7F4EF;color:#0F0F0F;min-height:100vh;
 }
 
 /* HEADER */
 .header{
-  background:#fff;border-bottom:1px solid #eee;
+  background:#0F0F0F;border-bottom:1px solid rgba(217,211,203,.15);
   padding:0 40px;display:flex;align-items:center;
-  justify-content:space-between;height:64px;
+  justify-content:space-between;height:60px;
   position:sticky;top:0;z-index:100;
 }
 .header-logo{
-  font-size:1.1rem;font-weight:700;color:#1a1a1a;
-  display:flex;align-items:center;gap:8px;text-decoration:none;
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;font-weight:300;
+  color:#F7F4EF;letter-spacing:.04em;
+  text-decoration:none;display:flex;align-items:center;gap:8px;
 }
+.header-logo span{color:#C9A96E}
 .header-nav{display:flex;align-items:center;gap:6px}
 .header-profile{
-  display:flex;align-items:center;gap:10px;
-  padding:6px 12px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;gap:9px;
+  padding:5px 12px 5px 5px;border-radius:2px;cursor:pointer;
   text-decoration:none;transition:background .15s;
-  border:1px solid #eee;
+  border:0.5px solid rgba(217,211,203,.2);
 }
-.header-profile:hover{background:#f5f5f5}
+.header-profile:hover{background:rgba(247,244,239,.06)}
 .profile-avatar{
-  width:32px;height:32px;border-radius:50%;
-  object-fit:cover;border:1.5px solid #eee;flex-shrink:0;
+  width:30px;height:30px;border-radius:50%;
+  object-fit:cover;border:1.5px solid rgba(217,211,203,.2);flex-shrink:0;
 }
 .profile-initials{
-  width:32px;height:32px;border-radius:50%;
-  background:#1a1a2e;color:#fff;
+  width:30px;height:30px;border-radius:50%;
+  background:#A0714F;color:#F7F4EF;
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;flex-shrink:0;
+  font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em;
 }
-.profile-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.profile-name{font-size:12px;font-weight:400;color:rgba(247,244,239,.7)}
 .header-btn{
-  padding:8px 14px;border-radius:8px;font-size:13px;
-  font-weight:600;cursor:pointer;border:none;
-  font-family:inherit;transition:all .15s;text-decoration:none;
+  padding:7px 14px;border-radius:2px;font-size:11px;
+  font-weight:500;cursor:pointer;border:none;
+  font-family:'Inter',sans-serif;transition:all .15s;text-decoration:none;
   display:inline-flex;align-items:center;gap:5px;
+  letter-spacing:.06em;text-transform:uppercase;
 }
-.btn-ghost{background:#f5f5f5;color:#555;border:1px solid #eee}
-.btn-ghost:hover{background:#eee}
-.btn-danger{background:#fff5f5;color:#ef4444;border:1px solid #fecaca}
-.btn-danger:hover{background:#fee2e2}
+.btn-ghost{
+  background:transparent;
+  color:rgba(247,244,239,.4);
+  border:0.5px solid rgba(217,211,203,.15);
+}
+.btn-ghost:hover{color:rgba(247,244,239,.7);border-color:rgba(217,211,203,.3)}
 
 /* LOADING */
 .loading{
@@ -65,162 +73,173 @@ body{
   justify-content:center;flex-direction:column;gap:14px;
 }
 .spinner{
-  width:36px;height:36px;border:3px solid #eee;
-  border-top-color:#1a1a2e;border-radius:50%;
+  width:32px;height:32px;border:2px solid #EDE8E0;
+  border-top-color:#A0714F;border-radius:50%;
   animation:spin .8s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* HERO */
 .hero{
-  background:#1a1a2e;padding:48px 40px;
+  background:#2C2420;padding:52px 40px;
   position:relative;overflow:hidden;
 }
 .hero::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 0% 50%,rgba(234,0,42,.15),transparent 60%),
-             radial-gradient(ellipse at 100% 50%,rgba(201,168,76,.1),transparent 60%);
+  background:
+    radial-gradient(ellipse at 0% 100%,rgba(160,113,79,.12),transparent 55%),
+    radial-gradient(ellipse at 100% 0%,rgba(201,169,110,.07),transparent 55%);
 }
 .hero-content{position:relative;z-index:1;max-width:1100px;margin:0 auto}
 .hero-greeting{
-  font-size:14px;color:rgba(255,255,255,.45);
-  margin-bottom:6px;letter-spacing:.02em;
+  font-size:10px;color:rgba(201,169,110,.45);
+  margin-bottom:8px;letter-spacing:.18em;
+  text-transform:uppercase;font-weight:400;
 }
 .hero-title{
-  font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;
-  color:#fff;margin-bottom:4px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.8rem,3vw,2.6rem);font-weight:300;
+  color:#F7F4EF;margin-bottom:4px;letter-spacing:.01em;
 }
-.hero-title span{color:#C9A84C}
-.hero-sub{font-size:14px;color:rgba(255,255,255,.4)}
+.hero-title span{color:#C9A96E;font-style:italic}
+.hero-sub{font-size:13px;color:rgba(237,232,224,.3);letter-spacing:.03em}
 .hero-stats{
-  display:flex;gap:24px;margin-top:24px;flex-wrap:wrap;
+  display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;
 }
 .hero-stat{
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
-  border-radius:10px;padding:14px 18px;
+  background:rgba(247,244,239,.04);
+  border:0.5px solid rgba(217,211,203,.12);
+  border-radius:2px;padding:16px 20px;
 }
 .hero-stat-val{
-  font-size:1.5rem;font-weight:700;color:#fff;line-height:1;
+  font-family:'Cormorant Garamond',serif;
+  font-size:2rem;font-weight:300;color:#F7F4EF;line-height:1;
 }
+.hero-stat-val.gold{color:#C9A96E}
 .hero-stat-lbl{
-  font-size:11px;color:rgba(255,255,255,.35);
-  margin-top:3px;letter-spacing:.04em;
+  font-size:9px;color:rgba(237,232,224,.28);
+  margin-top:4px;letter-spacing:.1em;text-transform:uppercase;
 }
 
-/* PROFILE COMPLETE BANNER */
+/* PROFILE BANNER */
 .profile-banner{
-  background:#fff;border:1px solid #fde68a;border-radius:10px;
-  padding:14px 18px;display:flex;align-items:center;
-  justify-content:space-between;gap:14px;
-  margin:24px 40px 0;max-width:1100px;
+  background:#fff;border:0.5px solid #D9D3CB;border-left:2px solid #A0714F;
+  border-radius:2px;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin:28px 40px 0;max-width:1100px;
 }
-.profile-banner-text{font-size:13px;color:#92400e}
-.profile-banner-text strong{display:block;font-size:14px;color:#78350f;margin-bottom:1px}
+.profile-banner-text{font-size:13px;color:#8C8479}
+.profile-banner-text strong{display:block;font-size:13px;color:#0F0F0F;margin-bottom:2px}
 .profile-banner-btn{
-  padding:8px 14px;background:#f59e0b;border:none;border-radius:7px;
-  font-size:13px;font-weight:600;color:#fff;cursor:pointer;
-  font-family:inherit;white-space:nowrap;text-decoration:none;
-  display:inline-block;
+  padding:8px 16px;background:#A0714F;border:none;border-radius:2px;
+  font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;
+  font-family:'Inter',sans-serif;white-space:nowrap;text-decoration:none;
+  display:inline-block;letter-spacing:.1em;text-transform:uppercase;
+  transition:background .15s;
 }
-.profile-banner-btn:hover{background:#d97706}
+.profile-banner-btn:hover{background:#8a6040}
 
 /* MAIN */
-.main{max-width:1100px;margin:0 auto;padding:32px 40px}
+.main{max-width:1100px;margin:0 auto;padding:36px 40px}
 
-/* SECTION */
+/* SECTION LABEL */
 .section-label{
-  font-size:10px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:#bbb;margin-bottom:14px;
+  font-size:9px;font-weight:600;letter-spacing:.18em;
+  text-transform:uppercase;color:#8C8479;margin-bottom:16px;
 }
 
 /* TOOL GRID */
 .tools-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:16px;margin-bottom:32px;
+  gap:1px;background:#D9D3CB;
+  border:0.5px solid #D9D3CB;
+  margin-bottom:1px;
 }
 
 /* TOOL CARD */
 .tool-card{
-  background:#fff;border:1px solid #eee;border-radius:14px;
-  padding:22px;transition:all .2s;position:relative;overflow:hidden;
+  background:#fff;padding:24px;
+  transition:all .2s;position:relative;
   display:flex;flex-direction:column;
+  border-top:2px solid transparent;
 }
-.tool-card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-  border-color:#ddd;
-}
+.tool-card:hover{background:#FDFCFA}
+.tool-card.obsidian-top{border-top-color:#0F0F0F}
+.tool-card.copper-top{border-top-color:#A0714F}
+.tool-card.sage-top{border-top-color:#4A5C4E}
 .tool-card-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
-.tool-icon{
-  width:48px;height:48px;border-radius:12px;
+.tool-icon-lux{
+  width:40px;height:40px;border-radius:2px;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;flex-shrink:0;
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;font-weight:400;
+  flex-shrink:0;
+  border:0.5px solid #D9D3CB;
+  color:#0F0F0F;background:#F7F4EF;
+  letter-spacing:.02em;
 }
-.tool-icon.red{background:linear-gradient(135deg,#EA002A,#c8001f)}
-.tool-icon.navy{background:linear-gradient(135deg,#1a1a2e,#2d3748)}
-.tool-icon.gold{background:linear-gradient(135deg,#C9A84C,#b8960a)}
-.tool-icon.green{background:linear-gradient(135deg,#22c55e,#16a34a)}
-.tool-icon.purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
-.tool-icon.blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
-.tool-icon.gray{background:#f5f5f5}
+.tool-icon-lux.copper{background:#A0714F;color:#F7F4EF;border-color:#A0714F}
+.tool-icon-lux.sage{background:#4A5C4E;color:#F7F4EF;border-color:#4A5C4E}
+.tool-icon-lux.obs{background:#0F0F0F;color:#C9A96E;border-color:#0F0F0F}
 .tool-meta{}
 .tool-category{
-  font-size:10px;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;color:#bbb;margin-bottom:3px;
+  font-size:9px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:#8C8479;margin-bottom:4px;
 }
-.tool-name{font-size:1rem;font-weight:700;color:#1a1a1a;line-height:1.2}
-.tool-desc{font-size:13px;color:#777;line-height:1.5;flex:1;margin-bottom:16px}
+.tool-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.15rem;font-weight:400;color:#0F0F0F;line-height:1.2;
+}
+.tool-desc{font-size:13px;color:#8C8479;line-height:1.6;flex:1;margin-bottom:18px}
 .tool-action{margin-top:auto}
 .tool-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 16px;border-radius:2px;font-size:10px;font-weight:500;
   text-decoration:none;transition:all .15s;border:none;cursor:pointer;
-  font-family:inherit;
+  font-family:'Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;
 }
-.tool-btn.primary{background:#1a1a2e;color:#fff}
-.tool-btn.primary:hover{background:#2d3748}
-.tool-btn.red{background:#EA002A;color:#fff}
-.tool-btn.red:hover{background:#c8001f}
+.tool-btn.primary{background:#0F0F0F;color:#F7F4EF}
+.tool-btn.primary:hover{background:#2C2420}
+.tool-btn.copper{background:#A0714F;color:#F7F4EF}
+.tool-btn.copper:hover{background:#8a6040}
 
 /* COMING SOON */
-.tool-card.soon{opacity:.7}
-.tool-card.soon:hover{transform:none;box-shadow:none}
+.tool-card.soon{opacity:.55}
+.tool-card.soon:hover{background:#fff}
 .soon-badge{
-  display:inline-block;font-size:9px;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;
-  background:#f5f5f5;color:#999;border:1px solid #eee;
-  padding:3px 8px;border-radius:20px;margin-bottom:10px;
+  display:inline-block;font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  background:#F7F4EF;color:#8C8479;border:0.5px solid #D9D3CB;
+  padding:3px 9px;border-radius:2px;margin-bottom:12px;
 }
 .tool-card.soon .tool-btn{
-  background:#f5f5f5;color:#bbb;cursor:not-allowed;
+  background:#F7F4EF;color:#D9D3CB;border:0.5px solid #D9D3CB;
+  cursor:not-allowed;
 }
-.tool-card.soon .tool-btn:hover{background:#f5f5f5}
-
-/* QUICK LINKS */
-.quick-links{
-  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px;
-}
-.quick-link{
-  display:flex;align-items:center;gap:7px;
-  padding:9px 14px;background:#fff;border:1px solid #eee;
-  border-radius:8px;font-size:13px;font-weight:500;
-  color:#555;text-decoration:none;transition:all .15s;
-}
-.quick-link:hover{border-color:#1a1a2e;color:#1a1a2e;background:#f8f8ff}
 
 /* DIVIDER */
-.divider{
-  height:1px;background:#eee;margin:8px 0 24px;
+.divider{height:1px;background:#D9D3CB;margin:8px 0 28px}
+
+/* QUICK LINKS */
+.quick-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px}
+.quick-link{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 14px;background:#fff;
+  border:0.5px solid #D9D3CB;
+  border-radius:2px;font-size:12px;font-weight:400;
+  color:#8C8479;text-decoration:none;transition:all .15s;
+  letter-spacing:.02em;
 }
+.quick-link:hover{border-color:#0F0F0F;color:#0F0F0F}
 
 /* RESPONSIVE */
 @media(max-width:768px){
   .header{padding:0 16px}
-  .hero{padding:32px 20px}
+  .hero{padding:36px 20px}
   .main{padding:24px 16px}
   .tools-grid{grid-template-columns:1fr}
   .profile-banner{margin:16px 20px 0;flex-direction:column}
-  .hero-stats{gap:12px}
+  .hero-stats{gap:10px}
 }
 </style>
 </head>
@@ -249,7 +268,7 @@ body{
         <div class="hero-stat-lbl">CMAs created</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-val" id="stat-published">—</div>
+        <div class="hero-stat-val gold" id="stat-published">—</div>
         <div class="hero-stat-lbl">Published to clients</div>
       </div>
       <div class="hero-stat">
@@ -279,39 +298,39 @@ body{
   <div class="tools-grid">
 
     <!-- CMA BUILDER -->
-    <div class="tool-card">
+    <div class="tool-card obsidian-top">
       <div class="tool-card-top">
-        <div class="tool-icon red">📊</div>
+        <div class="tool-icon-lux obs">CMA</div>
         <div class="tool-meta">
           <div class="tool-category">Market Evaluation</div>
           <div class="tool-name">CMA Builder</div>
         </div>
       </div>
-      <div class="tool-desc">Create interactive Comparative Market Analysis reports with password-protected client pages, live net sheet slider, and a selling journey roadmap.</div>
+      <div class="tool-desc">Interactive Comparative Market Analysis reports with password-protected client pages, live net sheet slider, and a selling journey roadmap.</div>
       <div class="tool-action">
-        <a href="../cma/" class="tool-btn red">Open CMA Builder →</a>
+        <a href="../cma/" class="tool-btn primary">Open CMA Builder →</a>
       </div>
     </div>
 
     <!-- NEWSLETTER BUILDER -->
-    <div class="tool-card">
+    <div class="tool-card copper-top">
       <div class="tool-card-top">
-        <div class="tool-icon navy">📧</div>
+        <div class="tool-icon-lux copper">NL</div>
         <div class="tool-meta">
           <div class="tool-category">Email Marketing</div>
           <div class="tool-name">Newsletter Builder</div>
         </div>
       </div>
-      <div class="tool-desc">Create and send branded market update newsletters to your sphere of influence. Professional templates, contact management, and campaign tracking.</div>
+      <div class="tool-desc">Branded market update newsletters to your sphere. Professional templates, contact management, and campaign tracking.</div>
       <div class="tool-action">
-        <a href="../newsletter/" class="tool-btn primary">Open Newsletter Builder →</a>
+        <a href="../newsletter/" class="tool-btn copper">Open Newsletter →</a>
       </div>
     </div>
 
     <!-- BOLD TRAIL NEWSLETTER -->
-    <div class="tool-card">
+    <div class="tool-card sage-top">
       <div class="tool-card-top">
-        <div class="tool-icon gold">📰</div>
+        <div class="tool-icon-lux sage">BT</div>
         <div class="tool-meta">
           <div class="tool-category">Email Marketing</div>
           <div class="tool-name">Bold Trail Newsletter</div>
@@ -319,7 +338,7 @@ body{
       </div>
       <div class="tool-desc">Specialized newsletter builder for Bold Trail (RLP Sphere) users. Design and deploy branded campaigns directly through your Bold Trail platform.</div>
       <div class="tool-action">
-        <a href="../Bold-trail-newsletter/" class="tool-btn primary">Open Bold Trail Newsletter →</a>
+        <a href="../Bold-trail-newsletter/" class="tool-btn primary">Open Bold Trail →</a>
       </div>
     </div>
 
@@ -327,7 +346,7 @@ body{
     <div class="tool-card soon">
       <div class="soon-badge">Coming soon</div>
       <div class="tool-card-top">
-        <div class="tool-icon gray">📋</div>
+        <div class="tool-icon-lux">LS</div>
         <div class="tool-meta">
           <div class="tool-category">Transaction Tools</div>
           <div class="tool-name">Listing Checklist</div>
@@ -343,7 +362,7 @@ body{
     <div class="tool-card soon">
       <div class="soon-badge">Coming soon</div>
       <div class="tool-card-top">
-        <div class="tool-icon gray">🏠</div>
+        <div class="tool-icon-lux">BC</div>
         <div class="tool-meta">
           <div class="tool-category">Transaction Tools</div>
           <div class="tool-name">Buyer Checklist</div>
@@ -359,7 +378,7 @@ body{
     <div class="tool-card soon">
       <div class="soon-badge">Coming soon</div>
       <div class="tool-card-top">
-        <div class="tool-icon gray">📈</div>
+        <div class="tool-icon-lux">MR</div>
         <div class="tool-meta">
           <div class="tool-category">Market Intelligence</div>
           <div class="tool-name">Monthly Market Reports</div>
