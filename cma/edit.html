@@ -693,6 +693,24 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label>Presentation type</label>
+                            <select class="fsel" id="presentationType" onchange="markDirty();toggleCustomType()">
+                                <option value="Private Market Evaluation">Private Market Evaluation</option>
+                                <option value="Listing Presentation">Listing Presentation</option>
+                                <option value="Home Valuation Report">Home Valuation Report</option>
+                                <option value="Seller's Market Analysis">Seller's Market Analysis</option>
+                                <option value="Prepared exclusively for you">Prepared exclusively for you</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="custom-type-wrap" style="display:none">
+                            <label>Custom title</label>
+                            <input class="fi" id="customPresentationType" placeholder="Enter your custom title..." oninput="markDirty()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
                             <label>Seller motivation</label>
                             <select id="sellerMotivation" onchange="markDirty()">
                                 <option value="">Select...</option>
@@ -1154,6 +1172,7 @@
     function populateForm() {
         const fields = [
             'clientName','clientEmail','appointmentDate','clientPassword',
+            'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
             'address','community','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
@@ -1171,12 +1190,15 @@
 
         // Set client URL preview
         updateClientUrl();
+        // Apply presentation type UI
+        toggleCustomType();
     }
 
     // ── COLLECT FORM DATA ──
     function collectFormData() {
         const fields = [
             'clientName','clientEmail','appointmentDate','clientPassword',
+            'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
             'address','community','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
@@ -1501,6 +1523,13 @@
         document.getElementById('np-tax').textContent = tax >= 0 ? '+' + fmt(tax) : '−' + fmt(Math.abs(tax));
         document.getElementById('np-other').textContent = '−' + fmt(other);
         document.getElementById('np-net').textContent = fmt(net);
+    }
+
+    // ── PRESENTATION TYPE TOGGLE ──
+    function toggleCustomType() {
+        const val = document.getElementById('presentationType')?.value;
+        const wrap = document.getElementById('custom-type-wrap');
+        if (wrap) wrap.style.display = val === 'custom' ? 'block' : 'none';
     }
 
     // ── CLOSE MODAL ON OVERLAY CLICK ──
