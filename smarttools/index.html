@@ -581,18 +581,17 @@ function loadDashboard(user) {
       document.getElementById('welcome-name').textContent = firstName;
 
       // Sidebar
-      document.getElementById('sidebar-name').textContent = [firstName, lastName].filter(Boolean).join(' ');
-      document.getElementById('sidebar-role').textContent = title;
-      document.getElementById('sidebar-initials').textContent = initials;
-
-      if (headshot) {
-        const av = document.getElementById('sidebar-initials');
+      const sbName = document.getElementById('sb-name');
+      const sbRole = document.getElementById('sb-role');
+      let sbInit = document.getElementById('sb-initials');
+      if (sbName) sbName.textContent = [firstName, lastName].filter(Boolean).join(' ');
+      if (sbRole) sbRole.textContent = title;
+      if (sbInit) sbInit.textContent = initials;
+      if (headshot && sbInit) {
         const img = document.createElement('img');
-        img.src = headshot;
-        img.className = 'agent-avatar';
-        img.alt = firstName;
-        img.onerror = () => img.replaceWith(av);
-        av.replaceWith(img);
+        img.src = headshot; img.className = 'sb-avatar'; img.alt = firstName;
+        img.onerror = () => img.replaceWith(sbInit);
+        sbInit.replaceWith(img);
       }
 
       // Plan
