@@ -46,7 +46,7 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
 }
 .gate-bg{
   position:absolute;inset:0;
-  background:var(--navy);
+  background:var(--espresso,#2C2420);
   overflow:hidden;
 }
 .gate-bg-photo{
@@ -56,19 +56,19 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   opacity:0;
   transition:opacity 1.2s ease;
 }
-.gate-bg-photo.loaded{opacity:.35}
+.gate-bg-photo.loaded{opacity:.55}
 .gate-bg-overlay{
   position:absolute;inset:0;
   background:linear-gradient(
-    135deg,
-    rgba(10,10,10,.75) 0%,
-    rgba(10,10,10,.55) 100%
+    to top,
+    rgba(10,10,10,.65) 0%,
+    rgba(10,10,10,.35) 100%
   );
 }
 .gate-card{
   position:relative;z-index:2;
-  width:100%;max-width:440px;
-  margin:20px;
+  width:100%;max-width:480px;
+  padding:0 32px;
   text-align:center;
   animation:gateIn .8s ease both;
   animation-delay:.3s;
@@ -79,40 +79,48 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
 }
 .gate-type{
   font-family:var(--sans);
-  font-size:10px;font-weight:500;
-  letter-spacing:.25em;text-transform:uppercase;
-  color:rgba(255,255,255,.45);
-  margin-bottom:20px;
+  font-size:9px;font-weight:500;
+  letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+  margin-bottom:24px;
+}
+.gate-prepared{
+  font-family:var(--serif);
+  font-size:1rem;font-weight:300;
+  color:rgba(255,255,255,.5);
+  letter-spacing:.04em;
+  margin-bottom:10px;
+  font-style:italic;
 }
 .gate-address{
   font-family:var(--serif);
-  font-size:clamp(1.8rem,5vw,2.8rem);
+  font-size:clamp(2.4rem,5vw,3.6rem);
   font-weight:300;
   color:#fff;
-  line-height:1.15;
-  margin-bottom:6px;
+  line-height:1.05;
+  margin-bottom:0;
   letter-spacing:.01em;
 }
-.gate-city{
-  font-size:13px;font-weight:400;
-  color:rgba(255,255,255,.4);
-  letter-spacing:.06em;
-  margin-bottom:48px;
+.gate-divider{
+  width:40px;height:1px;
+  background:rgba(255,255,255,.2);
+  margin:28px auto;
 }
 .gate-input-wrap{
-  position:relative;margin-bottom:14px;
+  position:relative;margin-bottom:12px;
+  max-width:320px;
+  margin-left:auto;margin-right:auto;
 }
 .gate-input{
   width:100%;
-  padding:16px 20px;
+  padding:14px 18px;
   background:rgba(255,255,255,.07);
   border:1px solid rgba(255,255,255,.15);
   border-radius:2px;
   color:#fff;
-  font-size:16px;
+  font-size:15px;
   font-family:var(--sans);
-  letter-spacing:.15em;
-  text-align:center;
+  letter-spacing:.1em;
   transition:all .2s;
   -webkit-appearance:none;
 }
@@ -123,39 +131,38 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
 }
 .gate-input::placeholder{
   color:rgba(255,255,255,.2);
-  letter-spacing:.1em;
-  font-size:13px;
+  letter-spacing:.06em;
+  font-size:12px;
 }
 .gate-btn{
-  width:100%;
-  padding:16px;
+  padding:13px 28px;
   background:transparent;
-  border:1px solid rgba(255,255,255,.3);
+  border:1px solid rgba(255,255,255,.25);
   border-radius:2px;
-  color:rgba(255,255,255,.8);
-  font-size:12px;
+  color:rgba(255,255,255,.7);
+  font-size:11px;
   font-weight:500;
-  letter-spacing:.18em;
+  letter-spacing:.2em;
   text-transform:uppercase;
   cursor:pointer;
   font-family:var(--sans);
   transition:all .2s;
+  display:inline-block;
 }
 .gate-btn:hover{
   background:rgba(255,255,255,.07);
-  border-color:rgba(255,255,255,.5);
+  border-color:rgba(255,255,255,.45);
   color:#fff;
 }
 .gate-error{
-  font-size:12px;color:rgba(255,100,100,.8);
-  margin-top:12px;letter-spacing:.04em;
-  min-height:18px;
-  transition:opacity .2s;
+  font-size:11px;color:rgba(255,100,100,.75);
+  margin-top:10px;letter-spacing:.04em;
+  min-height:16px;
 }
 .gate-loading{
-  font-size:11px;color:rgba(255,255,255,.3);
-  letter-spacing:.1em;text-transform:uppercase;
-  margin-top:32px;
+  font-size:10px;color:rgba(255,255,255,.25);
+  letter-spacing:.12em;text-transform:uppercase;
+  margin-top:24px;
 }
 
 /* ── REPORT ───────────────────────────────────── */
@@ -927,8 +934,9 @@ input[type=range]::-moz-range-thumb{
   </div>
   <div class="gate-card">
     <div class="gate-type" id="gate-type">Private Market Evaluation</div>
+    <div class="gate-prepared" id="gate-prepared"></div>
     <div class="gate-address" id="gate-address">Loading...</div>
-    <div class="gate-city" id="gate-city"></div>
+    <div class="gate-divider"></div>
     <div class="gate-input-wrap">
       <input
         type="password"
@@ -940,7 +948,7 @@ input[type=range]::-moz-range-thumb{
     </div>
     <button class="gate-btn" onclick="unlock()">View Report &nbsp;→</button>
     <div class="gate-error" id="gate-error"></div>
-    <div class="gate-loading" id="gate-loading">Loading your report...</div>
+    <div class="gate-loading" id="gate-loading">Loading...</div>
   </div>
 </div>
 
@@ -1214,8 +1222,11 @@ if (!slug) {
         : (cmaData.presentationType || 'Private Market Evaluation');
 
       document.getElementById('gate-type').textContent = presentationType;
+      if (cmaData.clientName) {
+        document.getElementById('gate-prepared').textContent = 'Prepared for ' + cmaData.clientName;
+      }
       document.getElementById('gate-address').textContent = cmaData.address || 'Your Property';
-      document.getElementById('gate-city').textContent = cmaData.community ? cmaData.community + ', SE Calgary' : 'SE Calgary, Alberta';
+      // No city line on gate — address is sufficient
 
       // Load property photo onto gate background
       if (cmaData.propPhotoUrl) {
