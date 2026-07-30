@@ -74,12 +74,12 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 .save-pill.saving{background:#fffbeb;border-color:#fde68a;color:#92400e}
 .save-pill.saved{background:#f0fdf4;border-color:#bbf7d0;color:#16a34a}
 .btn-publish{
-  padding:8px 18px;background:var(--copper);border:none;border-radius:2px;
+  padding:8px 18px;background:var(--obs);border:none;border-radius:2px;
   font-size:11px;font-weight:500;color:#fff;cursor:pointer;
   font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase;
   transition:background .12s;
 }
-.btn-publish:hover{background:#8a6040}
+.btn-publish:hover{background:var(--esp)}
 .btn-publish.published{background:var(--sage)}
 
 /* EDITOR LAYOUT */
@@ -962,6 +962,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         if (user) {
             currentUser = user;
             loadCMA();
+            loadSidebarProfile(user);
         } else {
             window.location.href = '../login.html';
         }
@@ -1205,6 +1206,14 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         document.getElementById('comp-dom').value = comp.dom || '';
         document.getElementById('comp-year').value = comp.year || '';
         document.getElementById('comp-garage').value = comp.garage || '';
+        const communityEl = document.getElementById('comp-community');
+        if (communityEl) {
+          Array.from(communityEl.options).forEach(o => {
+            o.selected = o.value === (comp.community || '');
+          });
+        }
+        const listpriceEl = document.getElementById('comp-listprice');
+        if (listpriceEl) listpriceEl.value = comp.listPrice || '';
         document.getElementById('comp-photo').value = comp.photoUrl || '';
         document.getElementById('comp-notes').value = comp.notes || '';
 
@@ -1222,14 +1231,17 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 
         const comp = {
             address,
+            community: document.getElementById('comp-community')?.value || '',
             status: document.getElementById('comp-status').value,
             price: parseFloat(document.getElementById('comp-price').value) || 0,
+            listPrice: parseFloat(document.getElementById('comp-listprice').value) || 0,
             beds: parseFloat(document.getElementById('comp-beds').value) || 0,
             baths: parseFloat(document.getElementById('comp-baths').value) || 0,
             sqft: parseFloat(document.getElementById('comp-sqft').value) || 0,
             dom: parseInt(document.getElementById('comp-dom').value) || 0,
             year: parseInt(document.getElementById('comp-year').value) || 0,
-            garage: parseInt(document.getElementById('comp-garage').value) || 0,
+            garage: document.getElementById('comp-garage')?.value || '',
+            photoUrl: document.getElementById('comp-photo')?.value || '',
             notes: document.getElementById('comp-notes').value
         };
 
@@ -1398,6 +1410,35 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         t.className = 'toast show' + (type === 'error' ? ' error' : '');
         setTimeout(() => t.className = 'toast', 3000);
     }
+
+function loadSidebarProfile(user) {
+  db.collection('users').doc(user.uid).get().then(doc => {
+    if (!doc.exists) return;
+    const p = doc.data().agentProfile || {};
+    const first = p.firstName || '';
+    const last  = p.lastName  || '';
+    const title = p.title     || 'Agent';
+    const initials = ((first.charAt(0))+(last.charAt(0)||'')).toUpperCase() || 'KD';
+    const headshot = p.photoUrls?.headshot || '';
+
+    const sbName = document.getElementById('sb-name');
+    const sbRole = document.getElementById('sb-role');
+    let sbInit   = document.getElementById('sb-initials');
+
+    if (sbName) sbName.textContent = [first,last].filter(Boolean).join(' ');
+    if (sbRole) sbRole.textContent = title;
+    if (sbInit) sbInit.textContent = initials;
+
+    if (headshot && sbInit) {
+      const img = document.createElement('img');
+      img.src = headshot;
+      img.className = 'sb-avatar';
+      img.alt = first;
+      img.onerror = () => img.replaceWith(sbInit);
+      sbInit.replaceWith(img);
+    }
+  }).catch(console.error);
+}
 
 </script>
 </body>
