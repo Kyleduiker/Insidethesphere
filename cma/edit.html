@@ -1495,6 +1495,8 @@ function parseMatrixPDF(input) {
         });
       }
 
+      // Normalize: collapse multiple spaces, clean up common PDF artifacts
+      fullText = fullText.replace(/[ \t]+/g, ' ').replace(/\r/g, '');
       console.log('Extracted text (first 500):', fullText.slice(0, 500));
 
       const data = extractMatrixFields(fullText);
@@ -1543,30 +1545,30 @@ function extractMatrixFields(text) {
   const status = statusMap[statusM && statusM[1]] || 'sold';
 
   // Prices - LP, OP, SP lines
-  const lpM = text.match(/\bLP[:\s]+\$?([\d,]+(?:\.\d+)?)/);
-  const spM = text.match(/\bSP[:\s]+\$?([\d,]+(?:\.\d+)?)/);
+  const lpM = text.match(/\bLP[:\s$]+([\d,]+(?:\.\d+)?)/i);
+  const spM = text.match(/\bSP[:\s$]+([\d,]+(?:\.\d+)?)/i);
   const soldM = text.match(/Sold Price[:\s]+\$?([\d,]+(?:\.\d+)?)/);
   const listPrice = lpM ? cleanNum(lpM[1]) : '';
   const salePrice = spM ? cleanNum(spM[1]) : (soldM ? cleanNum(soldM[1]) : '');
 
   // DOM
-  const domM = text.match(/DOM[:\s]+(\d+)/);
+  const domM = text.match(/\bDOM[:\s]+(\d+)/i);
   const dom = domM ? domM[1] : '';
 
   // Beds
-  const bedsM = text.match(/Ttl Beds[:\s]+(\d+)/) || text.match(/Beds on Main[:\s]+(\d+)/);
+  const bedsM = text.match(/Ttl\s+Beds[:\s]+(\d+)/i) || text.match(/Beds\s+on\s+Main[:\s]+(\d+)/i);
   const beds = bedsM ? bedsM[1] : '';
 
   // Baths - "F/H Bth: 2/0" means 2 full, 0 half
-  const bathsM = text.match(/F.H Bth[:\s]+(\d+).+(\d+)/);
+  const bathsM = text.match(/F.H\s*Bth[:\s]+(\d+)[^\d]+(\d+)/i);
   const baths = bathsM ? String(parseInt(bathsM[1]||0) + parseInt(bathsM[2]||0)) : '';
 
   // Square footage
-  const sqftM = text.match(/RMS SQFT[:\s]+([\d,]+)/);
+  const sqftM = text.match(/RMS\s+SQFT[:\s]+([\d,]+(?:\.\d+)?)/i);
   const sqft = sqftM ? sqftM[1].replace(/,/g,'').replace(/\.\d+$/,'') : '';
 
   // Year built
-  const yearM = text.match(/Year Built[:\s]+(\d{4})/);
+  const yearM = text.match(/Year\s+Built[:\s]+(\d{4})/i);
   const year = yearM ? yearM[1] : '';
 
   // City / Subdivision
@@ -1597,7 +1599,7 @@ function fillCompForm(data) {
     if (el && val) el.value = val;
   };
   
-  set('comp-address', data.address);
+  set('comp-address', (data.address || '').replace(/\s+/g,' ').trim());
   set('comp-price', data.salePrice || data.listPrice);
   set('comp-listprice', data.listPrice);
   set('comp-dom', data.dom);
