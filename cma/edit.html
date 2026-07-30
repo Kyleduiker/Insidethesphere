@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1455,53 +1455,67 @@ function parseMatrixPDF(input) {
   statusEl.textContent = 'Reading PDF...';
   statusEl.style.color = '#A0714F';
 
-  // Use PDF.js to extract text
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
       const typedArray = new Uint8Array(e.target.result);
-      
-      // Set worker source
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-      
-      const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
-      let fullText = '';
-      
-      // Extract text from all pages
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        // Preserve layout by sorting items by position
-        const items = textContent.items.sort((a, b) => {
-          const yDiff = Math.round(b.transform[5]) - Math.round(a.transform[5]);
-          if (Math.abs(yDiff) > 3) return yDiff;
-          return a.transform[4] - b.transform[4];
-        });
-        fullText += items.map(item => item.str).join(' ') + '\n';
+
+      // Configure PDF.js worker
+      if (typeof pdfjsLib === 'undefined') {
+        throw new Error('PDF library not loaded');
       }
-      
-      // Parse the extracted text
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+
+      const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+
+      for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 2); pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // Group items by Y position (row) then sort by X (column)
+        const rows = {};
+        textContent.items.forEach(item => {
+          const y = Math.round(item.transform[5]);
+          if (!rows[y]) rows[y] = [];
+          rows[y].push({ x: item.transform[4], str: item.str });
+        });
+        
+        // Sort rows top to bottom, items left to right
+        Object.keys(rows).sort((a,b) => b-a).forEach(y => {
+          const line = rows[y].sort((a,b) => a.x - b.x).map(i => i.str).join(' ');
+          if (line.trim()) fullText += line + '\n';
+        });
+      }
+
+      console.log('Extracted text (first 500):', fullText.slice(0, 500));
+
       const data = extractMatrixFields(fullText);
-      
-      if (data.address) {
+      console.log('Parsed data:', data);
+
+      if (data.address || data.salePrice || data.listPrice) {
         fillCompForm(data);
         statusEl.textContent = '✓ Fields filled from Matrix report — review and save';
         statusEl.style.color = '#4A5C4E';
       } else {
-        statusEl.textContent = '⚠ Could not read this PDF — please fill fields manually';
+        statusEl.textContent = '⚠ Could not read this PDF format — please fill fields manually';
         statusEl.style.color = '#c0392b';
       }
-      
+
     } catch (err) {
       console.error('PDF parse error:', err);
       statusEl.textContent = '⚠ Error reading PDF — please fill fields manually';
       statusEl.style.color = '#c0392b';
     }
-    
-    // Reset file input
     input.value = '';
   };
-  
+
+  reader.onerror = () => {
+    statusEl.textContent = '⚠ Could not read file — please try again';
+    statusEl.style.color = '#c0392b';
+  };
+
   reader.readAsArrayBuffer(file);
 }
 
