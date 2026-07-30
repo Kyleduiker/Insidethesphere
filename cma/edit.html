@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -852,6 +853,11 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
       <div class="modal-title" id="compModalTitle">Add comparable</div>
       <button class="modal-close" onclick="closeCompModal()">✕</button>
     </div>
+    <div id="pdf-upload-bar" style="padding:12px 22px;background:#F7F4EF;border-bottom:0.5px solid #D9D3CB;display:flex;align-items:center;gap:12px">
+      <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="parseMatrixPDF(this)">
+      <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase">↑ Upload Matrix PDF</button>
+      <span style="font-size:12px;color:#8C8479" id="pdf-status">Upload a Matrix Agent Full report to auto-fill</span>
+    </div>
     <div class="modal-body">
       <div class="frow">
         <div class="fg">
@@ -1439,6 +1445,164 @@ function loadSidebarProfile(user) {
     }
   }).catch(console.error);
 }
+
+// ── MATRIX PDF PARSER ────────────────────────────────────
+function parseMatrixPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('pdf-status');
+  statusEl.textContent = 'Reading PDF...';
+  statusEl.style.color = '#A0714F';
+
+  // Use PDF.js to extract text
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const typedArray = new Uint8Array(e.target.result);
+      
+      // Set worker source
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      
+      const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+      let fullText = '';
+      
+      // Extract text from all pages
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        // Preserve layout by sorting items by position
+        const items = textContent.items.sort((a, b) => {
+          const yDiff = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+          if (Math.abs(yDiff) > 3) return yDiff;
+          return a.transform[4] - b.transform[4];
+        });
+        fullText += items.map(item => item.str).join(' ') + '\n';
+      }
+      
+      // Parse the extracted text
+      const data = extractMatrixFields(fullText);
+      
+      if (data.address) {
+        fillCompForm(data);
+        statusEl.textContent = '✓ Fields filled from Matrix report — review and save';
+        statusEl.style.color = '#4A5C4E';
+      } else {
+        statusEl.textContent = '⚠ Could not read this PDF — please fill fields manually';
+        statusEl.style.color = '#c0392b';
+      }
+      
+    } catch (err) {
+      console.error('PDF parse error:', err);
+      statusEl.textContent = '⚠ Error reading PDF — please fill fields manually';
+      statusEl.style.color = '#c0392b';
+    }
+    
+    // Reset file input
+    input.value = '';
+  };
+  
+  reader.readAsArrayBuffer(file);
+}
+
+function extractMatrixFields(text) {
+  const get = (pattern, flags, group) => {
+    const m = new RegExp(pattern, flags || '').exec(text);
+    return m ? (m[group || 1] || '').trim() : '';
+  };
+  
+  const cleanPrice = s => s.replace(/[$,]/g, '').replace(/\.00$/, '');
+  
+  // Address — first line with a street number
+  const addrMatch = text.match(/(\d+\s+[\w\s#]+?(?:,\s*)?(?:AB|BC|SK|MB|ON|QC|NS|NB|PE|NL|NT|YT|NU))/);
+  const address = addrMatch ? addrMatch[1].replace(/\s+/g,' ').replace(/,\s*(AB|BC|SK|MB|ON).*$/, '').trim() : '';
+  
+  // Status
+  const statusMatch = text.match(/\b(Sold|Active|Active Under Contract|Expired|Terminated|Pending)\b/);
+  const statusMap = {
+    'Sold': 'sold', 'Active': 'active', 
+    'Active Under Contract': 'pending', 'Pending': 'pending',
+    'Expired': 'expired', 'Terminated': 'terminated'
+  };
+  const status = statusMap[statusMatch?.[1]] || 'sold';
+  
+  // Prices
+  const lpMatch = text.match(/LP[:\s]+\$?([\d,]+(?:\.\d+)?)/);
+  const spMatch = text.match(/SP[:\s]+\$?([\d,]+(?:\.\d+)?)/);
+  const soldPriceMatch = text.match(/Sold Price[:\s]+\$?([\d,]+(?:\.\d+)?)/);
+  
+  const listPrice = lpMatch ? cleanPrice(lpMatch[1]) : '';
+  const salePrice = spMatch ? cleanPrice(spMatch[1]) : (soldPriceMatch ? cleanPrice(soldPriceMatch[1]) : '');
+  
+  // Core fields
+  const dom  = get('DOM[:\s]+(\d+)');
+  const beds = get('Ttl Beds[:\s]+(\d+)') || get('# Beds on Main[:\s]+(\d+)');
+  const sqft = get('RMS SQFT[:\s]+([\d,]+)').replace(/,/g,'').replace(/\.\d+$/,'');
+  const year = get('Year Built[:\s]+(\d{4})');
+  const psf  = get('SP/SF[:\s]+\$?([\d.]+)');
+  const city = get('City[:\s]+(\w+)');
+  
+  // Baths - F/H Bth format = full/half
+  const bathMatch = text.match(/F\/H Bth[:\s]+(\d+)\/(\d+)/);
+  const baths = bathMatch ? String(parseInt(bathMatch[1]) + parseInt(bathMatch[2])) : '';
+  
+  // Sold date
+  const soldDate = get('Sold Date[:\s]+([\d/]+)');
+  
+  // Public remarks for notes
+  const remarksMatch = text.match(/Public Remarks[:\s]*(.{50,400}?)(?:Directions:|Rooms &)/s);
+  const notes = remarksMatch ? remarksMatch[1].replace(/\s+/g,' ').trim().slice(0, 200) : '';
+  
+  // MLS number
+  const mls = get('(A\d{7})');
+  
+  return { address, status, listPrice, salePrice, dom, beds, baths, sqft, year, psf, city, notes, mls, soldDate };
+}
+
+function fillCompForm(data) {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  };
+  
+  set('comp-address', data.address);
+  set('comp-price', data.salePrice || data.listPrice);
+  set('comp-listprice', data.listPrice);
+  set('comp-dom', data.dom);
+  set('comp-beds', data.beds);
+  set('comp-baths', data.baths);
+  set('comp-sqft', data.sqft);
+  set('comp-year', data.year);
+  set('comp-notes', data.notes);
+  
+  // Set status dropdown
+  if (data.status) {
+    const statusEl = document.getElementById('comp-status');
+    if (statusEl) {
+      Array.from(statusEl.options).forEach(o => {
+        o.selected = o.value === data.status;
+      });
+    }
+  }
+  
+  // Set community from city if it matches our list
+  const communityMap = {
+    'mahogany': 'Mahogany', 'auburn': 'Auburn Bay', 'auburn bay': 'Auburn Bay',
+    'seton': 'Seton', 'cranston': 'Cranston', 'legacy': 'Legacy',
+    'chestermere': 'Chestermere'
+  };
+  const cityLower = (data.city || '').toLowerCase();
+  const community = Object.entries(communityMap).find(([k]) => cityLower.includes(k))?.[1];
+  if (community) {
+    const communityEl = document.getElementById('comp-community');
+    if (communityEl) {
+      Array.from(communityEl.options).forEach(o => {
+        o.selected = o.value === community;
+      });
+    }
+  }
+}
+// ── END MATRIX PARSER ────────────────────────────────────
 
 </script>
 </body>
