@@ -1146,11 +1146,18 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             .update(data)
             .then(() => {
                 // Also write to public_cmas for client access
+                // Sanitise: never let a FieldValue sentinel reach an array.
+                const publicComps = comps.map(c => {
+                    const o = { ...c };
+                    if (o.createdAt && typeof o.createdAt !== 'number'
+                        && typeof o.createdAt.toMillis !== 'function') delete o.createdAt;
+                    return o;
+                });
                 return db.collection('public_cmas').doc(slug).set({
                     ...data,
                     agentId: currentUser.uid,
                     cmaId: cmaId,
-                    comps: comps,
+                    comps: publicComps,
                     publishedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
@@ -1281,7 +1288,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             if (editingCompIndex !== null) {
                 comps[editingCompIndex] = { ...comps[editingCompIndex], ...comp };
             } else {
-                comps.push({ id: docRef ? docRef.id : Date.now(), ...comp });
+                comps.push({ id: docRef ? docRef.id : Date.now(), ...comp, createdAt: Date.now() });
             }
             renderComps();
             recalcCompStats();
@@ -1312,7 +1319,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         if (!wrap) return;
 
         if (!comps.length) {
-            wrap.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:20px">No comparables yet — add your first one above</p>';
+            wrap.innerHTML = '<p style="color:#8C8479;font-size:13px;text-align:center;padding:20px">No comparables yet — add your first one above</p>';
             return;
         }
 
@@ -1323,7 +1330,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             return `<tr>
                 <td><span class="status-badge ${badgeClass[c.status] || ''}">${c.status}</span></td>
                 <td>${c.address}</td>
-                <td style="font-weight:600;color:#fff">$${(c.price||0).toLocaleString()}</td>
+                <td style="font-weight:600;color:#0F0F0F">$${(c.price||0).toLocaleString()}</td>
                 <td>${c.beds||'—'} bd / ${c.baths||'—'} ba</td>
                 <td>${c.sqft ? c.sqft.toLocaleString() : '—'}</td>
                 <td>${psf ? '$'+psf : '—'}</td>
@@ -1840,7 +1847,10 @@ async function addSelectedComps() {
 
     try {
       const docRef = await colRef.add(comp);
-      comps.push({ id: docRef.id, ...comp });
+      // Keep the serverTimestamp sentinel OUT of the in-memory array:
+      // publishCMA() writes comps[] into public_cmas, and Firestore rejects
+      // FieldValue sentinels nested inside an array.
+      comps.push({ id: docRef.id, ...comp, createdAt: Date.now() });
       saved++;
     } catch (err) {
       console.error('Error saving comp:', data.address, err);
