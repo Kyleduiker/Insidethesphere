@@ -728,9 +728,44 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
               <input class="fi" type="number" id="netPrice" placeholder="699900" oninput="markDirty();recalcNet()">
             </div>
             <div class="fg">
+              <label>Commission structure</label>
+              <select class="fsel" id="commissionType" onchange="markDirty();toggleCommission();recalcNet()">
+                <option value="tiered">Tiered — % on first portion, % on balance</option>
+                <option value="flat_pct">Flat percentage of sale price</option>
+                <option value="flat_fee">Flat dollar fee</option>
+              </select>
+            </div>
+          </div>
+          <div class="frow" id="comm-tiered-row">
+            <div class="fg">
+              <label>First <span id="comm-cap-label">$100,000</span> at (%)</label>
+              <input class="fi" type="number" step="0.25" id="commTier1" placeholder="7" value="7" oninput="markDirty();recalcNet()">
+            </div>
+            <div class="fg">
+              <label>Balance at (%)</label>
+              <input class="fi" type="number" step="0.25" id="commTier2" placeholder="3" value="3" oninput="markDirty();recalcNet()">
+            </div>
+          </div>
+          <div class="frow" id="comm-cap-row">
+            <div class="fg">
+              <label>Tier threshold ($) <span>— the amount the first rate applies to</span></label>
+              <input class="fi" type="number" id="commCap" placeholder="100000" value="100000" oninput="markDirty();updateCapLabel();recalcNet()">
+            </div>
+            <div class="fg"></div>
+          </div>
+          <div class="frow" id="comm-flatpct-row" style="display:none">
+            <div class="fg">
               <label>Commission (%)</label>
               <input class="fi" type="number" step="0.25" id="commission" placeholder="3.5" value="3.5" oninput="markDirty();recalcNet()">
             </div>
+            <div class="fg"></div>
+          </div>
+          <div class="frow" id="comm-flatfee-row" style="display:none">
+            <div class="fg">
+              <label>Flat fee ($)</label>
+              <input class="fi" type="number" id="commFlatFee" placeholder="15000" oninput="markDirty();recalcNet()">
+            </div>
+            <div class="fg"></div>
           </div>
           <div class="frow">
             <div class="fg">
@@ -1051,7 +1086,8 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'address','community','propPhotoUrl','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
-            'netPrice','commission','gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
+            'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
+            'gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
             'photographerName','shootDate','shotList','offerStrategy'
         ];
 
@@ -1077,7 +1113,8 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'address','community','propPhotoUrl','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
-            'netPrice','commission','gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
+            'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
+            'gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
             'photographerName','shootDate','shotList','offerStrategy'
         ];
 
@@ -1214,7 +1251,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         document.getElementById('nav-' + id).classList.add('active');
 
         if (id === 'pricing') recalcPricing();
-        if (id === 'netsheet') recalcNet();
+        if (id === 'netsheet') { toggleCommission(); updateCapLabel(); recalcNet(); }
         if (id === 'publish') { updatePublishPanel(); updateClientUrl(); }
     }
 
@@ -1391,9 +1428,36 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
     }
 
     // ── NET SHEET ──
+    // Alberta convention: a higher rate on the first slice of the sale price,
+    // a lower rate on the balance, GST on the commission. Kept identical to
+    // the client page so both surfaces always agree.
+    function calcCommission(price, p) {
+        let base;
+        if (p.type === 'flat_fee')      base = p.flatFee;
+        else if (p.type === 'flat_pct') base = price * p.flatPct / 100;
+        else {
+            const first = Math.min(price, p.cap);
+            base = first * p.tier1 / 100 + Math.max(0, price - p.cap) * p.tier2 / 100;
+        }
+        const gst = base * p.gstPct / 100;
+        return { base: base, gst: gst, total: base + gst };
+    }
+
+    function toggleCommission() {
+        const t = document.getElementById('commissionType').value;
+        document.getElementById('comm-tiered-row').style.display  = t === 'tiered'   ? 'flex' : 'none';
+        document.getElementById('comm-cap-row').style.display     = t === 'tiered'   ? 'flex' : 'none';
+        document.getElementById('comm-flatpct-row').style.display = t === 'flat_pct' ? 'flex' : 'none';
+        document.getElementById('comm-flatfee-row').style.display = t === 'flat_fee' ? 'flex' : 'none';
+    }
+
+    function updateCapLabel() {
+        const cap = parseFloat(document.getElementById('commCap').value) || 0;
+        document.getElementById('comm-cap-label').textContent = '$' + cap.toLocaleString();
+    }
+
     function recalcNet() {
         const price = parseFloat(document.getElementById('netPrice').value) || 0;
-        const comm = parseFloat(document.getElementById('commission').value) || 0;
         const gst = parseFloat(document.getElementById('gst').value) || 0;
         const legal = parseFloat(document.getElementById('legalFees').value) || 0;
         const mortgage = parseFloat(document.getElementById('mortgageBalance').value) || 0;
@@ -1401,8 +1465,17 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         const tax = parseFloat(document.getElementById('taxAdj').value) || 0;
         const other = parseFloat(document.getElementById('otherCosts').value) || 0;
 
-        const commAmt = Math.round(price * comm / 100);
-        const gstAmt = Math.round(commAmt * gst / 100);
+        const c = calcCommission(price, {
+            type:    document.getElementById('commissionType').value,
+            tier1:   parseFloat(document.getElementById('commTier1').value) || 0,
+            tier2:   parseFloat(document.getElementById('commTier2').value) || 0,
+            cap:     parseFloat(document.getElementById('commCap').value) || 0,
+            flatPct: parseFloat(document.getElementById('commission').value) || 0,
+            flatFee: parseFloat(document.getElementById('commFlatFee').value) || 0,
+            gstPct:  gst
+        });
+        const commAmt = Math.round(c.base);
+        const gstAmt = Math.round(c.gst);
         const totalComm = commAmt + gstAmt;
         const net = Math.max(0, price - totalComm - legal - mortgage - penalty + tax - other);
 
