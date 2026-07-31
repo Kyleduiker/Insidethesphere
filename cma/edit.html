@@ -854,7 +854,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
       <button class="modal-close" onclick="closeCompModal()">✕</button>
     </div>
     <div id="pdf-upload-bar" style="padding:12px 22px;background:#F7F4EF;border-bottom:0.5px solid #D9D3CB;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="parseMatrixPDF(this)">
+      <input type="file" id="pdf-file-input" accept=".pdf" multiple style="display:none" onchange="parseMatrixPDF(this)">
       <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload Matrix PDF</button>
       <span style="font-size:12px;color:#8C8479;flex:1" id="pdf-status">Upload a Matrix Agent Full report — single or multiple listings</span>
     </div>
@@ -1459,90 +1459,284 @@ function loadSidebarProfile(user) {
 }
 
 // ── MATRIX PDF PARSER ────────────────────────────────────
+// Replaces everything in cma/edit.html between the existing
+//   "// ── MATRIX PDF PARSER ──" and "// ── END MATRIX PARSER ──" markers.
+//
+// Also change the file input on ~line 857 to allow multi-select:
+//   <input type="file" id="pdf-file-input" accept=".pdf" multiple
+//          style="display:none" onchange="parseMatrixPDF(this)">
+//
+// Format: Matrix "Client Full". Handles single- and multi-listing exports,
+// several files at once, and de-duplicates by MLS number.
+
 let parsedListings = [];
 
-function parseMatrixPDF(input) {
-  const file = input.files[0];
-  if (!file) return;
+const COMMUNITIES = ['Mahogany','Auburn Bay','Seton','Cranston','Legacy','Chestermere'];
+
+const STATUS_MAP = {
+  Active:'active', Sold:'sold', Expired:'expired', Pending:'pending',
+  Terminated:'terminated', Withdrawn:'terminated', T:'terminated'
+};
+
+const ADDR_RE = /^\d+[A-Z]?,?\s+.+?\s+(?:SE|SW|NE|NW)\s+[A-Za-z .'-]+,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d/;
+
+// Matrix offsets labels and values by ~1 unit vertically. Rounding y to an
+// integer splits them onto separate rows and breaks every label-anchored
+// match. Real line spacing is ~9-10 units, so cluster with a 2.5 tolerance.
+function clusterRows(items, tol) {
+  tol = tol || 2.5;
+  const pts = items
+    .map(i => ({ y: i.transform[5], x: i.transform[4], s: i.str }))
+    .filter(i => i.s && i.s.trim());
+  pts.sort((a, b) => b.y - a.y || a.x - b.x);
+  const rows = [];
+  for (const p of pts) {
+    const last = rows[rows.length - 1];
+    if (last && Math.abs(last.y - p.y) <= tol) last.cells.push(p);
+    else rows.push({ y: p.y, cells: [p] });
+  }
+  return rows.map(r => {
+    r.cells.sort((a, b) => a.x - b.x);
+    return r.cells.map(c => c.s).join(' ').replace(/[ \t]+/g, ' ').trim();
+  }).filter(Boolean);
+}
+
+// Anchor on the address heading. The old "^Residential" split returns zero
+// matches on Client Full, where "Residential" is a mid-line field value.
+function splitListings(pageTexts) {
+  const flat = [];
+  pageTexts.forEach((lines, pi) => lines.forEach(l => flat.push({ line: l, page: pi + 1 })));
+  const starts = [];
+  flat.forEach((r, i) => { if (ADDR_RE.test(r.line.trim())) starts.push(i); });
+  return starts.map((s, i) => {
+    const end = i + 1 < starts.length ? starts[i + 1] : flat.length;
+    const slice = flat.slice(s, end);
+    return {
+      text: slice.map(r => r.line).join('\n'),
+      startPage: slice[0].page,
+      endPage: slice[slice.length - 1].page
+    };
+  });
+}
+
+const _num = s => (s == null ? null : parseFloat(String(s).replace(/,/g, '')));
+
+function mapGarage(parking) {
+  if (!parking) return '';
+  const p = parking.toLowerCase();
+  if (/triple garage/.test(p))          return '3 car';
+  if (/double garage attached/.test(p)) return '2 car attached';
+  if (/double garage detached/.test(p)) return '2 car detached';
+  if (/single garage attached/.test(p)) return '1 car attached';
+  if (/single garage detached/.test(p)) return '1 car detached';
+  if (/garage/.test(p))                 return 'Garage';
+  if (/parking pad|driveway|off street/.test(p)) return 'No garage';
+  return '';
+}
+
+function parsePrinted(s) {
+  const m = s && s.match(/(\d{2})\/(\d{2})\/(\d{4})[ \t]+(\d{1,2}):(\d{2}):(\d{2})[ \t]*([AP])M/);
+  if (!m) return null;
+  let h = parseInt(m[4], 10);
+  if (m[7] === 'P' && h !== 12) h += 12;
+  if (m[7] === 'A' && h === 12) h = 0;
+  return new Date(+m[3], +m[1] - 1, +m[2], h, +m[5], +m[6]).getTime();
+}
+
+// Every pattern uses [ \t]* — never \s* — so a match can never cross a
+// newline and pick up the neighbouring column's value. That is the bug that
+// produced "sqft 2011" (the year) instead of 1456.
+function extractMatrixFields(chunk) {
+  const text = typeof chunk === 'string' ? chunk : chunk.text;
+  const g = re => { const m = text.match(re); return m ? m[1].trim() : null; };
+  const flags = [];
+
+  const firstLine = (text.split('\n')[0] || '').trim();
+  const qm = firstLine.match(/^(.+?\s+(?:SE|SW|NE|NW))\s+\S/);
+  const address = qm
+    ? qm[1].trim()
+    : firstLine.replace(/,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d.*$/i, '')
+              .replace(/\s+[A-Za-z .'-]+$/, '').trim();
+
+  const stM   = text.match(/^(Active|Sold|Expired|Pending|Terminated|Withdrawn|T)[ \t]+(A\d{7})\b/m);
+  const status = stM ? (STATUS_MAP[stM[1]] || 'active') : null;
+  const mls    = stM ? stM[2] : g(/\b(A\d{7})\b/);
+  if (!status) flags.push('status unread');
+  if (!mls)    flags.push('MLS unread');
+
+  const listPrice = _num(g(/\bLP:[ \t]*\$([\d,]+\.\d{2})/));
+  const origPrice = _num(g(/\bOP:[ \t]*\$([\d,]+\.\d{2})/));
+  const soldPrice = _num(g(/\bSP:[ \t]*\$([\d,]+\.\d{2})/));
+  const soldDate  = g(/\bSD:[ \t]*(\d{2}\/\d{2}\/\d{4})/);
+  if (status === 'sold' && soldPrice == null) flags.push('sold price unread');
+  if (listPrice == null) flags.push('list price unread');
+
+  // Two independent sqft anchors. Total AG prints as "<mtr2> Mtr2 <sqft> SqFt"
+  // — take the SECOND figure. Grabbing the first yields square metres (198.72),
+  // which looks plausible enough to slip past a quick glance.
+  const rms = _num(g(/RMS SQFT:[ \t]*([\d,]+(?:\.\d+)?)/));
+  const ag  = _num(g(/Total AG:[ \t]*[\d,.]+[ \t]*Mtr2[ \t]*([\d,]+(?:\.\d+)?)[ \t]*SqFt/));
+  let sqft = null;
+  if (rms != null && ag != null) {
+    sqft = rms;
+    if (Math.abs(rms - ag) > 1) flags.push('sqft mismatch: RMS ' + rms + ' vs Total AG ' + ag);
+  } else if (rms != null) { sqft = rms; flags.push('sqft from RMS only'); }
+  else if (ag != null)    { sqft = ag;  flags.push('sqft from Total AG only'); }
+  else                    { flags.push('sqft unread'); }
+
+  const bedsRaw = g(/Ttl Beds:[ \t]*(\d+)/);
+  if (bedsRaw == null) flags.push('beds unread');
+
+  const bth = text.match(/F\/H Bth:[ \t]*(\d+)[ \t]*\/[ \t]*(\d+)/);
+  if (!bth) flags.push('baths unread');
+
+  const yearRaw = g(/Year Built:[ \t]*(\d{4})/);
+  if (yearRaw == null) flags.push('year unread');
+
+  const domRaw  = g(/\bDOM:[ \t]*(\d+)/);
+  const sub     = g(/Subdivision:[ \t]*([A-Za-z .'-]+?)[ \t]*$/m);
+  const community = COMMUNITIES.find(c => c.toLowerCase() === (sub || '').toLowerCase()) || sub || '';
+  const parking = g(/^Parking:[ \t]*(.+?)(?:[ \t]*Total:[ \t]*\d+)?[ \t]*$/m);
+  const remarks = g(/Public Remarks:[ \t]*([\s\S]*?)\n(?:Directions:|Rooms & Measurements)/);
+
+  return {
+    mls: mls, address: address, community: community, status: status,
+    price: status === 'sold' ? soldPrice : listPrice,
+    listPrice: listPrice, originalPrice: origPrice,
+    soldPrice: soldPrice, soldDate: soldDate,
+    beds:  bedsRaw != null ? parseInt(bedsRaw, 10) : null,
+    baths: bth ? parseInt(bth[1], 10) + parseInt(bth[2], 10) * 0.5 : null,
+    sqft:  sqft != null ? Math.round(sqft) : null,
+    sqftRms: rms, sqftTotalAG: ag,
+    year: yearRaw != null ? parseInt(yearRaw, 10) : null,
+    dom:  domRaw  != null ? parseInt(domRaw, 10)  : null,
+    lotSize: _num(g(/Lot Size:[ \t]*([\d,]+)[ \t]*SF/)),
+    garage: mapGarage(parking),
+    printedAt: parsePrinted(g(/Printed Date:[ \t]*(\d{2}\/\d{2}\/\d{4}[ \t]+\d{1,2}:\d{2}:\d{2}[ \t]*[AP]M)/)),
+    photoUrl: '',
+    notes: remarks ? remarks.replace(/\n/g, ' ').trim() : '',
+    flags: flags
+  };
+}
+
+// Same MLS across uploads -> keep the more recently printed sheet, since
+// status and price change between exports.
+function mergeListings(all) {
+  const byMls = new Map();
+  const dupes = [];
+  for (const l of all) {
+    const key  = l.mls || (l.address + '|' + l.status);
+    const prev = byMls.get(key);
+    if (!prev) { byMls.set(key, l); continue; }
+    const keepNew = (l.printedAt || 0) >= (prev.printedAt || 0);
+    dupes.push(key);
+    if (keepNew) byMls.set(key, l);
+  }
+  return { listings: Array.from(byMls.values()), dupes: dupes };
+}
+
+async function parseMatrixPDF(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
 
   const statusEl = document.getElementById('pdf-status');
-  statusEl.textContent = 'Reading PDF...';
-  statusEl.style.color = '#A0714F';
   document.getElementById('multi-review-panel').style.display = 'none';
 
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const typedArray = new Uint8Array(e.target.result);
-      if (typeof pdfjsLib === 'undefined') throw new Error('PDF library not loaded');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+  if (typeof pdfjsLib === 'undefined') {
+    statusEl.textContent = '⚠ PDF library not loaded';
+    statusEl.style.color = '#c0392b';
+    input.value = '';
+    return;
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
+  let all = [];
+  const failed = [];
+
+  // Sequential, not parallel: a batch export runs to ~1.8MB and PDF.js holds
+  // a lot per document. Several at once on an iPad is asking for trouble.
+  for (let f = 0; f < files.length; f++) {
+    const file = files[f];
+    statusEl.textContent = files.length > 1
+      ? `Reading sheet ${f + 1} of ${files.length} — ${file.name}...`
+      : 'Reading ' + file.name + '...';
+    statusEl.style.color = '#A0714F';
+
+    try {
+      const buf = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({
-        data: typedArray,
+        data: new Uint8Array(buf),
         useWorkerFetch: false,
         isEvalSupported: false,
         useSystemFonts: true
       }).promise;
 
-      let fullText = '';
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const tc = await page.getTextContent();
-        const rows = {};
-        tc.items.forEach(item => {
-          const y = Math.round(item.transform[5]);
-          if (!rows[y]) rows[y] = [];
-          rows[y].push({ x: item.transform[4], str: item.str });
-        });
-        Object.keys(rows).sort((a,b) => b-a).forEach(y => {
-          const line = rows[y].sort((a,b) => a.x - b.x).map(i => i.str).join(' ');
-          if (line.trim()) fullText += line + '\n';
-        });
+      const pages = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const tc = await pdf.getPage(p).then(pg => pg.getTextContent());
+        pages.push(clusterRows(tc.items));
       }
 
-      // Normalize whitespace
-      fullText = fullText.replace(/[ \t]+/g, ' ').replace(/\r/g, '');
+      const chunks = splitListings(pages);
+      if (!chunks.length) { failed.push(file.name + ' (no listings found)'); continue; }
 
-      // Split into individual listings
-      const listings = splitListings(fullText);
-      console.log(`Found ${listings.length} listing(s)`);
-
-      if (listings.length === 0) {
-        statusEl.textContent = '⚠ Could not detect listings — please fill fields manually';
-        statusEl.style.color = '#c0392b';
-      } else if (listings.length === 1) {
-        // Single listing — fill the form directly
-        const data = extractMatrixFields(listings[0]);
-        if (data.address || data.salePrice || data.listPrice) {
-          fillCompForm(data);
-          statusEl.textContent = '✓ Fields filled from Matrix report — review and save';
-          statusEl.style.color = '#4A5C4E';
-        } else {
-          statusEl.textContent = '⚠ Could not read listing — please fill fields manually';
-          statusEl.style.color = '#c0392b';
-        }
-      } else {
-        // Multiple listings — show review panel
-        parsedListings = listings.map(chunk => extractMatrixFields(chunk));
-        showMultiReview(parsedListings);
-        statusEl.textContent = `✓ Found ${listings.length} listings — select which to add`;
-        statusEl.style.color = '#4A5C4E';
-      }
-
+      chunks.forEach(c => {
+        const d = extractMatrixFields(c);
+        d.sourceFile = file.name;
+        d.startPage  = c.startPage;
+        d.endPage    = c.endPage;
+        all.push(d);
+      });
     } catch (err) {
-      console.error('PDF parse error:', err);
-      statusEl.textContent = '⚠ Error reading PDF — please fill fields manually';
-      statusEl.style.color = '#c0392b';
+      console.error('PDF parse error in ' + file.name + ':', err);
+      failed.push(file.name);
     }
-    input.value = '';
-  };
-  reader.readAsArrayBuffer(file);
+  }
+
+  input.value = '';
+
+  if (!all.length) {
+    statusEl.textContent = '⚠ Could not read any listings — please fill fields manually';
+    statusEl.style.color = '#c0392b';
+    return;
+  }
+
+  const merged = mergeListings(all);
+  parsedListings = merged.listings;
+
+  // Branch on the total across all files, not per file — otherwise dropping
+  // in three single-listing sheets fills the form three times.
+  if (parsedListings.length === 1) {
+    fillCompForm(parsedListings[0]);
+    statusEl.textContent = '✓ Fields filled from Matrix sheet — review and save';
+    statusEl.style.color = '#4A5C4E';
+    return;
+  }
+
+  showMultiReview(parsedListings);
+
+  let msg = `✓ ${parsedListings.length} listings ready`;
+  if (merged.dupes.length) msg += ` · ${merged.dupes.length} duplicate${merged.dupes.length !== 1 ? 's' : ''} merged`;
+  if (failed.length)       msg += ` · could not read: ${failed.join(', ')}`;
+  statusEl.textContent = msg;
+  statusEl.style.color = failed.length ? '#A0714F' : '#4A5C4E';
 }
 
-function splitListings(text) {
-  // Each listing starts with "Residential" on its own line
-  const parts = text.split(/(?=^Residential\s)/m);
-  return parts.filter(p => p.trim() && /^Residential/m.test(p));
+function fillCompForm(d) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); };
+  set('comp-address',   d.address);
+  set('comp-community', d.community);
+  set('comp-status',    d.status);
+  set('comp-price',     d.price);
+  set('comp-listprice', d.listPrice);
+  set('comp-beds',      d.beds);
+  set('comp-baths',     d.baths);
+  set('comp-sqft',      d.sqft);
+  set('comp-dom',       d.dom);
+  set('comp-year',      d.year);
+  set('comp-garage',    d.garage);
+  set('comp-photo',     d.photoUrl);
+  set('comp-notes',     d.notes ? d.notes.slice(0, 200) : '');
 }
 
 function showMultiReview(listings) {
@@ -1556,36 +1750,50 @@ function showMultiReview(listings) {
     sold:'#4A5C4E', active:'#2563eb', expired:'#A0714F',
     terminated:'#8C8479', pending:'#92400e'
   };
-  const fmt = n => n ? '$' + parseInt(n).toLocaleString() : '—';
+  const fmt = n => (n ? '$' + parseInt(n, 10).toLocaleString() : '—');
+  const multiSource = new Set(listings.map(l => l.sourceFile)).size > 1;
 
-  list.innerHTML = listings.map((l, i) => `
-    <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;cursor:pointer">
-      <input type="checkbox" data-idx="${i}" checked style="width:14px;height:14px;cursor:pointer;accent-color:#0F0F0F">
+  list.innerHTML = listings.map((l, i) => {
+    const ratio = (l.soldPrice && l.listPrice)
+      ? ' · ' + (l.soldPrice / l.listPrice * 100).toFixed(1) + '% of list' : '';
+    const flagRow = l.flags && l.flags.length
+      ? `<div style="font-size:10px;color:#6B2737;margin-top:3px">⚠ ${l.flags.join(' · ')}</div>` : '';
+    const src = multiSource
+      ? `<span style="font-size:10px;color:#8C8479">${l.sourceFile} p.${l.startPage}</span>` : '';
+    return `
+    <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;cursor:pointer">
+      <input type="checkbox" data-idx="${i}" checked style="width:14px;height:14px;margin-top:4px;cursor:pointer;accent-color:#0F0F0F">
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:400;color:#0F0F0F;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.address || 'Unknown address'}</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${statusColors[l.status]||'#8C8479'}">${l.status||'—'}</span>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:#0F0F0F;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.address || 'Unknown address'}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline">
+          <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${statusColors[l.status] || '#8C8479'}">${l.status || '—'}</span>
           <span style="font-size:11px;color:#8C8479">LP ${fmt(l.listPrice)}</span>
-          ${l.salePrice ? `<span style="font-size:11px;color:#8C8479">SP ${fmt(l.salePrice)}</span>` : ''}
-          <span style="font-size:11px;color:#8C8479">${l.dom ? l.dom+'d' : ''} ${l.beds ? l.beds+'bd' : ''} ${l.sqft ? l.sqft+' sqft' : ''}</span>
+          ${l.soldPrice ? `<span style="font-size:11px;color:#8C8479">SP ${fmt(l.soldPrice)}${ratio}</span>` : ''}
+          <span style="font-size:11px;color:#8C8479">${l.dom != null ? l.dom + 'd' : ''} ${l.beds != null ? l.beds + 'bd' : ''} ${l.sqft != null ? l.sqft + ' sqft' : ''}</span>
+          ${src}
         </div>
+        ${flagRow}
       </div>
-    </label>`).join('');
+    </label>`;
+  }).join('');
 
   panel.style.display = 'block';
-  document.getElementById('add-selected-btn').textContent = `Add ${listings.length} comps`;
+  updateAddButton();
 
-  // Update button count when checkboxes change
-  list.addEventListener('change', () => {
-    const checked = list.querySelectorAll('input[type=checkbox]:checked').length;
-    document.getElementById('add-selected-btn').textContent = `Add ${checked} comp${checked !== 1 ? 's' : ''}`;
-  });
+  // Assigned, not addEventListener — showMultiReview can run several times
+  // per session and listeners would otherwise stack up.
+  list.onchange = updateAddButton;
+}
+
+function updateAddButton() {
+  const checked = document.querySelectorAll('#multi-review-list input[type=checkbox]:checked').length;
+  const btn = document.getElementById('add-selected-btn');
+  if (btn) btn.textContent = `Add ${checked} comp${checked !== 1 ? 's' : ''}`;
 }
 
 function selectAllComps(checked) {
-  document.querySelectorAll('#multi-review-list input[type=checkbox]').forEach(cb => cb.checked = checked);
-  const count = checked ? parsedListings.length : 0;
-  document.getElementById('add-selected-btn').textContent = `Add ${count} comp${count !== 1 ? 's' : ''}`;
+  document.querySelectorAll('#multi-review-list input[type=checkbox]').forEach(cb => { cb.checked = checked; });
+  updateAddButton();
 }
 
 async function addSelectedComps() {
@@ -1598,22 +1806,25 @@ async function addSelectedComps() {
 
   let saved = 0;
   for (const cb of checkboxes) {
-    const idx = parseInt(cb.dataset.idx);
-    const data = parsedListings[idx];
+    const data = parsedListings[parseInt(cb.dataset.idx, 10)];
     if (!data || !data.address) continue;
 
     const comp = {
+      mls:        data.mls || '',
       address:    data.address,
-      community:  data.subdivision || data.city || '',
+      community:  data.community || '',
       status:     data.status || 'sold',
-      price:      parseFloat(data.salePrice || data.listPrice) || 0,
-      listPrice:  parseFloat(data.listPrice) || 0,
-      beds:       parseFloat(data.beds) || 0,
-      baths:      parseFloat(data.baths) || 0,
-      sqft:       parseFloat(data.sqft) || 0,
-      dom:        parseInt(data.dom) || 0,
-      year:       parseInt(data.year) || 0,
-      garage:     '',
+      price:      data.price     || 0,
+      listPrice:  data.listPrice || 0,
+      soldPrice:  data.soldPrice || 0,
+      soldDate:   data.soldDate  || '',
+      beds:       data.beds  || 0,
+      baths:      data.baths || 0,
+      sqft:       data.sqft  || 0,
+      dom:        data.dom   || 0,
+      year:       data.year  || 0,
+      lotSize:    data.lotSize || 0,
+      garage:     data.garage  || '',
       photoUrl:   '',
       notes:      data.notes ? data.notes.slice(0, 200) : ''
     };
@@ -1630,12 +1841,11 @@ async function addSelectedComps() {
           .collection('comps').add(comp);
       }
       saved++;
-    } catch(err) {
+    } catch (err) {
       console.error('Error saving comp:', err);
     }
   }
 
-  // Reload comps display
   await loadComps();
   document.getElementById('multi-review-panel').style.display = 'none';
   closeCompModal();
