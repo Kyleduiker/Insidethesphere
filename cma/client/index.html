@@ -1438,7 +1438,12 @@ function populateReport() {
   // NET SHEET
   const rec = parseFloat(d.priceRec) || 700000;
   netParams = {
-    commission: parseFloat(d.commission) || 3.5,
+    type:    d.commissionType || 'tiered',
+    tier1:   parseFloat(d.commTier1) || 7,
+    tier2:   parseFloat(d.commTier2) || 3,
+    cap:     parseFloat(d.commCap) || 100000,
+    flatPct: parseFloat(d.commission) || 3.5,
+    flatFee: parseFloat(d.commFlatFee) || 0,
     gst: parseFloat(d.gst) || 5,
     legal: parseFloat(d.legalFees) || 1800,
     mortgage: parseFloat(d.mortgageBalance) || 0,
@@ -1465,6 +1470,41 @@ function populateReport() {
   window.addEventListener('scroll', () => {
     document.getElementById('sticky-bar').classList.toggle('visible', window.scrollY > 500);
   });
+}
+
+// ── NET SHEET ────────────────────────────────────
+// Mirrors calcCommission() in cma/edit.html — keep the two in step.
+function calcCommission(price, p) {
+  let base;
+  if (p.type === 'flat_fee')      base = p.flatFee;
+  else if (p.type === 'flat_pct') base = price * p.flatPct / 100;
+  else {
+    const first = Math.min(price, p.cap);
+    base = first * p.tier1 / 100 + Math.max(0, price - p.cap) * p.tier2 / 100;
+  }
+  const gst = base * p.gst / 100;
+  return { base: base, gst: gst, total: base + gst };
+}
+
+function netCalc(price) {
+  const p = netParams || {};
+  const c = calcCommission(price, {
+    type: p.type || 'tiered',
+    tier1: p.tier1 || 0, tier2: p.tier2 || 0, cap: p.cap || 0,
+    flatPct: p.flatPct || 0, flatFee: p.flatFee || 0, gst: p.gst || 0
+  });
+  const legal    = p.legal    || 0;
+  const mortgage = p.mortgage || 0;
+  const penalty  = p.penalty  || 0;
+  const net = Math.max(0, price - c.total - legal - mortgage - penalty);
+  const fmt = n => '$' + Math.round(n).toLocaleString();
+
+  document.getElementById('net-price-display').textContent = fmt(price);
+  document.getElementById('net-comm').textContent     = '−' + fmt(c.total);
+  document.getElementById('net-legal').textContent    = '−' + fmt(legal);
+  document.getElementById('net-mortgage').textContent = '−' + fmt(mortgage);
+  document.getElementById('net-penalty').textContent  = '−' + fmt(penalty);
+  document.getElementById('net-result-val').textContent = fmt(net);
 }
 
 // ── JOURNEY ──────────────────────────────────────
