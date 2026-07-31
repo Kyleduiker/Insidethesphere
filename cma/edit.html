@@ -586,6 +586,16 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
           <div class="panel-title">Current market conditions</div>
           <div class="panel-sub">SE Calgary lake communities — pull from Matrix before your appointment</div>
         </div>
+        <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <input type="file" id="creb-file-input" accept=".pdf" style="display:none" onchange="parseCREB(this)">
+          <button onclick="document.getElementById('creb-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload CREB stats PDF</button>
+          <span style="font-size:12px;color:#8C8479;flex:1" id="creb-status">Upload a CREB community Monthly Summary (e.g. Cranston 360) — figures fill in below</span>
+        </div>
+        <div class="card" id="creb-review" style="display:none">
+          <div class="card-title" id="creb-review-title">Choose which figures to use</div>
+          <div id="creb-review-body" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button onclick="applyCREB()" style="margin-top:14px;padding:8px 16px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase">Apply to market data</button>
+        </div>
         <div class="card">
           <div class="card-title">Key metrics</div>
           <div class="frow3">
@@ -1539,6 +1549,144 @@ function loadSidebarProfile(user) {
     }
   }).catch(console.error);
 }
+
+
+// ── CREB MONTHLY STATS PARSER ────────────────────────────
+// Reads the CREB Monthly Stats Package. Two useful geographies: the
+// "Summary Stats City of Calgary" table, and the "Calgary Districts" table
+// which breaks each property type down by district. SE Calgary lake
+// communities all sit in CREB's South East district.
+let crebParsed = null;
+
+const CREB_DISTRICTS = ['City Centre','North East','North West','North','West','South East','South','East'];
+
+async function parseCREB(input) {
+  const file = (input.files || [])[0];
+  if (!file) return;
+  const st = document.getElementById('creb-status');
+  document.getElementById('creb-review').style.display = 'none';
+  st.textContent = 'Reading ' + file.name + '...';
+  st.style.color = '#A0714F';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF library not loaded');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    const pdf = await pdfjsLib.getDocument({
+      data: new Uint8Array(await file.arrayBuffer()),
+      useWorkerFetch: false, isEvalSupported: false, useSystemFonts: true
+    }).promise;
+
+    let lines = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const tc = await pdf.getPage(p).then(pg => pg.getTextContent());
+      lines = lines.concat(clusterRows(tc.items));
+    }
+    const text = lines.join('\n');
+    crebParsed = extractCREB(text);
+
+    if (!crebParsed.city.sales && !crebParsed.districts.length) {
+      st.textContent = '⚠ Could not read this file — is it the CREB Monthly Stats Package?';
+      st.style.color = '#c0392b';
+      input.value = ''; return;
+    }
+    showCREBReview();
+    st.textContent = '✓ Read ' + (crebParsed.period || file.name) + ' — choose figures below';
+    st.style.color = '#4A5C4E';
+  } catch (err) {
+    console.error('CREB parse error:', err);
+    document.getElementById('creb-status').textContent = '⚠ Error reading PDF';
+    document.getElementById('creb-status').style.color = '#c0392b';
+  }
+  input.value = '';
+}
+
+const CREB_MONTHS = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+const CREB_TYPES = ['TOTAL RESIDENTIAL','DETACHED','SEMI-DETACHED','ROW','APARTMENT'];
+
+// Community "360" report: one monthly time series per property type. The most
+// recent row carries sales, inventory, months of supply, DOM, sale-to-list,
+// benchmark and median — everything the Market data panel needs.
+function extractCREB(text) {
+  const n = v => v == null ? null : parseFloat(String(v).replace(/[,$%]/g, ''));
+  const community = (text.match(/^[A-Z][a-z]+ \d{4}\s+(.+)$/m) || [])[1] || null;
+  const period    = (text.match(/^([A-Z][a-z]+ \d{4})\s/m) || [])[1] || null;
+
+  const types = {};
+  let section = null;
+  text.split('\n').forEach(raw => {
+    const t = raw.trim();
+    const hit = CREB_TYPES.find(x => t === x || t.indexOf(x + ' ') === 0);
+    if (hit) { section = hit; return; }
+    if (!section) return;
+    const m = t.match(/^([A-Z][a-z]{2})-(\d{2})\s+(\d+)\s+(-?\d+)%\s+(\d+)\s+(-?\d+)%\s+([\d.]+)\s+(\d+)\s+(-?\d+)%\s+([\d.]+)\s+(\d+)\s+([\d.]+)%\s+([\d,]+)\s+(-?[\d.]+)%\s+([\d,]+)\s+(-?[\d.]+)%\s+([\d,]+)\s+(-?[\d.]+)%\s+(\d+)$/);
+    if (!m) return;
+    const when = new Date(2000 + parseInt(m[2], 10), CREB_MONTHS[m[1]], 1).getTime();
+    const rec = {
+      when: when, label: m[1] + '-' + m[2],
+      sales: n(m[3]), salesYoY: n(m[4]), newList: n(m[5]),
+      snl: Math.round(n(m[7]) * 1000) / 10, inventory: n(m[8]),
+      months: n(m[10]), dom: n(m[11]), spLp: n(m[12]),
+      benchmark: n(m[13]), benchYoY: n(m[14]), median: n(m[15]), average: n(m[17])
+    };
+    if (!types[section] || rec.when > types[section].when) types[section] = rec;
+  });
+
+  return { community: community, period: period, types: types };
+}
+
+function showCREBReview() {
+  const body = document.getElementById('creb-review-body');
+  const t = crebParsed.types;
+
+  const rows = CREB_TYPES.filter(k => t[k]).map((k, i) => {
+    const d = t[k];
+    // CREB's own guidance: aggregated stats need more than ten sales to be
+    // meaningful. Below that, say so rather than quoting it to a client.
+    const thin = d.sales != null && d.sales < 10;
+    return `
+    <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid ${thin ? '#6B2737' : '#D9D3CB'};border-radius:2px;cursor:pointer">
+      <input type="radio" name="creb-choice" value="${k}" style="margin-top:4px;accent-color:#0F0F0F">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:#0F0F0F">${k.charAt(0) + k.slice(1).toLowerCase()}</div>
+        <div style="font-size:11px;color:#8C8479;margin-top:3px">
+          ${d.sales} sales · ${d.inventory} inventory · ${d.months} mo supply · ${d.dom}d · ${d.spLp}% of list · $${d.benchmark.toLocaleString()} benchmark
+        </div>
+        ${thin ? `<div style="font-size:10px;color:#6B2737;margin-top:4px">⚠ Only ${d.sales} sale${d.sales === 1 ? '' : 's'} this month — too thin to quote as a trend</div>` : ''}
+      </div>
+    </label>`;
+  }).join('');
+
+  document.getElementById('creb-review-title').textContent =
+    [crebParsed.community, crebParsed.period].filter(Boolean).join(' · ') || 'Choose which figures to use';
+  body.innerHTML = rows || '<div style="font-size:12px;color:#c0392b">No property-type tables found in this file.</div>';
+  const first = body.querySelector('input[type=radio]');
+  if (first) first.checked = true;
+  document.getElementById('creb-review').style.display = 'block';
+}
+
+function applyCREB() {
+  const sel = document.querySelector('input[name="creb-choice"]:checked');
+  if (!sel || !crebParsed) return;
+  const d = crebParsed.types[sel.value];
+  if (!d) return;
+  const set = (id, v) => { if (v == null) return; const el = document.getElementById(id); if (el) el.value = v; };
+
+  set('soldLast30', d.sales);
+  set('activeListings', d.inventory);
+  set('domAvg', Math.round(d.dom));
+  set('listToSale', d.spLp);
+  set('medianSoldPrice', d.median);
+  set('absorption', d.snl);
+
+  markDirty();
+  const st = document.getElementById('creb-status');
+  const thin = d.sales != null && d.sales < 10;
+  st.textContent = thin
+    ? `Applied ${sel.value.toLowerCase()} — but only ${d.sales} sale${d.sales === 1 ? '' : 's'}; consider Total residential instead`
+    : '✓ Applied — review the fields below before saving';
+  st.style.color = thin ? '#6B2737' : '#4A5C4E';
+}
+// ── END CREB PARSER ──────────────────────────────────────
 
 // ── MATRIX PDF PARSER ────────────────────────────────────
 // Replaces everything in cma/edit.html between the existing
