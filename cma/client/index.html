@@ -452,108 +452,71 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
 }
 
 /* COMP CARDS */
-.comp-list{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+.comp-list{display:flex;flex-direction:column;gap:0}
+.comp-group{margin-bottom:44px}
+.comp-group:last-child{margin-bottom:0}
+.comp-group-head{
+  display:flex;align-items:baseline;gap:12px;
+  padding-bottom:10px;margin-bottom:1px;
+  border-bottom:1px solid var(--border);
+}
+.comp-group-label{
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+}
+.comp-group-count{font-family:var(--sans);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.comp-group-rows{display:flex;flex-direction:column;gap:1px;background:var(--border)}
 .comp-card{
   background:var(--white);
-  display:grid;
-  grid-template-columns:320px 1fr;
-  transition:all .2s;
+  display:grid;grid-template-columns:172px 1fr;
+  gap:28px;padding:26px 30px;
+  transition:background .25s ease;
 }
-.comp-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.comp-photo-wrap{
-  position:relative;
-  height:220px;overflow:hidden;
+.comp-card:hover{background:var(--off)}
+.comp-money{
+  text-align:right;padding-right:26px;
+  border-right:1px solid var(--border);
 }
-.comp-photo-wrap img{
-  width:100%;height:100%;
-  object-fit:cover;
-  transition:transform .4s ease;
+.comp-sale-price{
+  font-family:var(--serif);font-size:1.65rem;
+  line-height:1.15;color:var(--text);
 }
-.comp-card:hover .comp-photo-wrap img{transform:scale(1.03)}
-.comp-photo-placeholder{
-  width:100%;height:100%;
-  background:linear-gradient(135deg,#f0ede8,#e8e5e0);
-  display:flex;align-items:center;justify-content:center;
-  font-size:2.5rem;opacity:.4;
+.comp-list-label{font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.comp-list-price{font-family:var(--serif);font-size:1.05rem;color:var(--muted)}
+.comp-ratio{font-family:var(--sans);font-size:11px;color:var(--accent);margin-top:6px;letter-spacing:.02em}
+.comp-dom{font-family:var(--sans);font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:.04em}
+.comp-body{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.comp-address{
+  font-family:var(--serif);font-size:1.35rem;font-weight:400;
+  color:var(--text);line-height:1.25;
 }
+.comp-community{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:3px;letter-spacing:.03em}
+.comp-specs{
+  font-family:var(--sans);font-size:13px;color:var(--text);
+  margin-top:12px;line-height:1.7;
+}
+.comp-specs span{color:var(--muted);margin:0 7px}
 .comp-sheet{
-  width:100%;height:100%;
-  background:#EDE8E0;
-  border-bottom:0.5px solid #D9D3CB;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;
-  text-decoration:none;
-  transition:background .3s ease;
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:14px;text-decoration:none;
+  font-family:var(--sans);font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  transition:color .2s ease;
 }
-.comp-sheet:hover{background:#E4DED4}
+.comp-sheet:hover{color:var(--accent)}
 .comp-sheet-icon{
-  width:44px;height:56px;
-  border:1px solid #A0714F;border-radius:2px;
-  position:relative;
+  width:13px;height:16px;flex-shrink:0;
+  border:1px solid currentColor;border-radius:1px;position:relative;
 }
 .comp-sheet-icon:before,.comp-sheet-icon:after{
-  content:'';position:absolute;left:9px;right:9px;height:1px;background:#A0714F;opacity:.55;
+  content:'';position:absolute;left:3px;right:3px;height:1px;background:currentColor;opacity:.7;
 }
-.comp-sheet-icon:before{top:18px}
-.comp-sheet-icon:after{top:27px;right:20px}
-.comp-sheet-label{
-  font-family:Inter,sans-serif;font-size:10px;font-weight:500;
-  letter-spacing:.14em;text-transform:uppercase;color:#A0714F;
-}
-.comp-sheet-sub{
-  font-family:Inter,sans-serif;font-size:9.5px;
-  letter-spacing:.08em;color:#8C8479;margin-top:-6px;
-}
-.sheet-modal{
-  position:fixed;inset:0;z-index:2000;
-  background:rgba(15,15,15,.72);
-  display:none;align-items:center;justify-content:center;
-  padding:32px;
-  opacity:0;transition:opacity .25s ease;
-}
-.sheet-modal.open{display:flex;opacity:1}
-.sheet-modal-inner{
-  background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;
-  width:100%;max-width:900px;height:100%;max-height:92vh;
-  display:flex;flex-direction:column;overflow:hidden;
-  box-shadow:0 24px 60px rgba(0,0,0,.35);
-}
-.sheet-modal-bar{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:16px 22px;border-bottom:0.5px solid #D9D3CB;background:#EDE8E0;
-}
-.sheet-modal-title{
-  font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#0F0F0F;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.sheet-modal-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.sheet-modal-btn{
-  font-family:Inter,sans-serif;font-size:10px;font-weight:500;
-  letter-spacing:.12em;text-transform:uppercase;
-  padding:7px 13px;border:0.5px solid #D9D3CB;border-radius:2px;
-  background:#F7F4EF;color:#8C8479;text-decoration:none;cursor:pointer;
-  transition:color .2s ease,border-color .2s ease;
-}
-.sheet-modal-btn:hover{color:#A0714F;border-color:#A0714F}
-.sheet-modal-btn.close{border:none;background:none;font-size:18px;line-height:1;padding:4px 8px;letter-spacing:0}
-.sheet-modal-frame{flex:1;width:100%;border:none;background:#EDE8E0}
+.comp-sheet-icon:before{top:5px}
+.comp-sheet-icon:after{top:9px;right:6px}
 @media(max-width:700px){
-  .sheet-modal{padding:0}
-  .sheet-modal-inner{max-height:100vh;border:none}
-}
-.comp-status-tag{
-  position:absolute;top:14px;left:14px;
-  font-size:9px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;
-  padding:5px 10px;
-  background:rgba(0,0,0,.7);
-  color:#fff;
-  backdrop-filter:blur(4px);
-}
-.comp-info{
-  padding:32px 36px;
-  display:flex;flex-direction:column;
-  justify-content:space-between;
+  .comp-card{grid-template-columns:1fr;gap:14px;padding:22px 20px}
+  .comp-money{text-align:left;padding-right:0;border-right:none;
+    border-bottom:1px solid var(--border);padding-bottom:12px}
 }
 .comp-address{
   font-family:var(--serif);
@@ -569,23 +532,6 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   display:flex;gap:20px;flex-wrap:wrap;
   margin-bottom:20px;
 }
-.comp-spec{text-align:center}
-.comp-spec-val{
-  font-family:var(--serif);
-  font-size:1.4rem;font-weight:400;
-  color:var(--dark);line-height:1;
-}
-.comp-spec-label{
-  font-size:9px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);margin-top:3px;
-}
-.comp-price-row{
-  display:flex;align-items:flex-end;
-  justify-content:space-between;
-  padding-top:16px;border-top:1px solid var(--border);
-  flex-wrap:wrap;gap:8px;
-}
 .comp-sale-price{
   font-family:var(--serif);
   font-size:1.8rem;font-weight:400;
@@ -596,17 +542,6 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   font-family:var(--serif);
   font-size:1rem;color:var(--muted);
   text-decoration:line-through;
-}
-.comp-dom-badge{
-  font-size:11px;font-weight:500;
-  color:var(--muted);
-  padding:5px 12px;
-  border:1px solid var(--border);
-}
-.comp-notes{
-  margin-top:10px;font-size:12px;
-  color:var(--muted);font-style:italic;
-  line-height:1.5;
 }
 
 /* VALUE RANGE */
@@ -967,7 +902,6 @@ input[type=range]::-moz-range-thumb{
   .section{padding:56px 0}
   .cover-content{padding:32px 24px}
   .comp-card{grid-template-columns:1fr}
-  .comp-photo-wrap{height:220px}
   .stats-row{grid-template-columns:1fr}
   .value-cols{grid-template-columns:1fr}
   .about-grid{grid-template-columns:1fr}
@@ -1546,88 +1480,69 @@ function buildComps(comps) {
 
   const statusLabels = { sold:'Sold', active:'Active', pending:'Pending', expired:'Expired', terminated:'Terminated' };
 
-  list.innerHTML = comps.map(c => {
+  // Group by status in presentation order, price descending within each group.
+  const GROUP_ORDER = ['active', 'sold', 'pending', 'expired', 'terminated'];
+  const groups = {};
+  comps.forEach(c => {
+    const k = (c.status || 'sold').toLowerCase();
+    (groups[k] = groups[k] || []).push(c);
+  });
+
+  const ordered = GROUP_ORDER.filter(k => groups[k] && groups[k].length)
+    .concat(Object.keys(groups).filter(k => !GROUP_ORDER.includes(k)));
+
+  const esc = v => String(v == null ? '' : v).replace(/'/g, "\\'");
+
+  const card = c => {
     const price = parseFloat(c.price) || 0;
-    const psf = c.sqft > 0 ? Math.round(price / c.sqft) : 0;
-    const photoHTML = c.sheetUrl
+    const psf   = c.sqft > 0 ? Math.round(price / c.sqft) : 0;
+    const ratio = (c.status === 'sold' && c.listPrice && price)
+      ? Math.round(price / c.listPrice * 1000) / 10 : null;
+
+    const specs = [
+      c.beds  ? c.beds + ' bed' + (c.beds === 1 ? '' : 's') : '',
+      c.baths ? c.baths + ' bath' + (c.baths === 1 ? '' : 's') : '',
+      c.sqft  ? c.sqft.toLocaleString() + ' sq.ft.' : '',
+      psf     ? '$' + psf + ' per sq.ft.' : ''
+    ].filter(Boolean).join('<span>·</span>');
+
+    const sheet = c.sheetUrl
       ? `<a class="comp-sheet" href="${c.sheetUrl}" target="_blank" rel="noopener"
-             onclick="event.preventDefault();openSheet('${c.sheetUrl}','${(c.address||'').replace(/'/g,"\\'")}')">
-           <div class="comp-sheet-icon"></div>
-           <div class="comp-sheet-label">View MLS Sheet</div>
-           <div class="comp-sheet-sub">${c.mls || ''}</div>
-         </a>`
-      : c.photoUrl
-        ? `<img src="${c.photoUrl}" alt="${c.address}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'comp-photo-placeholder\\'>🏠</div>'">`
-        : `<div class="comp-photo-placeholder">🏠</div>`;
+             onclick="event.preventDefault();openSheet('${esc(c.sheetUrl)}','${esc(c.address)}')">
+           <span class="comp-sheet-icon"></span>View MLS sheet</a>`
+      : '';
 
     return `<div class="comp-card">
-      <div class="comp-photo-wrap">
-        ${photoHTML}
-        <div class="comp-status-tag">${statusLabels[c.status] || c.status}</div>
+      <div class="comp-money">
+        <div class="comp-sale-price">$${price.toLocaleString()}</div>
+        ${c.status === 'sold' && c.listPrice
+          ? `<div class="comp-list-label">Listed at</div>
+             <div class="comp-list-price">$${Math.round(c.listPrice).toLocaleString()}</div>` : ''}
+        ${ratio !== null ? `<div class="comp-ratio">${ratio}% of list</div>` : ''}
+        ${c.dom ? `<div class="comp-dom">${c.dom} days on market</div>` : ''}
       </div>
-      <div class="comp-info">
-        <div>
-          <div class="comp-address">${c.address || '—'}</div>
-          <div class="comp-community">${c.community || 'SE Calgary'}</div>
-          <div class="comp-specs">
-            ${c.beds ? `<div class="comp-spec"><div class="comp-spec-val">${c.beds}</div><div class="comp-spec-label">Beds</div></div>` : ''}
-            ${c.baths ? `<div class="comp-spec"><div class="comp-spec-val">${c.baths}</div><div class="comp-spec-label">Baths</div></div>` : ''}
-            ${c.sqft ? `<div class="comp-spec"><div class="comp-spec-val">${c.sqft.toLocaleString()}</div><div class="comp-spec-label">Sq.ft.</div></div>` : ''}
-            ${psf ? `<div class="comp-spec"><div class="comp-spec-val">$${psf}</div><div class="comp-spec-label">Per sq.ft.</div></div>` : ''}
-          </div>
-        </div>
-        <div class="comp-price-row">
-          <div>
-            ${c.status === 'sold' && c.listPrice ? `<div class="comp-list-label">List price</div><div class="comp-list-price">$${Math.round(c.listPrice).toLocaleString()}</div>` : ''}
-            <div class="comp-sale-price">$${price.toLocaleString()}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <div class="comp-dom-badge">${c.dom ? c.dom + ' days' : '—'}</div>
-          </div>
-        </div>
-        ${c.notes ? `<div class="comp-notes">${c.notes}</div>` : ''}
+      <div class="comp-body">
+        <div class="comp-address">${c.address || '—'}</div>
+        <div class="comp-community">${c.community || 'SE Calgary'}${c.year ? ' · built ' + c.year : ''}</div>
+        <div class="comp-specs">${specs}</div>
+        ${sheet}
       </div>
+    </div>`;
+  };
+
+  list.innerHTML = ordered.map(k => {
+    const rows = groups[k].slice().sort((a, b) =>
+      (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+    return `<div class="comp-group">
+      <div class="comp-group-head">
+        <div class="comp-group-label">${statusLabels[k] || k}</div>
+        <div class="comp-group-count">${rows.length} ${rows.length === 1 ? 'property' : 'properties'}</div>
+      </div>
+      <div class="comp-group-rows">${rows.map(card).join('')}</div>
     </div>`;
   }).join('');
 }
 
-// ── NET SHEET ────────────────────────────────────
-function netCalc(price) {
-  const comm = Math.round(price * netParams.commission / 100);
-  const gst = Math.round(comm * netParams.gst / 100);
-  const totalComm = comm + gst;
-  const legal = netParams.legal || 0;
-  const mortgage = netParams.mortgage || 0;
-  const penalty = netParams.penalty || 0;
-  const net = Math.max(0, price - totalComm - legal - mortgage - penalty);
-  const fmt = n => '-$' + Math.round(n).toLocaleString();
-  document.getElementById('net-price-display').textContent = '$' + price.toLocaleString();
-  document.getElementById('net-result-val').textContent = '$' + net.toLocaleString();
-  document.getElementById('net-comm').textContent = fmt(totalComm);
-  document.getElementById('net-legal').textContent = fmt(legal);
-  document.getElementById('net-mortgage').textContent = mortgage ? fmt(mortgage) : '$0';
-  if (netParams.penalty > 0) document.getElementById('net-penalty').textContent = fmt(penalty);
-}
-
-// ── REVIEWS ──────────────────────────────────────
-function defaultReviews() {
-  return [
-    { stars:5, text:'"Kyle had our home sold in 8 days — well above asking. The offer strategy was perfect."', author:'Auburn Bay', year:'2024' },
-    { stars:5, text:'"Kyle\'s knowledge of Mahogany gave us complete confidence. Sold in 12 days at 102% of asking."', author:'Mahogany', year:'2024' },
-    { stars:5, text:'"First time selling — Kyle walked us through every step. We got $18,000 over our asking price."', author:'Legacy', year:'2023' },
-  ];
-}
-
-function buildReviews(reviews) {
-  const grid = document.getElementById('reviews-grid');
-  if (!reviews.length) { grid.style.display = 'none'; return; }
-  grid.innerHTML = reviews.map(r => `
-    <div class="review-card">
-      <div class="review-stars">${'★'.repeat(r.stars || 5)}</div>
-      <div class="review-text">${r.text ? (r.text.startsWith('"') ? r.text : `"${r.text}"`) : ''}</div>
-      <div class="review-author">${r.author || ''}${r.year ? ' · ' + r.year : ''}${r.result ? ' · ' + r.result : ''}</div>
-    </div>`).join('');
-}
 
 // ── MLS SHEET MODAL ──────────────────────────────
 // iOS Safari does not render PDFs reliably inside an iframe, so on iOS the
