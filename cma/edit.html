@@ -9,8 +9,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1477,6 +1479,9 @@ function loadSidebarProfile(user) {
 // several files at once, and de-duplicates by MLS number.
 
 let parsedListings = [];
+// Original PDF bytes, kept per filename so selected listings can be
+// split into per-listing sheets when the comps are saved.
+let pdfBuffers = {};
 
 const COMMUNITIES = ['Mahogany','Auburn Bay','Seton','Cranston','Legacy','Chestermere'];
 
@@ -1671,6 +1676,8 @@ async function parseMatrixPDF(input) {
 
     try {
       const buf = await file.arrayBuffer();
+      // pdf.js may detach the buffer it is handed, so keep our own copy.
+      pdfBuffers[file.name] = buf.slice(0);
       const pdf = await pdfjsLib.getDocument({
         data: new Uint8Array(buf),
         useWorkerFetch: false,
@@ -1803,6 +1810,32 @@ function selectAllComps(checked) {
   updateAddButton();
 }
 
+// Split one listing's pages out of its source PDF and upload to Storage.
+// Returns a tokenised download URL (works for signed-out clients) or ''.
+async function uploadSheetPDF(data) {
+  const buf = pdfBuffers[data.sourceFile];
+  if (!buf || typeof PDFLib === 'undefined' || !data.startPage) return '';
+  try {
+    const src = await PDFLib.PDFDocument.load(buf);
+    const out = await PDFLib.PDFDocument.create();
+    const idx = [];
+    for (let p = data.startPage - 1; p <= data.endPage - 1 && p < src.getPageCount(); p++) idx.push(p);
+    if (!idx.length) return '';
+    const pages = await out.copyPages(src, idx);
+    pages.forEach(pg => out.addPage(pg));
+    const bytes = await out.save();
+
+    const safe = (data.mls || data.address.replace(/[^a-zA-Z0-9]/g, '-')).slice(0, 40);
+    const ref  = storage.ref(`users/${currentUser.uid}/cma-sheets/${cmaId}/${safe}.pdf`);
+    await ref.put(new Blob([bytes], { type: 'application/pdf' }),
+                  { contentType: 'application/pdf' });
+    return await ref.getDownloadURL();
+  } catch (err) {
+    console.error('Sheet upload failed for', data.address, err);
+    return '';
+  }
+}
+
 async function addSelectedComps() {
   const checkboxes = document.querySelectorAll('#multi-review-list input[type=checkbox]:checked');
   if (!checkboxes.length) { showToast('Select at least one listing', 'error'); return; }
@@ -1822,6 +1855,9 @@ async function addSelectedComps() {
     const data = parsedListings[parseInt(cb.dataset.idx, 10)];
     if (!data || !data.address) continue;
 
+    btn.textContent = `Saving ${saved + failed + 1} of ${checkboxes.length}...`;
+    const sheetUrl = await uploadSheetPDF(data);
+
     const comp = {
       mls:        data.mls || '',
       address:    data.address,
@@ -1839,6 +1875,7 @@ async function addSelectedComps() {
       lotSize:    data.lotSize || 0,
       garage:     data.garage  || '',
       photoUrl:   '',
+      sheetUrl:   sheetUrl,
       notes:      data.notes ? data.notes.slice(0, 200) : '',
       // Required: loadSubComps() queries with orderBy('createdAt'), and
       // Firestore omits any document that lacks the field entirely.
