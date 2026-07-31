@@ -1798,13 +1798,19 @@ function selectAllComps(checked) {
 
 async function addSelectedComps() {
   const checkboxes = document.querySelectorAll('#multi-review-list input[type=checkbox]:checked');
-  if (!checkboxes.length) { showToast('Select at least one listing'); return; }
+  if (!checkboxes.length) { showToast('Select at least one listing', 'error'); return; }
 
   const btn = document.getElementById('add-selected-btn');
+  const origText = btn.textContent;
   btn.textContent = 'Saving...';
   btn.disabled = true;
 
-  let saved = 0;
+  const colRef = db.collection('users').doc(currentUser.uid)
+                   .collection('cmas').doc(cmaId)
+                   .collection('comps');
+
+  let saved = 0, failed = 0;
+
   for (const cb of checkboxes) {
     const data = parsedListings[parseInt(cb.dataset.idx, 10)];
     if (!data || !data.address) continue;
@@ -1826,31 +1832,32 @@ async function addSelectedComps() {
       lotSize:    data.lotSize || 0,
       garage:     data.garage  || '',
       photoUrl:   '',
-      notes:      data.notes ? data.notes.slice(0, 200) : ''
+      notes:      data.notes ? data.notes.slice(0, 200) : '',
+      // Required: loadSubComps() queries with orderBy('createdAt'), and
+      // Firestore omits any document that lacks the field entirely.
+      createdAt:  firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-      if (editingCompId) {
-        await db.collection('users').doc(currentUser.uid)
-          .collection('cmas').doc(cmaId)
-          .collection('comps').doc(editingCompId).set(comp);
-        editingCompId = null;
-      } else {
-        await db.collection('users').doc(currentUser.uid)
-          .collection('cmas').doc(cmaId)
-          .collection('comps').add(comp);
-      }
+      const docRef = await colRef.add(comp);
+      comps.push({ id: docRef.id, ...comp });
       saved++;
     } catch (err) {
-      console.error('Error saving comp:', err);
+      console.error('Error saving comp:', data.address, err);
+      failed++;
     }
   }
 
-  await loadComps();
+  renderComps();
+  recalcCompStats();
   document.getElementById('multi-review-panel').style.display = 'none';
   closeCompModal();
-  showToast(`✓ ${saved} comparable${saved !== 1 ? 's' : ''} added`, 'ok');
+
+  btn.textContent = origText;
   btn.disabled = false;
+
+  if (failed) showToast(saved + ' added, ' + failed + ' failed - see console', 'error');
+  else        showToast('\u2713 ' + saved + ' comparable' + (saved !== 1 ? 's' : '') + ' added', 'ok');
 }
 // ── END MATRIX PARSER ────────────────────────────────────
 
