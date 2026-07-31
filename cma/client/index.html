@@ -504,6 +504,43 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   font-family:Inter,sans-serif;font-size:9.5px;
   letter-spacing:.08em;color:#8C8479;margin-top:-6px;
 }
+.sheet-modal{
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(15,15,15,.72);
+  display:none;align-items:center;justify-content:center;
+  padding:32px;
+  opacity:0;transition:opacity .25s ease;
+}
+.sheet-modal.open{display:flex;opacity:1}
+.sheet-modal-inner{
+  background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;
+  width:100%;max-width:900px;height:100%;max-height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.sheet-modal-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 22px;border-bottom:0.5px solid #D9D3CB;background:#EDE8E0;
+}
+.sheet-modal-title{
+  font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#0F0F0F;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sheet-modal-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sheet-modal-btn{
+  font-family:Inter,sans-serif;font-size:10px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 13px;border:0.5px solid #D9D3CB;border-radius:2px;
+  background:#F7F4EF;color:#8C8479;text-decoration:none;cursor:pointer;
+  transition:color .2s ease,border-color .2s ease;
+}
+.sheet-modal-btn:hover{color:#A0714F;border-color:#A0714F}
+.sheet-modal-btn.close{border:none;background:none;font-size:18px;line-height:1;padding:4px 8px;letter-spacing:0}
+.sheet-modal-frame{flex:1;width:100%;border:none;background:#EDE8E0}
+@media(max-width:700px){
+  .sheet-modal{padding:0}
+  .sheet-modal-inner{max-height:100vh;border:none}
+}
 .comp-status-tag{
   position:absolute;top:14px;left:14px;
   font-size:9px;font-weight:600;
@@ -1513,7 +1550,8 @@ function buildComps(comps) {
     const price = parseFloat(c.price) || 0;
     const psf = c.sqft > 0 ? Math.round(price / c.sqft) : 0;
     const photoHTML = c.sheetUrl
-      ? `<a class="comp-sheet" href="${c.sheetUrl}" target="_blank" rel="noopener">
+      ? `<a class="comp-sheet" href="${c.sheetUrl}" target="_blank" rel="noopener"
+             onclick="event.preventDefault();openSheet('${c.sheetUrl}','${(c.address||'').replace(/'/g,"\\'")}')">
            <div class="comp-sheet-icon"></div>
            <div class="comp-sheet-label">View MLS Sheet</div>
            <div class="comp-sheet-sub">${c.mls || ''}</div>
@@ -1591,6 +1629,32 @@ function buildReviews(reviews) {
     </div>`).join('');
 }
 
+// ── MLS SHEET MODAL ──────────────────────────────
+// iOS Safari does not render PDFs reliably inside an iframe, so on iOS the
+// sheet opens directly instead of being embedded.
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.platform)
+  || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+
+function openSheet(url, title) {
+  if (!url) return;
+  if (IS_IOS) { window.open(url, '_blank', 'noopener'); return; }
+  document.getElementById('sheetModalTitle').textContent = title || 'MLS Sheet';
+  document.getElementById('sheetModalOpen').href = url;
+  document.getElementById('sheetModalFrame').src = url;
+  document.getElementById('sheetModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSheet() {
+  document.getElementById('sheetModal').classList.remove('open');
+  document.getElementById('sheetModalFrame').src = '';   // stop loading / free memory
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSheet();
+});
+
 // ── HELPERS ──────────────────────────────────────
 function fmtDate(d) {
   if (!d) return '';
@@ -1599,5 +1663,18 @@ function fmtDate(d) {
   } catch { return d; }
 }
 </script>
+
+<div class="sheet-modal" id="sheetModal" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet-modal-inner">
+    <div class="sheet-modal-bar">
+      <div class="sheet-modal-title" id="sheetModalTitle">MLS Sheet</div>
+      <div class="sheet-modal-actions">
+        <a class="sheet-modal-btn" id="sheetModalOpen" href="#" target="_blank" rel="noopener">Open</a>
+        <button class="sheet-modal-btn close" onclick="closeSheet()" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <iframe class="sheet-modal-frame" id="sheetModalFrame" title="MLS Sheet"></iframe>
+  </div>
+</div>
 </body>
 </html>
