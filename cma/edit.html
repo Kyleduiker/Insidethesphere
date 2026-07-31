@@ -853,10 +853,22 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
       <div class="modal-title" id="compModalTitle">Add comparable</div>
       <button class="modal-close" onclick="closeCompModal()">✕</button>
     </div>
-    <div id="pdf-upload-bar" style="padding:12px 22px;background:#F7F4EF;border-bottom:0.5px solid #D9D3CB;display:flex;align-items:center;gap:12px">
+    <div id="pdf-upload-bar" style="padding:12px 22px;background:#F7F4EF;border-bottom:0.5px solid #D9D3CB;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="parseMatrixPDF(this)">
-      <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase">↑ Upload Matrix PDF</button>
-      <span style="font-size:12px;color:#8C8479" id="pdf-status">Upload a Matrix Agent Full report to auto-fill</span>
+      <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload Matrix PDF</button>
+      <span style="font-size:12px;color:#8C8479;flex:1" id="pdf-status">Upload a Matrix Agent Full report — single or multiple listings</span>
+    </div>
+    <!-- MULTI-LISTING REVIEW PANEL -->
+    <div id="multi-review-panel" style="display:none;padding:16px 22px;background:#fff;border-bottom:0.5px solid #D9D3CB;max-height:320px;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8C8479" id="multi-review-title">Listings found</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="selectAllComps(true)" style="padding:5px 10px;background:transparent;border:0.5px solid #D9D3CB;border-radius:2px;font-size:10px;cursor:pointer;font-family:Inter,sans-serif;color:#8C8479">Select all</button>
+          <button onclick="selectAllComps(false)" style="padding:5px 10px;background:transparent;border:0.5px solid #D9D3CB;border-radius:2px;font-size:10px;cursor:pointer;font-family:Inter,sans-serif;color:#8C8479">Deselect all</button>
+          <button onclick="addSelectedComps()" style="padding:5px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase" id="add-selected-btn">Add selected</button>
+        </div>
+      </div>
+      <div id="multi-review-list" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div class="modal-body">
       <div class="frow">
@@ -1447,6 +1459,8 @@ function loadSidebarProfile(user) {
 }
 
 // ── MATRIX PDF PARSER ────────────────────────────────────
+let parsedListings = [];
+
 function parseMatrixPDF(input) {
   const file = input.files[0];
   if (!file) return;
@@ -1454,61 +1468,65 @@ function parseMatrixPDF(input) {
   const statusEl = document.getElementById('pdf-status');
   statusEl.textContent = 'Reading PDF...';
   statusEl.style.color = '#A0714F';
+  document.getElementById('multi-review-panel').style.display = 'none';
 
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
       const typedArray = new Uint8Array(e.target.result);
-
-      // Configure PDF.js worker
-      if (typeof pdfjsLib === 'undefined') {
-        throw new Error('PDF library not loaded');
-      }
-      // Disable worker - runs on main thread, works everywhere without CORS issues
+      if (typeof pdfjsLib === 'undefined') throw new Error('PDF library not loaded');
       pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
-      const loadingTask = pdfjsLib.getDocument({ 
+      const pdf = await pdfjsLib.getDocument({
         data: typedArray,
         useWorkerFetch: false,
         isEvalSupported: false,
         useSystemFonts: true
-      });
-      const pdf = await loadingTask.promise;
-      let fullText = '';
+      }).promise;
 
-      for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 2); pageNum++) {
+      let fullText = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Group items by Y position (row) then sort by X (column)
+        const tc = await page.getTextContent();
         const rows = {};
-        textContent.items.forEach(item => {
+        tc.items.forEach(item => {
           const y = Math.round(item.transform[5]);
           if (!rows[y]) rows[y] = [];
           rows[y].push({ x: item.transform[4], str: item.str });
         });
-        
-        // Sort rows top to bottom, items left to right
         Object.keys(rows).sort((a,b) => b-a).forEach(y => {
           const line = rows[y].sort((a,b) => a.x - b.x).map(i => i.str).join(' ');
           if (line.trim()) fullText += line + '\n';
         });
       }
 
-      // Normalize: collapse multiple spaces, clean up common PDF artifacts
+      // Normalize whitespace
       fullText = fullText.replace(/[ \t]+/g, ' ').replace(/\r/g, '');
-      console.log('Extracted text (first 500):', fullText.slice(0, 500));
 
-      const data = extractMatrixFields(fullText);
-      console.log('Parsed data:', data);
+      // Split into individual listings
+      const listings = splitListings(fullText);
+      console.log(`Found ${listings.length} listing(s)`);
 
-      if (data.address || data.salePrice || data.listPrice) {
-        fillCompForm(data);
-        statusEl.textContent = '✓ Fields filled from Matrix report — review and save';
-        statusEl.style.color = '#4A5C4E';
-      } else {
-        statusEl.textContent = '⚠ Could not read this PDF format — please fill fields manually';
+      if (listings.length === 0) {
+        statusEl.textContent = '⚠ Could not detect listings — please fill fields manually';
         statusEl.style.color = '#c0392b';
+      } else if (listings.length === 1) {
+        // Single listing — fill the form directly
+        const data = extractMatrixFields(listings[0]);
+        if (data.address || data.salePrice || data.listPrice) {
+          fillCompForm(data);
+          statusEl.textContent = '✓ Fields filled from Matrix report — review and save';
+          statusEl.style.color = '#4A5C4E';
+        } else {
+          statusEl.textContent = '⚠ Could not read listing — please fill fields manually';
+          statusEl.style.color = '#c0392b';
+        }
+      } else {
+        // Multiple listings — show review panel
+        parsedListings = listings.map(chunk => extractMatrixFields(chunk));
+        showMultiReview(parsedListings);
+        statusEl.textContent = `✓ Found ${listings.length} listings — select which to add`;
+        statusEl.style.color = '#4A5C4E';
       }
 
     } catch (err) {
@@ -1518,123 +1536,111 @@ function parseMatrixPDF(input) {
     }
     input.value = '';
   };
-
-  reader.onerror = () => {
-    statusEl.textContent = '⚠ Could not read file — please try again';
-    statusEl.style.color = '#c0392b';
-  };
-
   reader.readAsArrayBuffer(file);
 }
 
-function extractMatrixFields(text) {
-  // Helper - run a regex literal and return first capture group
-  function g(re) {
-    const m = re.exec(text);
-    return m ? (m[1] || '').trim() : '';
-  }
-  function cleanNum(s) { return s.replace(/[$,]/g, '').replace(/\.\d+$/, ''); }
-
-  // Address - first line with a street number followed by province code
-  const addrM = text.match(/(\d+[\w\s#,.-]+?(?:AB|BC|SK|MB|ON|QC|NS))/);
-  const address = addrM ? addrM[1].replace(/\s+/g,' ').trim().replace(/,?\s*(AB|BC|SK|MB|ON|QC|NS).*$/,'').trim() : '';
-
-  // Status - word at start of a line
-  const statusM = text.match(/\b(Sold|Active|Expired|Terminated|Pending)\b/);
-  const statusMap = {'Sold':'sold','Active':'active','Expired':'expired','Terminated':'terminated','Pending':'pending'};
-  const status = statusMap[statusM && statusM[1]] || 'sold';
-
-  // Prices - LP, OP, SP lines
-  const lpM = text.match(/\bLP[:\s$]+([\d,]+(?:\.\d+)?)/i);
-  const spM = text.match(/\bSP[:\s$]+([\d,]+(?:\.\d+)?)/i);
-  const soldM = text.match(/Sold Price[:\s]+\$?([\d,]+(?:\.\d+)?)/);
-  const listPrice = lpM ? cleanNum(lpM[1]) : '';
-  const salePrice = spM ? cleanNum(spM[1]) : (soldM ? cleanNum(soldM[1]) : '');
-
-  // DOM
-  const domM = text.match(/\bDOM[:\s]+(\d+)/i);
-  const dom = domM ? domM[1] : '';
-
-  // Beds
-  const bedsM = text.match(/Ttl\s+Beds[:\s]+(\d+)/i) || text.match(/Beds\s+on\s+Main[:\s]+(\d+)/i);
-  const beds = bedsM ? bedsM[1] : '';
-
-  // Baths - "F/H Bth: 2/0" means 2 full, 0 half
-  const bathsM = text.match(/F.H\s*Bth[:\s]+(\d+)[^\d]+(\d+)/i);
-  const baths = bathsM ? String(parseInt(bathsM[1]||0) + parseInt(bathsM[2]||0)) : '';
-
-  // Square footage
-  const sqftM = text.match(/RMS\s+SQFT[:\s]+([\d,]+(?:\.\d+)?)/i);
-  const sqft = sqftM ? sqftM[1].replace(/,/g,'').replace(/\.\d+$/,'') : '';
-
-  // Year built
-  const yearM = text.match(/Year\s+Built[:\s]+(\d{4})/i);
-  const year = yearM ? yearM[1] : '';
-
-  // City / Subdivision
-  const cityM = text.match(/City[:\s]+(\w+)/);
-  const city = cityM ? cityM[1] : '';
-  const subdivM = text.match(/Subdivision[:\s]+([\w_]+)/);
-  const subdivision = subdivM ? subdivM[1].replace(/_/g,' ') : '';
-
-  // MLS number
-  const mlsM = text.match(/\b(A\d{7})\b/);
-  const mls = mlsM ? mlsM[1] : '';
-
-  // Sold date
-  const soldDateM = text.match(/Sold Date[:\s]+([\d/]+)/);
-  const soldDate = soldDateM ? soldDateM[1] : '';
-
-  // Public remarks for notes
-  const remarksM = text.match(/Public Remarks[:\s]*(.{50,300}?)(?:Directions|Rooms)/s);
-  const notes = remarksM ? remarksM[1].replace(/\s+/g,' ').trim().slice(0,200) : '';
-
-  return { address, status, listPrice, salePrice, dom, beds, baths, sqft, year, city, subdivision, notes, mls, soldDate };
+function splitListings(text) {
+  // Each listing starts with "Residential" on its own line
+  const parts = text.split(/(?=^Residential\s)/m);
+  return parts.filter(p => p.trim() && /^Residential/m.test(p));
 }
 
+function showMultiReview(listings) {
+  const panel = document.getElementById('multi-review-panel');
+  const list  = document.getElementById('multi-review-list');
+  const title = document.getElementById('multi-review-title');
 
-function fillCompForm(data) {
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el && val) el.value = val;
+  title.textContent = `${listings.length} listings found — select which to add as comparables`;
+
+  const statusColors = {
+    sold:'#4A5C4E', active:'#2563eb', expired:'#A0714F',
+    terminated:'#8C8479', pending:'#92400e'
   };
-  
-  set('comp-address', (data.address || '').replace(/\s+/g,' ').trim());
-  set('comp-price', data.salePrice || data.listPrice);
-  set('comp-listprice', data.listPrice);
-  set('comp-dom', data.dom);
-  set('comp-beds', data.beds);
-  set('comp-baths', data.baths);
-  set('comp-sqft', data.sqft);
-  set('comp-year', data.year);
-  set('comp-notes', data.notes);
-  
-  // Set status dropdown
-  if (data.status) {
-    const statusEl = document.getElementById('comp-status');
-    if (statusEl) {
-      Array.from(statusEl.options).forEach(o => {
-        o.selected = o.value === data.status;
-      });
+  const fmt = n => n ? '$' + parseInt(n).toLocaleString() : '—';
+
+  list.innerHTML = listings.map((l, i) => `
+    <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;cursor:pointer">
+      <input type="checkbox" data-idx="${i}" checked style="width:14px;height:14px;cursor:pointer;accent-color:#0F0F0F">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:400;color:#0F0F0F;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.address || 'Unknown address'}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${statusColors[l.status]||'#8C8479'}">${l.status||'—'}</span>
+          <span style="font-size:11px;color:#8C8479">LP ${fmt(l.listPrice)}</span>
+          ${l.salePrice ? `<span style="font-size:11px;color:#8C8479">SP ${fmt(l.salePrice)}</span>` : ''}
+          <span style="font-size:11px;color:#8C8479">${l.dom ? l.dom+'d' : ''} ${l.beds ? l.beds+'bd' : ''} ${l.sqft ? l.sqft+' sqft' : ''}</span>
+        </div>
+      </div>
+    </label>`).join('');
+
+  panel.style.display = 'block';
+  document.getElementById('add-selected-btn').textContent = `Add ${listings.length} comps`;
+
+  // Update button count when checkboxes change
+  list.addEventListener('change', () => {
+    const checked = list.querySelectorAll('input[type=checkbox]:checked').length;
+    document.getElementById('add-selected-btn').textContent = `Add ${checked} comp${checked !== 1 ? 's' : ''}`;
+  });
+}
+
+function selectAllComps(checked) {
+  document.querySelectorAll('#multi-review-list input[type=checkbox]').forEach(cb => cb.checked = checked);
+  const count = checked ? parsedListings.length : 0;
+  document.getElementById('add-selected-btn').textContent = `Add ${count} comp${count !== 1 ? 's' : ''}`;
+}
+
+async function addSelectedComps() {
+  const checkboxes = document.querySelectorAll('#multi-review-list input[type=checkbox]:checked');
+  if (!checkboxes.length) { showToast('Select at least one listing'); return; }
+
+  const btn = document.getElementById('add-selected-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  let saved = 0;
+  for (const cb of checkboxes) {
+    const idx = parseInt(cb.dataset.idx);
+    const data = parsedListings[idx];
+    if (!data || !data.address) continue;
+
+    const comp = {
+      address:    data.address,
+      community:  data.subdivision || data.city || '',
+      status:     data.status || 'sold',
+      price:      parseFloat(data.salePrice || data.listPrice) || 0,
+      listPrice:  parseFloat(data.listPrice) || 0,
+      beds:       parseFloat(data.beds) || 0,
+      baths:      parseFloat(data.baths) || 0,
+      sqft:       parseFloat(data.sqft) || 0,
+      dom:        parseInt(data.dom) || 0,
+      year:       parseInt(data.year) || 0,
+      garage:     '',
+      photoUrl:   '',
+      notes:      data.notes ? data.notes.slice(0, 200) : ''
+    };
+
+    try {
+      if (editingCompId) {
+        await db.collection('users').doc(currentUser.uid)
+          .collection('cmas').doc(cmaId)
+          .collection('comps').doc(editingCompId).set(comp);
+        editingCompId = null;
+      } else {
+        await db.collection('users').doc(currentUser.uid)
+          .collection('cmas').doc(cmaId)
+          .collection('comps').add(comp);
+      }
+      saved++;
+    } catch(err) {
+      console.error('Error saving comp:', err);
     }
   }
-  
-  // Set community from city if it matches our list
-  const communityMap = {
-    'mahogany': 'Mahogany', 'auburn': 'Auburn Bay', 'auburn bay': 'Auburn Bay',
-    'seton': 'Seton', 'cranston': 'Cranston', 'legacy': 'Legacy',
-    'chestermere': 'Chestermere'
-  };
-  const cityLower = (data.city || '').toLowerCase();
-  const community = Object.entries(communityMap).find(([k]) => cityLower.includes(k))?.[1];
-  if (community) {
-    const communityEl = document.getElementById('comp-community');
-    if (communityEl) {
-      Array.from(communityEl.options).forEach(o => {
-        o.selected = o.value === community;
-      });
-    }
-  }
+
+  // Reload comps display
+  await loadComps();
+  document.getElementById('multi-review-panel').style.display = 'none';
+  closeCompModal();
+  showToast(`✓ ${saved} comparable${saved !== 1 ? 's' : ''} added`, 'ok');
+  btn.disabled = false;
 }
 // ── END MATRIX PARSER ────────────────────────────────────
 
