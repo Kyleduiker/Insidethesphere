@@ -1558,7 +1558,6 @@ function loadSidebarProfile(user) {
 // communities all sit in CREB's South East district.
 let crebParsed = null;
 
-const CREB_DISTRICTS = ['City Centre','North East','North West','North','West','South East','South','East'];
 
 async function parseCREB(input) {
   const file = (input.files || [])[0];
@@ -1584,7 +1583,7 @@ async function parseCREB(input) {
     const text = lines.join('\n');
     crebParsed = extractCREB(text);
 
-    if (!crebParsed.city.sales && !crebParsed.districts.length) {
+    if (!crebParsed.types || !Object.keys(crebParsed.types).length) {
       st.textContent = '⚠ Could not read this file — is it the CREB Monthly Stats Package?';
       st.style.color = '#c0392b';
       input.value = ''; return;
