@@ -194,6 +194,12 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 .b-sold{background:rgba(74,92,78,.08);color:var(--sage);border:0.5px solid rgba(74,92,78,.2)}
 .b-active{background:rgba(37,99,235,.07);color:#2563eb;border:0.5px solid rgba(37,99,235,.15)}
 .b-exp{background:rgba(160,113,79,.08);color:var(--copper);border:0.5px solid rgba(160,113,79,.2)}
+.comp-group-row td{
+  background:var(--ivory);font-size:8px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--stone);
+  padding:9px 10px;border-bottom:0.5px solid var(--border);
+}
+.comp-table tr.comp-group-row:hover td{background:var(--ivory)}
 .comp-act-btn{
   font-size:10px;padding:4px 9px;border-radius:2px;
   cursor:pointer;font-family:var(--sans);border:0.5px solid var(--border);
@@ -202,6 +208,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 .comp-act-btn:hover{border-color:var(--obs);color:var(--obs)}
 .comp-act-del{color:var(--border);border-color:transparent}
 .comp-act-del:hover{color:#c0392b;border-color:rgba(192,57,43,.2)}
+.comp-flag{font-size:10px;color:#6B2737;margin-top:3px}
 .comp-stats-row{
   display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
   background:var(--border);border:0.5px solid var(--border);
@@ -271,7 +278,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
   padding:16px 20px;border:0.5px solid var(--border);
   background:#fff;border-radius:2px;margin-bottom:14px;
 }
-.pub-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.pub-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .12s}
 .pub-dot.live{background:var(--sage)}
 .pub-label{font-size:13px;color:var(--stone)}
 .pub-label strong{color:var(--obs);display:block;font-size:13px;margin-bottom:1px}
@@ -475,7 +482,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             </div>
             <div class="fg">
               <label>Client page password</label>
-              <input class="fi" id="clientPassword" placeholder="e.g. Mahogany2026" oninput="markDirty()">
+              <input class="fi" id="clientPassword" placeholder="e.g. Mahogany2026" oninput="markDirty();updateClientUrl()">
             </div>
           </div>
         </div>
@@ -657,7 +664,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
           </div>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
-          <div id="compTableWrap" style="padding:0">
+          <div id="compTableWrap" style="padding:0;overflow-x:auto">
             <table class="comp-table">
               <thead>
                 <tr>
@@ -903,7 +910,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
     <div id="pdf-upload-bar" style="padding:12px 22px;background:#F7F4EF;border-bottom:0.5px solid #D9D3CB;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <input type="file" id="pdf-file-input" accept=".pdf" multiple style="display:none" onchange="parseMatrixPDF(this)">
       <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload Matrix PDF</button>
-      <span style="font-size:12px;color:#8C8479;flex:1" id="pdf-status">Upload a Matrix Agent Full report — single or multiple listings</span>
+      <span style="font-size:12px;color:#8C8479;flex:1" id="pdf-status">Upload a Matrix Client Full report — single or multiple listings</span>
     </div>
     <!-- MULTI-LISTING REVIEW PANEL -->
     <div id="multi-review-panel" style="display:none;padding:16px 22px;background:#fff;border-bottom:0.5px solid #D9D3CB;max-height:320px;overflow-y:auto">
@@ -1033,6 +1040,10 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         }
     });
 
+    function doLogout() {
+        firebase.auth().signOut().then(() => window.location.href = '../login.html');
+    }
+
     // ── LOAD CMA ──
     function loadCMA() {
         db.collection('users').doc(currentUser.uid)
@@ -1049,12 +1060,15 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
                 comps = cmaData.comps || [];
                 populateForm();
                 renderComps();
+                recalcCompStats();
+                toggleCommission();
+                updateCapLabel();
                 recalcNet();
                 recalcPricing();
                 updatePublishPanel();
 
                 document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('sidebar').style.display = 'flex';
                 document.getElementById('appContent').style.display = 'flex';
                 document.getElementById('breadcrumb-name').textContent = cmaData.clientName || 'Untitled';
 
@@ -1170,31 +1184,33 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         saveTimer = setTimeout(saveCMA, 2000);
     }
 
+    // FIXED: CSS class is .save-pill, not .save-status. The old version wrote
+    // a class that does not exist, so the pill never changed colour.
     function setSaveStatus(state) {
         const el = document.getElementById('saveStatus');
-        if (state === 'saving') { el.textContent = '● Saving...'; el.className = 'save-status saving'; }
-        else if (state === 'saved') { el.textContent = '✓ Saved'; el.className = 'save-status saved'; }
-        else { el.textContent = 'All saved'; el.className = 'save-status'; }
+        if (!el) return;
+        if (state === 'saving')     { el.textContent = '● Saving…'; el.className = 'save-pill saving'; }
+        else if (state === 'saved') { el.textContent = '✓ Saved';   el.className = 'save-pill saved'; }
+        else                        { el.textContent = 'All saved'; el.className = 'save-pill'; }
     }
 
     // ── PUBLISH CMA ──
     function publishCMA() {
         if (!currentUser || !cmaId) return;
 
-        // Save first
+        const slug = cmaData.slug;
+        if (!slug) { showToast('This CMA has no slug — cannot publish', 'error'); return; }
+
         const data = collectFormData();
         data.status = 'published';
         data.publishedAt = firebase.firestore.FieldValue.serverTimestamp();
         data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
-        const slug = cmaData.slug;
-
-        // Write to user's collection
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .update(data)
             .then(() => {
-                // Also write to public_cmas for client access
+                // Also write to public_cmas for client access.
                 // Sanitise: never let a FieldValue sentinel reach an array.
                 const publicComps = comps.map(c => {
                     const o = { ...c };
@@ -1212,7 +1228,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             })
             .then(() => {
                 cmaData = { ...cmaData, ...data };
-                showToast('CMA published! Client link is ready.');
+                showToast('CMA published — client link is ready');
                 updatePublishPanel();
                 updateClientUrl();
             })
@@ -1222,35 +1238,71 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             });
     }
 
+    // FIXED: the old version replaced #publishStatus with markup using CSS
+    // classes that do not exist (.publish-banner, .pb-url, .btn-ghost), and
+    // wiped the pub-dot markup when unpublished so it never came back.
+    // This version updates the existing elements in place.
     function updatePublishPanel() {
-        const statusDiv = document.getElementById('publishStatus');
-        if (cmaData.status === 'published') {
-            statusDiv.innerHTML = `
-                <div class="publish-banner">
-                    <div>
-                        <div class="pb-info">✓ This CMA is published and live</div>
-                        <div class="pb-url">${window.location.origin}/cma/client/?slug=${cmaData.slug}</div>
-                    </div>
-                    <button class="btn btn-ghost" onclick="copyClientUrl()">Copy link</button>
-                </div>`;
-        } else {
-            statusDiv.innerHTML = '';
+        const live = cmaData.status === 'published';
+        const dot  = document.getElementById('pub-dot');
+        const txt  = document.getElementById('pub-status-text');
+        const sub  = document.getElementById('pub-status-sub');
+        const b1   = document.getElementById('publishBtn');
+        const b2   = document.getElementById('publishBtn2');
+
+        if (dot) dot.classList.toggle('live', live);
+        if (txt) txt.textContent = live ? 'Published — live' : 'Not published';
+        if (sub) sub.textContent = live
+            ? 'Your client can open this now using the password below'
+            : 'Publish to make the client page live';
+        if (b1) {
+            b1.textContent = live ? 'Update client page' : 'Publish to client';
+            b1.classList.toggle('published', live);
         }
+        if (b2) b2.textContent = live ? 'Update client page →' : 'Publish to client →';
     }
 
+    // FIXED: #clientUrl is a <span> and #publishPassword is a <div> — neither
+    // has a .value property. Setting .value silently did nothing, which is why
+    // the client link always displayed "—".
     function updateClientUrl() {
-        const slug = cmaData.slug || '';
-        const url = `${window.location.origin}/cma/client/?slug=${slug}`;
-        const urlEl = document.getElementById('clientUrl');
+        const slug   = cmaData.slug || '';
+        const urlEl  = document.getElementById('clientUrl');
         const passEl = document.getElementById('publishPassword');
-        if (urlEl) urlEl.value = url;
-        if (passEl) passEl.value = cmaData.clientPassword || document.getElementById('clientPassword').value || '—';
+        const pass   = (document.getElementById('clientPassword') || {}).value
+                       || cmaData.clientPassword || '';
+        if (urlEl)  urlEl.textContent  = slug ? clientLink() : '—';
+        if (passEl) passEl.textContent = pass || '—';
+    }
+
+    function clientLink() {
+        return window.location.origin + '/cma/client/?slug=' + (cmaData.slug || '');
     }
 
     function copyClientUrl() {
-        const slug = cmaData.slug || '';
-        const url = `${window.location.origin}/cma/client/?slug=${slug}`;
-        navigator.clipboard.writeText(url).then(() => showToast('Link copied!'));
+        if (!cmaData.slug) { showToast('Publish first to generate a link', 'error'); return; }
+        const url = clientLink();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url)
+                .then(() => showToast('Link copied'))
+                .catch(() => fallbackCopy(url));
+        } else {
+            fallbackCopy(url);
+        }
+    }
+
+    // iPad Safari refuses clipboard writes in some contexts — fall back to a
+    // temporary textarea so the Copy button always does something.
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); showToast('Link copied'); }
+        catch (e) { showToast('Could not copy — select the link manually', 'error'); }
+        document.body.removeChild(ta);
     }
 
     // ── NAVIGATION ──
@@ -1260,9 +1312,10 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         document.getElementById('panel-' + id).classList.add('active');
         document.getElementById('nav-' + id).classList.add('active');
 
-        if (id === 'pricing') recalcPricing();
+        if (id === 'comps')    { renderComps(); recalcCompStats(); }
+        if (id === 'pricing')  recalcPricing();
         if (id === 'netsheet') { toggleCommission(); updateCapLabel(); recalcNet(); }
-        if (id === 'publish') { updatePublishPanel(); updateClientUrl(); }
+        if (id === 'publish')  { updatePublishPanel(); updateClientUrl(); }
     }
 
     // ── COMPARABLES ──
@@ -1270,7 +1323,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         editingCompIndex = (index !== undefined) ? index : null;
         const comp = editingCompIndex !== null ? comps[editingCompIndex] : {};
 
-        document.getElementById('compModalTitle').textContent = editingCompIndex !== null ? 'Edit Comparable' : 'Add Comparable';
+        document.getElementById('compModalTitle').textContent = editingCompIndex !== null ? 'Edit comparable' : 'Add comparable';
         document.getElementById('comp-address').value = comp.address || '';
         document.getElementById('comp-status').value = comp.status || 'sold';
         document.getElementById('comp-price').value = comp.price || '';
@@ -1291,6 +1344,11 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         document.getElementById('comp-photo').value = comp.photoUrl || '';
         document.getElementById('comp-notes').value = comp.notes || '';
 
+        // Editing one comp should not leave last upload's review list open.
+        if (editingCompIndex !== null) {
+            document.getElementById('multi-review-panel').style.display = 'none';
+        }
+
         document.getElementById('compModal').classList.add('open');
     }
 
@@ -1305,7 +1363,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 
         const comp = {
             address,
-            community: document.getElementById('comp-community')?.value || '',
+            community: (document.getElementById('comp-community') || {}).value || '',
             status: document.getElementById('comp-status').value,
             price: parseFloat(document.getElementById('comp-price').value) || 0,
             listPrice: parseFloat(document.getElementById('comp-listprice').value) || 0,
@@ -1314,19 +1372,19 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             sqft: parseFloat(document.getElementById('comp-sqft').value) || 0,
             dom: parseInt(document.getElementById('comp-dom').value) || 0,
             year: parseInt(document.getElementById('comp-year').value) || 0,
-            garage: document.getElementById('comp-garage')?.value || '',
-            photoUrl: document.getElementById('comp-photo')?.value || '',
+            garage: (document.getElementById('comp-garage') || {}).value || '',
+            photoUrl: (document.getElementById('comp-photo') || {}).value || '',
             notes: document.getElementById('comp-notes').value
         };
 
-        // Save to Firestore subcollection
         const colRef = db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .collection('comps');
 
+        const idx = editingCompIndex;
         let promise;
-        if (editingCompIndex !== null && comps[editingCompIndex].id) {
-            promise = colRef.doc(comps[editingCompIndex].id).update(comp);
+        if (idx !== null && comps[idx] && comps[idx].id) {
+            promise = colRef.doc(comps[idx].id).update(comp);
         } else {
             comp.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             promise = colRef.add(comp);
@@ -1334,14 +1392,14 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 
         promise.then(docRef => {
             closeCompModal();
-            if (editingCompIndex !== null) {
-                comps[editingCompIndex] = { ...comps[editingCompIndex], ...comp };
+            if (idx !== null && comps[idx]) {
+                comps[idx] = { ...comps[idx], ...comp, createdAt: comps[idx].createdAt };
             } else {
-                comps.push({ id: docRef ? docRef.id : Date.now(), ...comp, createdAt: Date.now() });
+                comps.push({ id: docRef ? docRef.id : String(Date.now()), ...comp, createdAt: Date.now() });
             }
             renderComps();
             recalcCompStats();
-            showToast(editingCompIndex !== null ? 'Comparable updated' : 'Comparable added');
+            showToast(idx !== null ? 'Comparable updated' : 'Comparable added');
         }).catch(err => {
             console.error(err);
             showToast('Error saving comparable', 'error');
@@ -1351,7 +1409,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
     function deleteComp(index) {
         if (!confirm('Remove this comparable?')) return;
         const comp = comps[index];
-        if (comp.id) {
+        if (comp && comp.id) {
             db.collection('users').doc(currentUser.uid)
                 .collection('cmas').doc(cmaId)
                 .collection('comps').doc(comp.id)
@@ -1363,51 +1421,103 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         showToast('Comparable removed');
     }
 
+    // FIXED: was replacing #compTableWrap wholesale (destroying <tbody
+    // id="compTableBody">) and emitting .status-badge / .badge-sold /
+    // .icon-btn — none of which exist in this stylesheet, so every row
+    // rendered unstyled. Now writes rows into the existing tbody using the
+    // real classes, grouped by status with price descending inside each group.
+    const STATUS_ORDER = ['active','pending','sold','expired','terminated'];
+    const STATUS_LABEL = {
+        active:'Active', pending:'Pending', sold:'Sold',
+        expired:'Expired', terminated:'Terminated'
+    };
+    const STATUS_BADGE = {
+        active:'b-active', pending:'b-active', sold:'b-sold',
+        expired:'b-exp', terminated:'b-exp'
+    };
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     function renderComps() {
-        const wrap = document.getElementById('compTableWrap');
-        if (!wrap) return;
+        const body = document.getElementById('compTableBody');
+        if (!body) return;
 
         if (!comps.length) {
-            wrap.innerHTML = '<p style="color:#8C8479;font-size:13px;text-align:center;padding:20px">No comparables yet — add your first one above</p>';
+            body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--stone);font-size:13px">No comparables yet — add your first comp below</td></tr>';
             return;
         }
 
-        const badgeClass = { sold: 'badge-sold', active: 'badge-active', pending: 'badge-pending', expired: 'badge-expired', terminated: 'badge-terminated' };
+        // Keep the original array index alongside each comp so Edit/Delete
+        // still address the right record after sorting.
+        const indexed = comps.map((c, i) => ({ c: c, i: i }));
+        let html = '';
 
-        const rows = comps.map((c, i) => {
-            const psf = c.sqft > 0 ? Math.round(c.price / c.sqft) : 0;
-            return `<tr>
-                <td><span class="status-badge ${badgeClass[c.status] || ''}">${c.status}</span></td>
-                <td>${c.address}</td>
-                <td style="font-weight:600;color:#0F0F0F">$${(c.price||0).toLocaleString()}</td>
-                <td>${c.beds||'—'} bd / ${c.baths||'—'} ba</td>
-                <td>${c.sqft ? c.sqft.toLocaleString() : '—'}</td>
-                <td>${psf ? '$'+psf : '—'}</td>
-                <td>${c.dom ? c.dom+'d' : '—'}</td>
-                <td style="white-space:nowrap">
-                    <button class="icon-btn" onclick="openCompModal(${i})">✎</button>
-                    <button class="icon-btn del" onclick="deleteComp(${i})">✕</button>
-                </td>
-            </tr>`;
-        }).join('');
+        STATUS_ORDER.forEach(st => {
+            const group = indexed
+                .filter(r => (r.c.status || 'sold') === st)
+                .sort((a, b) => (b.c.price || 0) - (a.c.price || 0));
+            if (!group.length) return;
 
-        wrap.innerHTML = `<div style="overflow-x:auto">
-            <table class="comp-table">
-                <thead><tr>
-                    <th>Status</th><th>Address</th><th>Price</th>
-                    <th>Beds/Baths</th><th>Sq.ft.</th><th>$/sf</th><th>DOM</th><th></th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>`;
+            html += `<tr class="comp-group-row"><td colspan="8">${STATUS_LABEL[st]} · ${group.length}</td></tr>`;
+
+            group.forEach(({ c, i }) => {
+                html += `
+                <tr>
+                    <td class="comp-address-cell">${esc(c.address) || '—'}</td>
+                    <td><span class="comp-badge ${STATUS_BADGE[st]}">${STATUS_LABEL[st]}</span></td>
+                    <td class="comp-price-cell">${c.price ? '$' + Number(c.price).toLocaleString() : '—'}</td>
+                    <td>${c.beds || '—'}</td>
+                    <td>${c.baths || '—'}</td>
+                    <td>${c.sqft ? Number(c.sqft).toLocaleString() : '—'}</td>
+                    <td>${c.dom ? c.dom + 'd' : '—'}</td>
+                    <td style="white-space:nowrap;text-align:right">
+                        <button class="comp-act-btn" onclick="openCompModal(${i})">Edit</button>
+                        <button class="comp-act-btn comp-act-del" onclick="deleteComp(${i})">✕</button>
+                    </td>
+                </tr>`;
+            });
+        });
+
+        // Anything with an unrecognised status still has to appear.
+        const orphans = indexed.filter(r => STATUS_ORDER.indexOf(r.c.status || 'sold') === -1);
+        if (orphans.length) {
+            html += `<tr class="comp-group-row"><td colspan="8">Other · ${orphans.length}</td></tr>`;
+            orphans.forEach(({ c, i }) => {
+                html += `
+                <tr>
+                    <td class="comp-address-cell">${esc(c.address) || '—'}</td>
+                    <td><span class="comp-badge b-exp">${esc(c.status) || '—'}</span></td>
+                    <td class="comp-price-cell">${c.price ? '$' + Number(c.price).toLocaleString() : '—'}</td>
+                    <td>${c.beds || '—'}</td>
+                    <td>${c.baths || '—'}</td>
+                    <td>${c.sqft ? Number(c.sqft).toLocaleString() : '—'}</td>
+                    <td>${c.dom ? c.dom + 'd' : '—'}</td>
+                    <td style="white-space:nowrap;text-align:right">
+                        <button class="comp-act-btn" onclick="openCompModal(${i})">Edit</button>
+                        <button class="comp-act-btn comp-act-del" onclick="deleteComp(${i})">✕</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        body.innerHTML = html;
     }
 
     function recalcCompStats() {
-        const sold = comps.filter(c => c.status === 'sold');
+        const sold = comps.filter(c => c.status === 'sold' && c.price > 0);
         const avgSold = sold.length ? Math.round(sold.reduce((s, c) => s + c.price, 0) / sold.length) : 0;
-        const withSqft = comps.filter(c => c.sqft > 0);
+
+        const withSqft = comps.filter(c => c.sqft > 0 && c.price > 0);
         const avgPsf = withSqft.length ? Math.round(withSqft.reduce((s, c) => s + (c.price / c.sqft), 0) / withSqft.length) : 0;
-        const avgDom = comps.length ? Math.round(comps.reduce((s, c) => s + c.dom, 0) / comps.length) : 0;
+
+        // Only average DOM over comps that actually have one — including
+        // zeroes drags the average down and understates time on market.
+        const withDom = comps.filter(c => c.dom > 0);
+        const avgDom = withDom.length ? Math.round(withDom.reduce((s, c) => s + c.dom, 0) / withDom.length) : 0;
 
         document.getElementById('avgSoldPrice').textContent = avgSold ? '$' + avgSold.toLocaleString() : '—';
         document.getElementById('avgPsf').textContent = avgPsf ? '$' + avgPsf : '—';
@@ -1453,12 +1563,14 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         return { base: base, gst: gst, total: base + gst };
     }
 
+    // FIXED: .frow is display:grid, not flex. Setting 'flex' collapsed the
+    // two-column commission rows into one squashed line.
     function toggleCommission() {
         const t = document.getElementById('commissionType').value;
-        document.getElementById('comm-tiered-row').style.display  = t === 'tiered'   ? 'flex' : 'none';
-        document.getElementById('comm-cap-row').style.display     = t === 'tiered'   ? 'flex' : 'none';
-        document.getElementById('comm-flatpct-row').style.display = t === 'flat_pct' ? 'flex' : 'none';
-        document.getElementById('comm-flatfee-row').style.display = t === 'flat_fee' ? 'flex' : 'none';
+        document.getElementById('comm-tiered-row').style.display  = t === 'tiered'   ? 'grid' : 'none';
+        document.getElementById('comm-cap-row').style.display     = t === 'tiered'   ? 'grid' : 'none';
+        document.getElementById('comm-flatpct-row').style.display = t === 'flat_pct' ? 'grid' : 'none';
+        document.getElementById('comm-flatfee-row').style.display = t === 'flat_fee' ? 'grid' : 'none';
     }
 
     function updateCapLabel() {
@@ -1499,26 +1611,30 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         document.getElementById('np-tax').textContent = tax >= 0 ? '+' + fmt(tax) : '−' + fmt(Math.abs(tax));
         document.getElementById('np-other').textContent = '−' + fmt(other);
         document.getElementById('np-net').textContent = fmt(net);
+
+        // Only show optional deduction rows that carry a value.
+        const row = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? 'flex' : 'none'; };
+        row('np-mortgage-row', mortgage > 0);
+        row('np-penalty-row',  penalty > 0);
+        row('np-tax-row',      tax !== 0);
+        row('np-other-row',    other > 0);
     }
 
     // ── PRESENTATION TYPE TOGGLE ──
     function toggleCustomType() {
-        const val = document.getElementById('presentationType')?.value;
+        const el = document.getElementById('presentationType');
+        const val = el ? el.value : '';
         const wrap = document.getElementById('custom-type-wrap');
         if (wrap) wrap.style.display = val === 'custom' ? 'block' : 'none';
     }
 
-    // ── CLOSE MODAL ON OVERLAY CLICK ──
-    document.getElementById('compModal').addEventListener('click', function(e) {
-        if (e.target === this) closeCompModal();
-    });
-
-    // ── TOAST ──
+    // FIXED: CSS class is .toast.err / .toast.ok, not .toast.error.
     function showToast(msg, type) {
         const t = document.getElementById('toast');
+        if (!t) return;
         t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
-        t.className = 'toast show' + (type === 'error' ? ' error' : '');
-        setTimeout(() => t.className = 'toast', 3000);
+        t.className = 'toast show ' + (type === 'error' ? 'err' : 'ok');
+        setTimeout(() => { t.className = 'toast'; }, 3000);
     }
 
 function loadSidebarProfile(user) {
@@ -1529,7 +1645,7 @@ function loadSidebarProfile(user) {
     const last  = p.lastName  || '';
     const title = p.title     || 'Agent';
     const initials = ((first.charAt(0))+(last.charAt(0)||'')).toUpperCase() || 'KD';
-    const headshot = p.photoUrls?.headshot || '';
+    const headshot = (p.photoUrls && p.photoUrls.headshot) || '';
 
     const sbName = document.getElementById('sb-name');
     const sbRole = document.getElementById('sb-role');
@@ -1552,10 +1668,9 @@ function loadSidebarProfile(user) {
 
 
 // ── CREB MONTHLY STATS PARSER ────────────────────────────
-// Reads the CREB Monthly Stats Package. Two useful geographies: the
-// "Summary Stats City of Calgary" table, and the "Calgary Districts" table
-// which breaks each property type down by district. SE Calgary lake
-// communities all sit in CREB's South East district.
+// Reads the CREB community "360" report. One monthly time series per
+// property type; the most recent row carries sales, inventory, months of
+// supply, DOM, sale-to-list, benchmark and median.
 let crebParsed = null;
 
 
@@ -1584,7 +1699,7 @@ async function parseCREB(input) {
     crebParsed = extractCREB(text);
 
     if (!crebParsed.types || !Object.keys(crebParsed.types).length) {
-      st.textContent = '⚠ Could not read this file — is it the CREB Monthly Stats Package?';
+      st.textContent = '⚠ Could not read this file — is it a CREB community 360 report?';
       st.style.color = '#c0392b';
       input.value = ''; return;
     }
@@ -1602,9 +1717,6 @@ async function parseCREB(input) {
 const CREB_MONTHS = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
 const CREB_TYPES = ['TOTAL RESIDENTIAL','DETACHED','SEMI-DETACHED','ROW','APARTMENT'];
 
-// Community "360" report: one monthly time series per property type. The most
-// recent row carries sales, inventory, months of supply, DOM, sale-to-list,
-// benchmark and median — everything the Market data panel needs.
 function extractCREB(text) {
   const n = v => v == null ? null : parseFloat(String(v).replace(/[,$%]/g, ''));
   const community = (text.match(/^[A-Z][a-z]+ \d{4}\s+(.+)$/m) || [])[1] || null;
@@ -1637,7 +1749,7 @@ function showCREBReview() {
   const body = document.getElementById('creb-review-body');
   const t = crebParsed.types;
 
-  const rows = CREB_TYPES.filter(k => t[k]).map((k, i) => {
+  const rows = CREB_TYPES.filter(k => t[k]).map(k => {
     const d = t[k];
     // CREB's own guidance: aggregated stats need more than ten sales to be
     // meaningful. Below that, say so rather than quoting it to a client.
@@ -1688,13 +1800,6 @@ function applyCREB() {
 // ── END CREB PARSER ──────────────────────────────────────
 
 // ── MATRIX PDF PARSER ────────────────────────────────────
-// Replaces everything in cma/edit.html between the existing
-//   "// ── MATRIX PDF PARSER ──" and "// ── END MATRIX PARSER ──" markers.
-//
-// Also change the file input on ~line 857 to allow multi-select:
-//   <input type="file" id="pdf-file-input" accept=".pdf" multiple
-//          style="display:none" onchange="parseMatrixPDF(this)">
-//
 // Format: Matrix "Client Full". Handles single- and multi-listing exports,
 // several files at once, and de-duplicates by MLS number.
 
@@ -1942,8 +2047,11 @@ async function parseMatrixPDF(input) {
   // in three single-listing sheets fills the form three times.
   if (parsedListings.length === 1) {
     fillCompForm(parsedListings[0]);
-    statusEl.textContent = '✓ Fields filled from Matrix sheet — review and save';
-    statusEl.style.color = '#4A5C4E';
+    const fl = parsedListings[0].flags || [];
+    statusEl.textContent = fl.length
+      ? '⚠ Filled with issues: ' + fl.join(' · ') + ' — check before saving'
+      : '✓ Fields filled from Matrix sheet — review and save';
+    statusEl.style.color = fl.length ? '#6B2737' : '#4A5C4E';
     return;
   }
 
@@ -1991,11 +2099,11 @@ function showMultiReview(listings) {
     const ratio = (l.soldPrice && l.listPrice)
       ? ' · ' + (l.soldPrice / l.listPrice * 100).toFixed(1) + '% of list' : '';
     const flagRow = l.flags && l.flags.length
-      ? `<div style="font-size:10px;color:#6B2737;margin-top:3px">⚠ ${l.flags.join(' · ')}</div>` : '';
+      ? `<div class="comp-flag">⚠ ${l.flags.join(' · ')}</div>` : '';
     const src = multiSource
       ? `<span style="font-size:10px;color:#8C8479">${l.sourceFile} p.${l.startPage}</span>` : '';
     return `
-    <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid #D9D3CB;border-radius:2px;cursor:pointer">
+    <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:#F7F4EF;border:0.5px solid ${l.flags && l.flags.length ? '#6B2737' : '#D9D3CB'};border-radius:2px;cursor:pointer">
       <input type="checkbox" data-idx="${i}" checked style="width:14px;height:14px;margin-top:4px;cursor:pointer;accent-color:#0F0F0F">
       <div style="flex:1;min-width:0">
         <div style="font-family:'Cormorant Garamond',serif;font-size:.95rem;color:#0F0F0F;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.address || 'Unknown address'}</div>
@@ -2123,8 +2231,8 @@ async function addSelectedComps() {
   btn.textContent = origText;
   btn.disabled = false;
 
-  if (failed) showToast(saved + ' added, ' + failed + ' failed - see console', 'error');
-  else        showToast('\u2713 ' + saved + ' comparable' + (saved !== 1 ? 's' : '') + ' added', 'ok');
+  if (failed) showToast(saved + ' added, ' + failed + ' failed — see console', 'error');
+  else        showToast(saved + ' comparable' + (saved !== 1 ? 's' : '') + ' added');
 }
 // ── END MATRIX PARSER ────────────────────────────────────
 
