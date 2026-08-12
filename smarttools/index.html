@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'dashboard';</script>
 <script src="../js/profile.js"></script>
@@ -369,6 +370,42 @@ body{
   .cma-row > *:nth-child(n+3){display:none}
   .page{padding:20px}
 }
+
+/* ── CLIENT ROWS ── */
+.client-row{
+  display:grid;
+  grid-template-columns:1fr 130px 1fr 90px;
+  gap:16px;align-items:center;
+  padding:14px 20px;
+  border-bottom:0.5px solid var(--border);
+  transition:background .12s;cursor:pointer;
+}
+.client-row:last-child{border-bottom:none}
+.client-row:hover{background:var(--ivory)}
+.client-row.header-row{background:var(--ivory);cursor:default}
+.client-row.header-row:hover{background:var(--ivory)}
+.client-name{
+  font-family:var(--serif);font-size:1rem;
+  font-weight:400;color:var(--obs);line-height:1.2;
+}
+.client-sub{font-size:11px;color:var(--stone);margin-top:2px}
+.client-cell{
+  font-size:12px;color:var(--stone);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.client-type{
+  display:inline-block;font-size:9px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;
+}
+.ct-seller{background:rgba(74,92,78,.08);color:var(--sage);border:0.5px solid rgba(74,92,78,.2)}
+.ct-buyer{background:rgba(160,113,79,.08);color:var(--copper);border:0.5px solid rgba(160,113,79,.2)}
+.ct-both{background:var(--parch);color:var(--esp);border:0.5px solid var(--border)}
+
+@media(max-width:900px){
+  .client-row{grid-template-columns:1fr 90px}
+  .client-row > *:nth-child(2),.client-row > *:nth-child(3){display:none}
+}
 </style>
 </head>
 <body>
@@ -387,6 +424,7 @@ body{
   </div>
   <div class="sb-section">Tools</div>
   <a href="" class="sb-item active" id="nav-dashboard"><span>◻</span> Dashboard</a>
+  <a href="../clients/" class="sb-item" id="nav-clients"><span>◻</span> Clients</a>
   <a href="../cma/" class="sb-item" id="nav-cma"><span>◻</span> CMA Builder</a>
   <a href="../newsletter/" class="sb-item" id="nav-newsletter"><span>◻</span> Newsletter</a>
   <a href="../Bold-trail-newsletter/" class="sb-item" id="nav-boldtrail"><span>◻</span> Bold Trail</a>
@@ -414,7 +452,7 @@ body{
     <div class="topbar-title" id="topbar-title">Dashboard</div>
     <div class="topbar-right">
       <span class="topbar-plan" id="topbar-plan">Free trial</span>
-      <a href="../cma/" class="topbar-new-cma">+ New CMA</a>
+      <a href="../clients/" class="topbar-new-cma">+ New Client</a>
     </div>
   </div>
 
@@ -449,14 +487,35 @@ body{
         <div class="stat-sub">Active reports</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Sphere contacts</div>
-        <div class="stat-value copper">554</div>
-        <div class="stat-sub">SE Calgary</div>
+        <div class="stat-label">Clients</div>
+        <div class="stat-value copper" id="stat-clients">—</div>
+        <div class="stat-sub">In your database</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Current plan</div>
         <div class="stat-value" id="stat-plan" style="font-size:1.4rem;padding-top:8px">Free trial</div>
         <div class="stat-sub"><a href="../profile.html" style="color:var(--copper);text-decoration:none;font-size:11px;letter-spacing:.04em">Upgrade →</a></div>
+      </div>
+    </div>
+
+    <!-- RECENT CLIENTS -->
+    <div class="sec-header">
+      <div class="sec-title">Recent clients</div>
+      <a href="../clients/" class="sec-link">View all →</a>
+    </div>
+    <div class="cma-list">
+      <div class="client-row header-row">
+        <div class="col-label">Client</div>
+        <div class="col-label">Phone</div>
+        <div class="col-label">Email</div>
+        <div class="col-label">Type</div>
+      </div>
+      <div id="client-rows">
+        <div class="empty">
+          <div class="empty-title">No clients yet</div>
+          <div class="empty-sub">Add a client once, then build everything else from their profile</div>
+          <a href="../clients/" class="empty-btn">+ Add a client</a>
+        </div>
       </div>
     </div>
 
@@ -487,6 +546,14 @@ body{
       <div class="sec-title">Your tools</div>
     </div>
     <div class="tool-grid">
+
+      <div class="tool-card t-obs">
+        <div class="tool-mono">CL</div>
+        <div class="tool-cat">Client management</div>
+        <div class="tool-name">Clients</div>
+        <div class="tool-desc">Every owner, contact detail and note in one place. Build a CMA or marketing materials straight from a client profile.</div>
+        <a href="../clients/" class="tool-cta">Open Clients →</a>
+      </div>
 
       <div class="tool-card t-obs">
         <div class="tool-mono">CMA</div>
@@ -543,6 +610,15 @@ body{
 
 <script>
 let currentUser = null;
+
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openClient(id){
+  window.location.href = '../clients/view.html?id=' + encodeURIComponent(id);
+}
 
 firebase.auth().onAuthStateChanged(user => {
   if (!user) { window.location.href = '../login.html'; return; }
@@ -606,7 +682,7 @@ function loadDashboard(user) {
 
       // Load CMAs
       return db.collection('users').doc(user.uid).collection('cmas')
-        .orderBy('updatedAt', 'desc').limit(5).get();
+        .orderBy('updatedAt', 'desc').get();
     })
     .then(snap => {
       const total = snap ? snap.size : 0;
@@ -618,26 +694,60 @@ function loadDashboard(user) {
         const fmt = v => v ? '$' + Math.round(parseFloat(v)).toLocaleString() : '—';
         const fmtDate = d => {
           if (!d) return '—';
-          try { return new Date(d).toLocaleDateString('en-CA',{month:'short',day:'numeric'}); }
-          catch { return d; }
+          const parsed = new Date(d + 'T12:00:00');
+          if (isNaN(parsed.getTime())) return d;
+          return parsed.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
         };
-        document.getElementById('cma-rows').innerHTML = snap.docs.map(doc => {
+        document.getElementById('cma-rows').innerHTML = snap.docs.slice(0, 5).map(doc => {
           const d = doc.data();
           const pub = d.status === 'published';
           return `<div class="cma-row">
             <div>
-              <div class="cma-address">${d.address || 'No address'}</div>
-              <div class="cma-client">${d.clientName || ''}</div>
+              <div class="cma-address">${esc(d.address || 'No address')}</div>
+              <div class="cma-client">${esc(d.clientName || '')}</div>
             </div>
-            <div class="cma-community">${d.community || '—'}</div>
+            <div class="cma-community">${esc(d.community || '—')}</div>
             <div class="cma-date">${fmtDate(d.appointmentDate)}</div>
             <div class="cma-price">${fmt(d.priceRec)}</div>
             <div><span class="cma-status ${pub?'status-pub':'status-draft'}">${pub?'Published':'Draft'}</span></div>
           </div>`;
         }).join('');
       }
+
+      return db.collection('users').doc(user.uid).collection('clients').get();
     })
-    .catch(err => console.error(err))
+    .then(csnap => {
+      if (!csnap) return;
+      document.getElementById('stat-clients').textContent = csnap.size || '0';
+      if (!csnap.size) return;
+
+      const clients = csnap.docs.map(d => {
+        const data = d.data();
+        data.id = d.id;
+        return data;
+      });
+      clients.sort((a, b) => {
+        const at = a.updatedAt && a.updatedAt.seconds ? a.updatedAt.seconds : 0;
+        const bt = b.updatedAt && b.updatedAt.seconds ? b.updatedAt.seconds : 0;
+        return bt - at;
+      });
+
+      document.getElementById('client-rows').innerHTML = clients.slice(0, 5).map(c => {
+        const name = [c.owner1Name, c.owner2Name].filter(Boolean).join(' & ') || 'Unnamed client';
+        const type = c.type || 'Seller';
+        const cls = type === 'Buyer' ? 'ct-buyer' : type === 'Both' ? 'ct-both' : 'ct-seller';
+        return `<div class="client-row" onclick="openClient('${esc(c.id)}')">
+          <div>
+            <div class="client-name">${esc(name)}</div>
+            <div class="client-sub">${esc(c.address || c.community || '—')}</div>
+          </div>
+          <div class="client-cell">${esc(c.phone || '—')}</div>
+          <div class="client-cell">${esc(c.email || '—')}</div>
+          <div><span class="client-type ${cls}">${esc(type)}</span></div>
+        </div>`;
+      }).join('');
+    })
+    .catch(err => console.error('Dashboard load failed:', err))
     .finally(() => {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('sidebar').style.display = 'flex';
