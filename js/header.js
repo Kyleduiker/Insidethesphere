@@ -1,313 +1,242 @@
 /**
  * Inside The Sphere — Shared Sidebar
- * 
- * Usage on any page:
- * 
- * 1. Add a container at the start of body:
- *    <div id="sphere-header"></div>
  *
- * 2. Wrap your page content:
- *    <div id="sphere-main">...your content...</div>
+ * SINGLE SOURCE OF TRUTH for platform navigation.
+ * To add, rename, remove or reorder a nav item, edit navItems / soonItems
+ * below. Every page updates on the next deploy.
  *
- * 3. Include after firebase-config.js:
- *    <script src="/js/profile.js"></script>
- *    <script src="/js/header.js"></script>
+ * ── Usage on any platform page ────────────────────────────────────────────
  *
- * 4. Set active page:
- *    <script>window.sphereActivePage = 'dashboard';</script>
- *    Options: 'dashboard', 'cma', 'newsletter', 'boldtrail', 'profile'
+ * 1. Replace the entire hardcoded <nav class="sidebar">...</nav> block with:
+ *      <div id="sphere-header"></div>
+ *
+ * 2. In <head>, after firebase-config.js:
+ *      <script>window.sphereActivePage = 'cma';</script>
+ *      <script src="../js/header.js"></script>
+ *
+ *    Keys: dashboard, clients, cma, newsletter, boldtrail, profile
+ *
+ * 3. Before </body>, AFTER header.js:
+ *      <script src="../js/mobile-nav.js"></script>
+ *
+ * 4. Delete the page's .sidebar / .sb-* CSS and any JS that writes to
+ *    sb-name, sb-role, sb-initials or sets sidebar.style.display.
+ *
+ * REQUIRES: the page keeps its own `.main{margin-left:220px}` rule.
+ * This script does NOT wrap or reposition page content.
+ *
+ * Client-facing CMA pages must NOT include this file.
  */
 
 (function() {
 
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500;600&display=swap');
-
-  #sphere-sidebar {
-    width: 220px !important;
-    flex-shrink: 0 !important;
-    background: #ffffff !important;
-    border-right: 0.5px solid #D9D3CB !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: fixed !important;
-    top: 0 !important; left: 0 !important; bottom: 0 !important;
-    z-index: 1000 !important;
-    font-family: 'Inter', -apple-system, sans-serif !important;
-    box-sizing: border-box !important;
-  }
-
-  #sphere-sidebar *, #sphere-sidebar *::before, #sphere-sidebar *::after {
-    box-sizing: border-box !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    line-height: normal !important;
-  }
-
-  #sphere-sidebar .ss-logo {
-    padding: 22px 20px 18px !important;
-    border-bottom: 0.5px solid #D9D3CB !important;
-    flex-shrink: 0 !important;
-  }
-  #sphere-sidebar .ss-logo-text {
-    font-family: 'Cormorant Garamond', Georgia, serif !important;
-    font-size: 1rem !important; font-weight: 300 !important;
-    color: #0F0F0F !important; letter-spacing: .04em !important;
-    line-height: 1.3 !important; text-decoration: none !important;
-    display: block !important;
-  }
-  #sphere-sidebar .ss-logo-text span { color: #A0714F !important; }
-  #sphere-sidebar .ss-logo-sub {
-    font-size: 8px !important; font-weight: 700 !important;
-    letter-spacing: .16em !important; text-transform: uppercase !important;
-    color: #D9D3CB !important; margin-top: 3px !important;
-    display: block !important;
-  }
-
-  #sphere-sidebar .ss-section {
-    font-size: 8px !important; font-weight: 700 !important;
-    letter-spacing: .16em !important; text-transform: uppercase !important;
-    color: #D9D3CB !important;
-    padding: 14px 20px 5px !important;
-    flex-shrink: 0 !important; display: block !important;
-  }
-
-  #sphere-sidebar .ss-nav-item {
-    display: flex !important; align-items: center !important; gap: 10px !important;
-    padding: 9px 20px !important; cursor: pointer !important;
-    font-size: 13px !important; font-weight: 400 !important;
-    color: #8C8479 !important;
-    border-left: 2px solid transparent !important;
-    transition: all .12s !important;
-    text-decoration: none !important;
-    font-family: 'Inter', sans-serif !important;
-    background: transparent !important;
-    border-top: none !important; border-right: none !important; border-bottom: none !important;
-    width: 100% !important;
-  }
-  #sphere-sidebar .ss-nav-item:hover { color: #0F0F0F !important; background: #F7F4EF !important; }
-  #sphere-sidebar .ss-nav-item.active {
-    color: #0F0F0F !important; font-weight: 500 !important;
-    border-left-color: #A0714F !important;
-    background: #F7F4EF !important;
-  }
-  #sphere-sidebar .ss-nav-item.soon {
-    opacity: .4 !important; cursor: default !important; pointer-events: none !important;
-  }
-  #sphere-sidebar .ss-nav-icon {
-    width: 14px !important; text-align: center !important;
-    font-size: 11px !important; flex-shrink: 0 !important;
-  }
-  #sphere-sidebar .ss-nav-soon {
-    font-size: 8px !important; font-weight: 600 !important;
-    letter-spacing: .08em !important; text-transform: uppercase !important;
-    color: #D9D3CB !important; margin-left: auto !important;
-  }
-
-  #sphere-sidebar .ss-footer {
-    margin-top: auto !important;
-    padding: 14px 20px !important;
-    border-top: 0.5px solid #D9D3CB !important;
-    flex-shrink: 0 !important;
-  }
-  #sphere-sidebar .ss-agent {
-    display: flex !important; align-items: center !important; gap: 10px !important;
-    padding: 8px !important; border-radius: 2px !important;
-    cursor: pointer !important; text-decoration: none !important;
-    transition: background .12s !important;
-    background: transparent !important;
-    border: none !important; width: 100% !important;
-  }
-  #sphere-sidebar .ss-agent:hover { background: #F7F4EF !important; }
-  #sphere-sidebar .ss-avatar {
-    width: 32px !important; height: 32px !important; border-radius: 50% !important;
-    object-fit: cover !important; flex-shrink: 0 !important;
-    border: 1.5px solid #D9D3CB !important; display: block !important;
-  }
-  #sphere-sidebar .ss-initials {
-    width: 32px !important; height: 32px !important; border-radius: 50% !important;
-    background: #A0714F !important; color: #fff !important;
-    display: flex !important; align-items: center !important; justify-content: center !important;
-    font-size: 10px !important; font-weight: 600 !important; flex-shrink: 0 !important;
-    letter-spacing: .04em !important;
-  }
-  #sphere-sidebar .ss-agent-info { min-width: 0 !important; }
-  #sphere-sidebar .ss-agent-name {
-    font-size: 12px !important; font-weight: 500 !important; color: #0F0F0F !important;
-    white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
-    display: block !important;
-  }
-  #sphere-sidebar .ss-agent-role {
-    font-size: 10px !important; color: #8C8479 !important; margin-top: 1px !important;
-    display: block !important;
-  }
-  #sphere-sidebar .ss-logout {
-    width: 100% !important; margin-top: 8px !important;
-    padding: 8px !important; border: 0.5px solid #D9D3CB !important;
-    background: transparent !important; border-radius: 2px !important;
-    font-size: 10px !important; font-weight: 500 !important;
-    color: #8C8479 !important; cursor: pointer !important;
-    font-family: 'Inter', sans-serif !important;
-    transition: all .12s !important;
-    letter-spacing: .08em !important; text-transform: uppercase !important;
-    display: block !important;
-  }
-  #sphere-sidebar .ss-logout:hover { border-color: #0F0F0F !important; color: #0F0F0F !important; }
-
-  /* Push main content */
-  body.sphere-has-sidebar {
-    display: flex !important;
-  }
-  body.sphere-has-sidebar #sphere-main {
-    margin-left: 220px !important;
-    flex: 1 !important;
-    min-height: 100vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  /* Mobile */
-  @media (max-width: 900px) {
-    #sphere-sidebar { display: none !important; }
-    body.sphere-has-sidebar #sphere-main { margin-left: 0 !important; }
-  }
-`;
-
-function getBasePath() {
-  const path = window.location.pathname;
-  const depth = (path.match(/\//g) || []).length - 1;
-  return depth <= 1 ? '' : '../'.repeat(depth - 1);
+/* Resolve the site root from this script's own URL, so links work at any
+   folder depth without guessing from the pathname. */
+var thisScript = document.currentScript;
+var base = '/';
+if (thisScript && thisScript.src) {
+  base = thisScript.src.replace(/js\/header\.js.*$/, '');
 }
 
-const base = getBasePath();
-const active = window.sphereActivePage || '';
+/* ── NAVIGATION — edit here, updates everywhere ────────────────────────── */
 
-const navItems = [
-  { key: 'dashboard',  label: 'Dashboard',        href: base + 'smarttools/' },
-  { key: 'cma',        label: 'CMA Builder',       href: base + 'cma/' },
-  { key: 'newsletter', label: 'Newsletter',         href: base + 'newsletter/' },
-  { key: 'boldtrail',  label: 'Bold Trail',         href: base + 'Bold-trail-newsletter/' },
+var navItems = [
+  { key: 'dashboard',  label: 'Dashboard',   href: 'smarttools/' },
+  { key: 'clients',    label: 'Clients',     href: 'clients/' },
+  { key: 'cma',        label: 'CMA Builder', href: 'cma/' },
+  { key: 'newsletter', label: 'Newsletter',  href: 'newsletter/' },
+  { key: 'boldtrail',  label: 'Bold Trail',  href: 'Bold-trail-newsletter/' }
 ];
 
-const soonItems = [
+var soonItems = [
   'Listing Checklist',
   'Buyer Checklist',
-  'Market Reports',
+  'Market Reports'
 ];
 
-function buildSidebar(profile) {
-  const firstName = profile?.firstName || '';
-  const lastName  = profile?.lastName  || '';
-  const fullName  = [firstName, lastName].filter(Boolean).join(' ') || 'My Profile';
-  const role      = profile?.title || 'Agent';
-  const initials  = ((firstName.charAt(0)) + (lastName.charAt(0) || '')).toUpperCase() || 'ME';
-  const headshot  = profile?.headshot || '';
+/* ─────────────────────────────────────────────────────────────────────── */
 
-  const avatarHTML = headshot
-    ? `<img src="${headshot}" class="ss-avatar" alt="${firstName}" onerror="this.outerHTML='<div class=\\'ss-initials\\'>${initials}</div>'">`
-    : `<div class="ss-initials">${initials}</div>`;
+var css = ''
++ '#sphere-sidebar{'
++   'width:220px;flex-shrink:0;background:#fff;'
++   'border-right:0.5px solid #D9D3CB;'
++   'display:flex;flex-direction:column;'
++   'position:fixed;top:0;left:0;bottom:0;z-index:100;'
++   'font-family:Inter,-apple-system,sans-serif;box-sizing:border-box;'
++ '}'
++ '#sphere-sidebar *{box-sizing:border-box;margin:0;padding:0}'
++ '#sphere-sidebar .sb-logo{padding:22px 20px 18px;border-bottom:0.5px solid #D9D3CB;flex-shrink:0}'
++ '#sphere-sidebar .sb-logo-text{'
++   'font-family:"Cormorant Garamond",Georgia,serif;'
++   'font-size:1rem;font-weight:300;color:#0F0F0F;'
++   'letter-spacing:.04em;line-height:1.2;text-decoration:none;display:block;'
++ '}'
++ '#sphere-sidebar .sb-logo-text span{color:#A0714F}'
++ '#sphere-sidebar .sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;margin-top:3px;display:block}'
++ '#sphere-sidebar .sb-section{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;padding:14px 20px 5px;flex-shrink:0;display:block}'
++ '#sphere-sidebar .sb-item{'
++   'display:flex;align-items:center;gap:10px;padding:9px 20px;'
++   'font-size:13px;font-weight:400;color:#8C8479;'
++   'border-left:2px solid transparent;'
++   'transition:color .12s,background .12s,border-color .12s;'
++   'text-decoration:none;background:transparent;font-family:Inter,sans-serif;'
++ '}'
++ '#sphere-sidebar .sb-item:hover{color:#0F0F0F;background:#F7F4EF}'
++ '#sphere-sidebar .sb-item.active{color:#0F0F0F;font-weight:500;border-left-color:#A0714F;background:#F7F4EF}'
++ '#sphere-sidebar .sb-item.soon{opacity:.4;pointer-events:none;cursor:default}'
++ '#sphere-sidebar .sb-soon-tag{font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#D9D3CB;margin-left:auto}'
++ '#sphere-sidebar .sb-footer{margin-top:auto;padding:14px 20px;border-top:0.5px solid #D9D3CB;flex-shrink:0}'
++ '#sphere-sidebar .sb-agent{display:flex;align-items:center;gap:10px;padding:8px;border-radius:2px;text-decoration:none;transition:background .12s;background:transparent;width:100%}'
++ '#sphere-sidebar .sb-agent:hover{background:#F7F4EF}'
++ '#sphere-sidebar .sb-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #D9D3CB;display:block}'
++ '#sphere-sidebar .sb-initials{width:32px;height:32px;border-radius:50%;background:#A0714F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em}'
++ '#sphere-sidebar .sb-name{font-size:12px;font-weight:500;color:#0F0F0F;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
++ '#sphere-sidebar .sb-role{font-size:10px;color:#8C8479;margin-top:1px;display:block}'
++ '#sphere-sidebar .sb-logout{'
++   'width:100%;margin-top:8px;padding:8px;border:0.5px solid #D9D3CB;'
++   'background:transparent;border-radius:2px;font-size:10px;font-weight:500;'
++   'color:#8C8479;cursor:pointer;font-family:Inter,sans-serif;'
++   'letter-spacing:.08em;text-transform:uppercase;'
++   'transition:border-color .12s,color .12s;display:block;'
++ '}'
++ '#sphere-sidebar .sb-logout:hover{border-color:#0F0F0F;color:#0F0F0F}'
++ '@media(max-width:900px){#sphere-sidebar{display:none}}';
 
-  const navHTML = navItems.map(item => `
-    <a class="ss-nav-item${item.key === active ? ' active' : ''}" href="${item.href}">
-      <span class="ss-nav-icon">◻</span>
-      ${item.label}
-    </a>`).join('');
-
-  const soonHTML = soonItems.map(label => `
-    <div class="ss-nav-item soon">
-      <span class="ss-nav-icon">◻</span>
-      ${label}
-      <span class="ss-nav-soon">Soon</span>
-    </div>`).join('');
-
-  return `
-    <div class="ss-logo">
-      <a href="${base}smarttools/" class="ss-logo-text">Inside The <span>Sphere</span></a>
-      <div class="ss-logo-sub">Real Estate Tools</div>
-    </div>
-    <div class="ss-section">Tools</div>
-    ${navHTML}
-    <div class="ss-section">Coming soon</div>
-    ${soonHTML}
-    <div class="ss-footer">
-      <a href="${base}profile.html" class="ss-agent">
-        ${avatarHTML}
-        <div class="ss-agent-info">
-          <div class="ss-agent-name">${fullName}</div>
-          <div class="ss-agent-role">${role}</div>
-        </div>
-      </a>
-      <button class="ss-logout" onclick="sphereLogout()">Log out</button>
-    </div>`;
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
 
-function inject(profile) {
-  // Inject styles once
-  if (!document.getElementById('sphere-sidebar-styles')) {
-    const style = document.createElement('style');
-    style.id = 'sphere-sidebar-styles';
-    style.textContent = css;
-    document.head.appendChild(style);
+function injectStyles() {
+  if (document.getElementById('sphere-sidebar-styles')) return;
+  var style = document.createElement('style');
+  style.id = 'sphere-sidebar-styles';
+  style.textContent = css;
+  document.head.appendChild(style);
 
-    // Load Cormorant Garamond if not already loaded
-    if (!document.querySelector('link[href*="Cormorant"]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500;600&display=swap';
-      document.head.appendChild(link);
-    }
+  if (!document.querySelector('link[href*="Cormorant"]')) {
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500;600&display=swap';
+    document.head.appendChild(link);
   }
+}
 
-  // Find or create container
-  let container = document.getElementById('sphere-header');
+function buildMarkup(profile) {
+  var active = window.sphereActivePage || '';
+  var p = profile || {};
+  var first = p.firstName || '';
+  var last  = p.lastName || '';
+  var full  = [first, last].filter(Boolean).join(' ') || 'My Profile';
+  var role  = p.title || 'Agent';
+  var initials = ((first.charAt(0)) + (last.charAt(0) || '')).toUpperCase() || 'ME';
+  var headshot = p.headshot || '';
+
+  var avatar = headshot
+    ? '<img src="' + esc(headshot) + '" class="sb-avatar" alt="' + esc(first) + '" id="sb-avatar-img">'
+    : '<div class="sb-initials">' + esc(initials) + '</div>';
+
+  var nav = navItems.map(function(item) {
+    return '<a class="sb-item' + (item.key === active ? ' active' : '') + '" href="' +
+      esc(base + item.href) + '"><span>\u25FB</span> ' + esc(item.label) + '</a>';
+  }).join('');
+
+  var soon = soonItems.map(function(label) {
+    return '<div class="sb-item soon"><span>\u25FB</span> ' + esc(label) +
+      ' <span class="sb-soon-tag">Soon</span></div>';
+  }).join('');
+
+  return ''
+    + '<div class="sb-logo">'
+    +   '<a href="' + esc(base + 'smarttools/') + '" class="sb-logo-text">Inside The <span>Sphere</span></a>'
+    +   '<div class="sb-logo-sub">Real Estate Tools</div>'
+    + '</div>'
+    + '<div class="sb-section">Tools</div>'
+    + nav
+    + '<div class="sb-section">Coming soon</div>'
+    + soon
+    + '<div class="sb-footer">'
+    +   '<a href="' + esc(base + 'profile.html') + '" class="sb-agent">'
+    +     avatar
+    +     '<div>'
+    +       '<div class="sb-name">' + esc(full) + '</div>'
+    +       '<div class="sb-role">' + esc(role) + '</div>'
+    +     '</div>'
+    +   '</a>'
+    +   '<button class="sb-logout" onclick="sphereLogout()">Log out</button>'
+    + '</div>';
+}
+
+function render(profile) {
+  var container = document.getElementById('sphere-header');
   if (!container) {
     container = document.createElement('div');
     container.id = 'sphere-header';
     document.body.insertBefore(container, document.body.firstChild);
   }
 
-  // Build sidebar element
-  const sidebar = document.createElement('nav');
-  sidebar.id = 'sphere-sidebar';
-  sidebar.innerHTML = buildSidebar(profile);
-  container.innerHTML = '';
-  container.appendChild(sidebar);
-
-  // Wrap main content if not already wrapped
-  if (!document.getElementById('sphere-main')) {
-    // Find the main content (everything after sphere-header)
-    const allChildren = Array.from(document.body.children);
-    const headerIdx = allChildren.indexOf(container);
-    const contentChildren = allChildren.slice(headerIdx + 1);
-    
-    if (contentChildren.length > 0) {
-      const mainWrap = document.createElement('div');
-      mainWrap.id = 'sphere-main';
-      document.body.insertBefore(mainWrap, contentChildren[0]);
-      contentChildren.forEach(el => mainWrap.appendChild(el));
-    }
+  var sidebar = document.getElementById('sphere-sidebar');
+  if (!sidebar) {
+    sidebar = document.createElement('nav');
+    sidebar.id = 'sphere-sidebar';
+    sidebar.className = 'sidebar';
+    container.innerHTML = '';
+    container.appendChild(sidebar);
   }
+  sidebar.innerHTML = buildMarkup(profile);
 
-  document.body.classList.add('sphere-has-sidebar');
+  /* Fall back to initials if the headshot URL 404s. */
+  var img = document.getElementById('sb-avatar-img');
+  if (img) {
+    img.onerror = function() {
+      var p = window.sphereHeaderProfile || {};
+      var ini = ((p.firstName || '').charAt(0) + ((p.lastName || '').charAt(0) || '')).toUpperCase() || 'ME';
+      var div = document.createElement('div');
+      div.className = 'sb-initials';
+      div.textContent = ini;
+      img.replaceWith(div);
+    };
+  }
 }
 
-// Logout
+function loadProfile(user) {
+  if (typeof db === 'undefined') return;
+  db.collection('users').doc(user.uid).get()
+    .then(function(doc) {
+      if (!doc.exists) return;
+      var p = doc.data().agentProfile || {};
+      var profile = {
+        firstName: p.firstName || (user.displayName ? user.displayName.split(' ')[0] : ''),
+        lastName:  p.lastName || '',
+        title:     p.title || 'Agent',
+        headshot:  (p.photoUrls && p.photoUrls.headshot) || ''
+      };
+      window.sphereHeaderProfile = profile;
+      render(profile);
+      document.dispatchEvent(new CustomEvent('sphereHeaderReady', { detail: profile }));
+    })
+    .catch(function(err) {
+      console.error('Sidebar profile load failed:', err);
+    });
+}
+
 window.sphereLogout = function() {
   if (confirm('Log out of Inside The Sphere?')) {
-    firebase.auth().signOut().then(() => {
-      window.location.href = getBasePath() + 'login.html';
+    firebase.auth().signOut().then(function() {
+      window.location.href = base + 'login.html';
     });
   }
 };
 
-// Init
 function init() {
-  inject(null);
-  document.addEventListener('sphereProfileReady', function(e) {
-    inject(e.detail);
-  });
-  if (window.sphereProfile?._loaded) {
-    inject(window.sphereProfile);
+  injectStyles();
+  render(window.sphereHeaderProfile || null);
+
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) loadProfile(user);
+    });
   }
 }
 
