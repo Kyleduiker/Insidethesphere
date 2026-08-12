@@ -169,6 +169,45 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
+/* PHOTO UPLOAD */
+.photo-zone{
+  position:relative;width:100%;min-height:150px;
+  background:var(--ivory);border:0.5px dashed var(--border);
+  border-radius:2px;cursor:pointer;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .12s,background .12s;
+}
+.photo-zone:hover{border-color:var(--copper);background:var(--parch)}
+.photo-zone.dragover{border-color:var(--copper);background:var(--parch)}
+.photo-zone.has-photo{border-style:solid;min-height:0;cursor:default}
+.photo-empty{text-align:center;padding:28px 20px}
+.photo-empty-icon{font-size:20px;color:var(--border);margin-bottom:8px}
+.photo-empty-text{font-size:12px;color:var(--stone);letter-spacing:.02em}
+.photo-empty-sub{font-size:10px;color:var(--border);margin-top:4px;letter-spacing:.04em}
+.photo-preview{width:100%;max-height:260px;object-fit:cover;display:block}
+.photo-progress{
+  position:absolute;inset:0;background:rgba(247,244,239,.94);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;
+}
+.photo-progress-bar{width:70%;max-width:260px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.photo-progress-fill{height:100%;width:0;background:var(--copper);transition:width .2s}
+.photo-progress-text{font-size:11px;color:var(--stone);letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+.photo-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.photo-act{
+  font-size:10px;padding:5px 12px;border-radius:2px;cursor:pointer;
+  font-family:var(--sans);border:0.5px solid var(--border);background:transparent;
+  color:var(--stone);transition:all .12s;letter-spacing:.06em;text-transform:uppercase;
+}
+.photo-act:hover{border-color:var(--obs);color:var(--obs)}
+.photo-act-del:hover{border-color:rgba(192,57,43,.3);color:#c0392b}
+.photo-meta{font-size:10px;color:var(--border);margin-left:auto;letter-spacing:.04em}
+.photo-url-toggle{
+  background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);
+  font-size:11px;color:var(--stone);text-decoration:underline;
+  text-decoration-color:var(--border);text-underline-offset:3px;transition:color .12s;
+}
+.photo-url-toggle:hover{color:var(--copper)}
+
 /* COMP TABLE */
 .comp-table{width:100%;border-collapse:collapse;font-size:12px}
 .comp-table th{
@@ -540,8 +579,38 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             </div>
           </div>
           <div class="fg">
-            <label>Property photo URL <span>— paste MLS photo link from Matrix · appears as gate background on client page</span></label>
-            <input type="url" class="fi" id="propPhotoUrl" placeholder="https://matrixmedia.pillarnine.com/..." oninput="markDirty()" style="font-size:11px">
+            <label>Property photo <span>— appears as the gate background on your client page</span></label>
+
+            <!-- hidden: holds the Storage path so a replaced photo can be deleted -->
+            <input type="hidden" id="propPhotoPath">
+
+            <div class="photo-zone" id="photoZone" onclick="pickPropPhoto()">
+              <input type="file" id="propPhotoInput" accept="image/*" style="display:none" onchange="handlePropPhoto(this)">
+              <div class="photo-empty" id="photoEmpty">
+                <div class="photo-empty-icon">▣</div>
+                <div class="photo-empty-text">Tap to add a photo</div>
+                <div class="photo-empty-sub">JPG, PNG or HEIC · resized automatically</div>
+              </div>
+              <img class="photo-preview" id="photoPreview" alt="Property photo" style="display:none">
+              <div class="photo-progress" id="photoProgress" style="display:none">
+                <div class="photo-progress-bar"><div class="photo-progress-fill" id="photoProgressFill"></div></div>
+                <div class="photo-progress-text" id="photoProgressText">Preparing…</div>
+              </div>
+            </div>
+
+            <div class="photo-actions" id="photoActions" style="display:none">
+              <button type="button" class="photo-act" onclick="event.stopPropagation();pickPropPhoto()">Replace</button>
+              <button type="button" class="photo-act photo-act-del" onclick="event.stopPropagation();removePropPhoto()">Remove</button>
+              <span class="photo-meta" id="photoMeta"></span>
+            </div>
+
+            <div style="margin-top:10px">
+              <button type="button" class="photo-url-toggle" onclick="togglePhotoUrl()" id="photoUrlToggle">Or paste an image URL instead</button>
+              <div id="photoUrlWrap" style="display:none;margin-top:8px">
+                <input type="url" class="fi" id="propPhotoUrl" placeholder="https://..." oninput="markDirty();renderPropPhoto()" style="font-size:11px">
+                <div class="info-box" style="margin-top:8px">A pasted MLS link can stop working once the listing comes off market. An uploaded photo is stored in your own account and won't break.</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -1107,7 +1176,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'clientName','clientEmail','appointmentDate','clientPassword',
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
-            'address','community','propPhotoUrl','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
@@ -1126,6 +1195,8 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         updateClientUrl();
         // Apply presentation type UI
         toggleCustomType();
+        // Show the saved property photo, if there is one
+        renderPropPhoto();
     }
 
     // ── COLLECT FORM DATA ──
@@ -1134,7 +1205,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'clientName','clientEmail','appointmentDate','clientPassword',
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
-            'address','community','propPhotoUrl','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
@@ -1666,6 +1737,228 @@ function loadSidebarProfile(user) {
   }).catch(console.error);
 }
 
+
+// ── PROPERTY PHOTO UPLOAD ────────────────────────────────
+// Photos go to Firebase Storage, not the repo. getDownloadURL() returns a
+// tokenised URL that a signed-out client can load, which is what the client
+// page needs. The Storage path is kept in a hidden field so replacing or
+// removing a photo can delete the old file instead of orphaning it.
+
+const PHOTO_MAX_DIM   = 1600;   // px on the long edge
+const PHOTO_QUALITY   = 0.82;   // JPEG quality
+const PHOTO_MAX_INPUT = 30;     // MB, before resize
+
+function _storageRef(path) {
+  const s = (typeof storage !== 'undefined' && storage) ? storage : firebase.storage();
+  return s.ref(path);
+}
+
+function pickPropPhoto() {
+  if (document.getElementById('photoProgress').style.display !== 'none') return;
+  document.getElementById('propPhotoInput').click();
+}
+
+function togglePhotoUrl() {
+  const wrap = document.getElementById('photoUrlWrap');
+  const btn  = document.getElementById('photoUrlToggle');
+  const open = wrap.style.display !== 'none';
+  wrap.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'Or paste an image URL instead' : 'Hide URL field';
+}
+
+// Draw the image to a canvas at a capped size and re-encode as JPEG.
+// An iPad photo is routinely 4–12MB of HEIC; a client page that loads that
+// over cellular feels broken. This gets it to roughly 200–400KB.
+async function resizePhoto(file) {
+  let bitmap;
+  try {
+    // from-image applies the EXIF rotation, so portrait shots aren't sideways.
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (e) {
+    try { bitmap = await createImageBitmap(file); }
+    catch (e2) { bitmap = await loadViaImgTag(file); }
+  }
+
+  const scale = Math.min(1, PHOTO_MAX_DIM / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  if (bitmap.close) bitmap.close();
+
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', PHOTO_QUALITY));
+  if (!blob) throw new Error('Could not encode image');
+  return { blob: blob, width: w, height: h };
+}
+
+// Fallback for browsers without createImageBitmap. Note HEIC will fail here —
+// only Safari decodes it natively — so the caller reports that plainly.
+function loadViaImgTag(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('unsupported image format')); };
+    img.src = url;
+  });
+}
+
+async function handlePropPhoto(input) {
+  const file = (input.files || [])[0];
+  input.value = '';
+  if (!file) return;
+
+  if (!currentUser || !cmaId) { showToast('Still loading — try again in a moment', 'error'); return; }
+  if (!/^image\//.test(file.type) && !/\.(jpe?g|png|heic|heif|webp)$/i.test(file.name)) {
+    showToast('That file is not an image', 'error'); return;
+  }
+  if (file.size > PHOTO_MAX_INPUT * 1024 * 1024) {
+    showToast(`Image is over ${PHOTO_MAX_INPUT}MB — please pick a smaller one`, 'error'); return;
+  }
+
+  const zone     = document.getElementById('photoZone');
+  const progress = document.getElementById('photoProgress');
+  const fill     = document.getElementById('photoProgressFill');
+  const label    = document.getElementById('photoProgressText');
+
+  progress.style.display = 'flex';
+  fill.style.width = '0%';
+  label.textContent = 'Preparing…';
+
+  let out;
+  try {
+    out = await resizePhoto(file);
+  } catch (err) {
+    console.error('Resize failed:', err);
+    progress.style.display = 'none';
+    showToast(/unsupported/.test(err.message)
+      ? 'This browser cannot read that format — try a JPG or PNG'
+      : 'Could not read that image', 'error');
+    return;
+  }
+
+  const prevPath = document.getElementById('propPhotoPath').value;
+  const path = `users/${currentUser.uid}/cma-photos/${cmaId}/property-${Date.now()}.jpg`;
+
+  label.textContent = 'Uploading…';
+
+  try {
+    const task = _storageRef(path).put(out.blob, {
+      contentType: 'image/jpeg',
+      cacheControl: 'public,max-age=31536000'
+    });
+
+    await new Promise((resolve, reject) => {
+      task.on('state_changed',
+        snap => {
+          const pct = snap.totalBytes ? (snap.bytesTransferred / snap.totalBytes) * 100 : 0;
+          fill.style.width = pct.toFixed(0) + '%';
+        },
+        reject,
+        resolve
+      );
+    });
+
+    const url = await task.snapshot.ref.getDownloadURL();
+
+    document.getElementById('propPhotoUrl').value  = url;
+    document.getElementById('propPhotoPath').value = path;
+    renderPropPhoto();
+    setPhotoMeta(out.width, out.height, out.blob.size);
+    markDirty();
+
+    // Only bin the previous file once the new one is safely stored.
+    if (prevPath) deleteStoragePath(prevPath);
+
+    progress.style.display = 'none';
+    showToast('Photo uploaded');
+  } catch (err) {
+    console.error('Photo upload failed:', err);
+    progress.style.display = 'none';
+    const code = err && err.code ? err.code : '';
+    showToast(code === 'storage/unauthorized'
+      ? 'Storage rules are blocking the upload — see setup notes'
+      : 'Upload failed — please try again', 'error');
+  }
+}
+
+function deleteStoragePath(path) {
+  if (!path) return;
+  _storageRef(path).delete().catch(err => {
+    // A missing file is fine; anything else is worth seeing in the console.
+    if (!err || err.code !== 'storage/object-not-found') console.warn('Could not delete old photo:', err);
+  });
+}
+
+function removePropPhoto() {
+  if (!confirm('Remove this photo?')) return;
+  const path = document.getElementById('propPhotoPath').value;
+  document.getElementById('propPhotoUrl').value  = '';
+  document.getElementById('propPhotoPath').value = '';
+  renderPropPhoto();
+  markDirty();
+  if (path) deleteStoragePath(path);
+  showToast('Photo removed');
+}
+
+function setPhotoMeta(w, h, bytes) {
+  const el = document.getElementById('photoMeta');
+  if (!el) return;
+  el.textContent = (w && h) ? `${w}×${h} · ${Math.round(bytes / 1024)}KB` : '';
+}
+
+function renderPropPhoto() {
+  const url     = (document.getElementById('propPhotoUrl') || {}).value || '';
+  const zone    = document.getElementById('photoZone');
+  const empty   = document.getElementById('photoEmpty');
+  const preview = document.getElementById('photoPreview');
+  const actions = document.getElementById('photoActions');
+
+  if (url) {
+    preview.src = url;
+    preview.style.display = 'block';
+    empty.style.display   = 'none';
+    actions.style.display = 'flex';
+    zone.classList.add('has-photo');
+    // A dead MLS hotlink should say so rather than showing a broken frame.
+    preview.onerror = () => {
+      preview.style.display = 'none';
+      empty.style.display   = 'block';
+      zone.classList.remove('has-photo');
+      document.getElementById('photoMeta').textContent = 'Image did not load';
+    };
+  } else {
+    preview.removeAttribute('src');
+    preview.style.display = 'none';
+    empty.style.display   = 'block';
+    actions.style.display = 'none';
+    zone.classList.remove('has-photo');
+    setPhotoMeta();
+  }
+}
+
+// Drag-and-drop, for when you're on a desktop rather than the iPad.
+(function initPhotoDrop() {
+  const ready = () => {
+    const zone = document.getElementById('photoZone');
+    if (!zone) return;
+    ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => {
+      e.preventDefault(); zone.classList.add('dragover');
+    }));
+    ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => {
+      e.preventDefault(); zone.classList.remove('dragover');
+    }));
+    zone.addEventListener('drop', e => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handlePropPhoto({ files: [f], value: '' });
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready);
+  else ready();
+})();
+// ── END PROPERTY PHOTO UPLOAD ────────────────────────────
 
 // ── CREB MONTHLY STATS PARSER ────────────────────────────
 // Reads the CREB community "360" report. One monthly time series per
