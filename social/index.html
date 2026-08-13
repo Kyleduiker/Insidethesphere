@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Social Studio · Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700;800&family=Anton&family=Allura&display=swap" rel="stylesheet">
+<style>
+:root{
+  --obsidian:#0F0F0F; --espresso:#2C2420; --stone:#8C8479;
+  --parchment:#EDE8E0; --ivory:#F7F4EF; --border:#D9D3CB;
+  --champagne:#C9A96E; --copper:#A0714F; --sage:#4A5C4E; --oxblood:#6B2737;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --r:2px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ivory); color:var(--espresso);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+/* header.js injects a 220px fixed left sidebar on the platform. */
+.sphere-page{padding:32px 24px 96px;max-width:1500px}
+@media(min-width:900px){ .sphere-page{margin-left:220px;padding:40px 40px 120px} }
+
+.eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--copper);margin:0 0 10px;
+}
+.eyebrow::after{content:"";display:block;width:40px;height:1px;background:var(--copper);margin-top:10px}
+h1{font-family:var(--serif);font-weight:600;font-size:40px;line-height:1.1;margin:0 0 8px;letter-spacing:-.01em}
+h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:0 0 4px}
+.lede{color:var(--stone);max-width:620px;margin:0 0 32px;font-size:15px}
+
+.layout{display:grid;grid-template-columns:1fr;gap:28px}
+@media(min-width:1120px){ .layout{grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:36px;align-items:start} }
+
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.panel + .panel{margin-top:20px}
+
+.sect{border-top:1px solid var(--border);margin-top:22px;padding-top:22px}
+.sect:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.sect > .eyebrow{margin-bottom:14px}
+
+label{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);margin:0 0 6px}
+input[type=text],input[type=number],textarea,select{
+  width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--r);
+  font-family:var(--sans);font-size:15px;color:var(--espresso);background:var(--ivory);
+  -webkit-appearance:none;appearance:none;
+}
+select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0h10L5 6z' fill='%238C8479'/></svg>");background-repeat:no-repeat;background-position:right 12px center}
+textarea{resize:vertical;min-height:64px;line-height:1.5}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--copper);background:#fff}
+.field{margin-bottom:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  border:1px solid var(--border);background:var(--ivory);color:var(--espresso);
+  padding:7px 12px;border-radius:var(--r);font-size:12px;font-weight:500;
+  cursor:pointer;font-family:var(--sans);letter-spacing:.02em;
+}
+.chip:hover{border-color:var(--copper)}
+.chip.on{background:var(--espresso);border-color:var(--espresso);color:var(--ivory)}
+
+.swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sw{width:30px;height:30px;border-radius:var(--r);border:1px solid var(--border);cursor:pointer;padding:0}
+.sw.on{box-shadow:0 0 0 2px #fff,0 0 0 3px var(--espresso)}
+
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:28px;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--border)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--espresso);margin-top:-9px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-track{height:2px;background:var(--border)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:2px solid #fff;border-radius:50%;background:var(--espresso)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 20px;border-radius:var(--r);border:1px solid var(--espresso);
+  background:var(--espresso);color:var(--ivory);font-family:var(--sans);
+  font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;
+}
+.btn:hover{background:#1a1512}
+.btn.ghost{background:transparent;color:var(--espresso)}
+.btn.ghost:hover{background:var(--parchment)}
+.btn.sm{padding:9px 14px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px}
+
+.upload{
+  border:1px dashed var(--border);border-radius:var(--r);padding:18px;text-align:center;
+  background:var(--ivory);cursor:pointer;display:block;
+}
+.upload:hover{border-color:var(--copper);background:#fff}
+.upload strong{display:block;font-size:13px;font-weight:600;color:var(--espresso)}
+.upload span{font-size:12px;color:var(--stone)}
+.upload input{display:none}
+.thumbs{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.thumb{width:52px;height:52px;border:1px solid var(--border);border-radius:var(--r);background:var(--parchment) center/contain no-repeat}
+.thumb.dark{background-color:var(--espresso)}
+
+.stage{position:sticky;top:24px}
+@media(max-width:1119px){ .stage{position:static} }
+.canvaswrap{
+  background:var(--parchment);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px;display:flex;justify-content:center;
+}
+canvas#c{
+  width:100%;max-width:520px;height:auto;display:block;
+  box-shadow:0 12px 40px rgba(15,15,15,.18);touch-action:none;cursor:grab;background:#ddd;
+}
+canvas#c:active{cursor:grabbing}
+
+.hint{font-size:12px;color:var(--stone);margin:10px 0 0;line-height:1.5}
+.caption-box{
+  background:var(--ivory);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+  max-height:280px;overflow:auto;
+}
+.tagline{color:var(--copper);font-weight:500}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--espresso);color:var(--ivory);padding:12px 22px;border-radius:var(--r);
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transition:.25s;z-index:9999;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.modal{position:fixed;inset:0;background:rgba(15,15,15,.86);display:none;z-index:9998;overflow:auto;padding:24px}
+.modal.on{display:flex;align-items:center;justify-content:center}
+.modal-inner{max-width:460px;width:100%;text-align:center}
+.modal-inner img{width:100%;height:auto;border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-inner p{color:var(--parchment);font-size:13px;margin:16px 0}
+.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--copper);border:1px solid var(--copper);padding:3px 8px;border-radius:var(--r);margin-left:8px;vertical-align:middle}
+.errbox{background:#FBE9EC;border-left:2px solid #EA002A;color:#6B2737;padding:11px 14px;font-size:12.5px;margin:0 0 14px;border-radius:var(--r)}
+.note{background:var(--parchment);border-left:2px solid var(--champagne);padding:12px 14px;font-size:12.5px;color:var(--espresso);line-height:1.55;margin-top:14px}
+</style>
+</head>
+<body>
+
+<div class="sphere-page">
+
+  <p class="eyebrow">Smart Tools</p>
+  <h1>Social Studio</h1>
+  <p class="lede">Build a branded post in under sixty seconds. Pick the moment, drop in a photo, and export a print-clean graphic plus a ready-to-paste caption.</p>
+
+  <div class="layout">
+
+    <!-- ================= CONTROLS ================= -->
+    <div>
+      <div class="panel">
+
+        <div class="sect">
+          <p class="eyebrow">The Moment</p>
+          <div class="chips" id="typeChips"></div>
+        </div>
+
+        <div class="sect">
+          <p class="eyebrow">Photo</p>
+          <label class="upload" for="photoIn">
+            <strong id="photoLabel">Add property photo</strong>
+            <span>JPG or PNG · landscape or portrait both work</span>
+            <input type="file" id="photoIn" accept="image/*">
+          </label>
+          <div style="margin-top:14px">
+            <label>Zoom</label>
+            <input type="range" id="zoom" min="100" max="260" value="100">
+          </div>
+          <div class="row">
+            <div><label>Horizontal</label><input type="range" id="ox" min="-100" max="100" value="0"></div>
+            <div><label>Vertical</label><input type="range" id="oy" min="-100" max="100" value="0"></div>
+          </div>
+          <p class="hint">You can also drag directly on the preview to reposition.</p>
+        </div>
+
+        <div class="sect" id="detailsSect">
+          <p class="eyebrow">Details</p>
+          <div class="field">
+            <label>Headline</label>
+            <textarea id="headline" rows="2" placeholder="JUST LISTED"></textarea>
+          </div>
+          <div class="row">
+            <div class="field"><label>Community</label><input type="text" id="line1" placeholder="Mahogany"></div>
+            <div class="field"><label>City</label><input type="text" id="line2" placeholder="Calgary, AB"></div>
+          </div>
+          <div class="field" id="statsField">
+            <label>Stat strip (optional)</label>
+            <div class="row3">
+              <input type="text" id="s1" placeholder="3 Bed">
+              <input type="text" id="s2" placeholder="2 Bath">
+              <input type="text" id="s3" placeholder="1,130 SqFt">
+            </div>
+          </div>
+          <div class="field" id="priceField">
+            <label>Price line (optional)</label>
+            <input type="text" id="price" placeholder="$489,900">
+          </div>
+        </div>
+
+        <div class="sect" id="marketSect" style="display:none">
+          <p class="eyebrow">Market Numbers</p>
+          <p class="hint" style="margin:0 0 14px">Pull these straight from the community 360 report.</p>
+          <div class="field"><label>Metric 1</label><div class="row"><input type="text" id="m1v" placeholder="$611,300"><input type="text" id="m1l" placeholder="Benchmark Price"></div></div>
+          <div class="field"><label>Metric 2</label><div class="row"><input type="text" id="m2v" placeholder="21"><input type="text" id="m2l" placeholder="Days on Market"></div></div>
+          <div class="field"><label>Metric 3</label><div class="row"><input type="text" id="m3v" placeholder="+4.2%"><input type="text" id="m3l" placeholder="Year over Year"></div></div>
+          <div class="field"><label>Period</label><input type="text" id="period" placeholder="July 2026"></div>
+        </div>
+
+        <div class="sect">
+          <p class="eyebrow">Style</p>
+          <div class="field">
+            <label>Format</label>
+            <div class="chips" id="sizeChips"></div>
+          </div>
+          <div class="field">
+            <label>Headline treatment</label>
+            <div class="chips" id="styleChips"></div>
+          </div>
+          <div class="field">
+            <label>Accent</label>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <div class="row">
+            <div><label>Photo darkening</label><input type="range" id="scrim" min="0" max="80" value="34"></div>
+            <div><label>Centre glow</label><input type="range" id="bloom" min="0" max="80" value="42"></div>
+          </div>
+          <div class="field" style="margin-top:6px">
+            <div class="chips" id="toggleChips"></div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <p class="eyebrow">Brand Kit <span class="badge">Saved</span></p>
+          <p class="hint" style="margin:0 0 12px">Upload once. Stored on this device and reused on every post.</p>
+          <label class="upload" for="headIn" style="margin-bottom:10px">
+            <strong>Headshot cut-out</strong>
+            <span>Transparent PNG works best</span>
+            <input type="file" id="headIn" accept="image/*">
+          </label>
+          <label class="upload" for="logoIn">
+            <strong>Logo</strong>
+            <span>White PNG · loads the RLP Solutions mark by default</span>
+            <input type="file" id="logoIn" accept="image/*">
+          </label>
+          <div class="thumbs">
+            <div class="thumb" id="headThumb"></div>
+            <div class="thumb dark" id="logoThumb"></div>
+            <button class="btn ghost sm" id="clearKit">Clear</button>
+          </div>
+          <div class="row" style="margin-top:14px">
+            <div class="field"><label>Signature name</label><input type="text" id="sigName" placeholder="Kyle Duiker"></div>
+            <div class="field"><label>Title</label><input type="text" id="sigTitle" placeholder="Associate Broker"></div>
+          </div>
+          <div class="field"><label>Contact line (optional)</label><input type="text" id="sigContact" placeholder="403-252-5900 · duikerproperties.com"></div>
+          <div class="field" style="margin-bottom:0">
+            <label>Signature font</label>
+            <select id="sigFont">
+              <option value="Allura">Allura — flowing script</option>
+              <option value="Cormorant Garamond">Cormorant — refined serif</option>
+              <option value="Raleway">Raleway — clean sans</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= STAGE ================= -->
+    <div class="stage">
+      <p class="errbox" id="errBox" style="display:none"></p>
+      <div class="canvaswrap">
+        <canvas id="c" width="1080" height="1080"></canvas>
+      </div>
+
+      <div class="panel" style="margin-top:20px">
+        <div class="btnrow">
+          <button class="btn" id="dlBtn">Download PNG</button>
+          <button class="btn ghost" id="shareBtn" style="display:none">Share</button>
+          <button class="btn ghost" id="saveBtn">Save to Photos</button>
+        </div>
+        <p class="hint">On iPad, <strong>Save to Photos</strong> is the reliable route — it opens the finished image so you can press and hold to save it.</p>
+      </div>
+
+      <div class="panel">
+        <div class="sect">
+          <p class="eyebrow">Caption</p>
+          <div class="field">
+            <label>Tone</label>
+            <div class="chips" id="toneChips"></div>
+          </div>
+          <div class="field" id="propField">
+            <label>Property type</label>
+            <div class="chips" id="propChips"></div>
+          </div>
+          <div class="caption-box" id="capBox"></div>
+          <div class="btnrow" style="margin-top:14px">
+            <button class="btn ghost sm" id="copyCap">Copy caption</button>
+            <button class="btn ghost sm" id="copyTags">Copy hashtags only</button>
+            <button class="btn ghost sm" id="reroll">Reword</button>
+          </div>
+          <div class="note">Instagram counts hashtags in the caption and the first comment the same way. Posting the caption clean and dropping the tags in comment one reads better on the feed.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal">
+  <div class="modal-inner">
+    <img id="modalImg" alt="Finished post">
+    <p>Press and hold the image, then choose <strong>Save to Photos</strong>.</p>
+    <button class="btn ghost" id="closeModal" style="color:var(--parchment);border-color:var(--parchment)">Close</button>
+  </div>
+</div>
+
+<!-- Firebase (compat) + Inside The Sphere shared scripts.
+     Adjust the ../ prefix if you place this file at a different depth. -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script>window.sphereActivePage = 'social';</script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/profile.js"></script>
+<script src="../js/header.js"></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+var RLS_RED   = '#EA002A';           // Royal LePage signature red (brand token)
+var ALT_RED   = '#E31837';           // alternate red used on some client pages
+var LOGO_URL  = 'https://raw.githubusercontent.com/Kyleduiker/duikerproperties-homepage/main/RLP-Solutions-Logo-White.png';
+var LS_KEY    = 'sphere_social_kit_v1';
+
+var TYPES = [
+  { id:'listed',    label:'Just Listed',      headline:'JUST\nLISTED',       tag:'JustListed' },
+  { id:'soon',      label:'Coming Soon',      headline:'COMING\nSOON',       tag:'ComingSoon' },
+  { id:'open',      label:'Open House',       headline:'OPEN\nHOUSE',        tag:'OpenHouse' },
+  { id:'price',     label:'New Price',        headline:'NEW\nPRICE',         tag:'NewPrice' },
+  { id:'sold',      label:'Just Sold',        headline:'JUST\nSOLD',         tag:'JustSold' },
+  { id:'over',      label:'Sold Over Asking', headline:'SOLD OVER\nASKING',  tag:'SoldOverAsking' },
+  { id:'purchased', label:'Just Purchased',   headline:'JUST\nPURCHASED',    tag:'JustPurchased' },
+  { id:'clients',   label:'Happy Clients',    headline:'CONGRATS\nTO MY CLIENTS', tag:'HappyClients' },
+  { id:'market',    label:'Market Minute',    headline:'MARKET\nMINUTE',     tag:'MarketUpdate' }
+];
+
+var SIZES = [
+  { id:'square',   label:'Square 1:1',   w:1080, h:1080 },
+  { id:'portrait', label:'Portrait 4:5', w:1080, h:1350 },
+  { id:'story',    label:'Story 9:16',   w:1080, h:1920 }
+];
+
+var PROP_TYPES = ['Detached','Semi-Detached','Townhouse','Condo','Villa','Acreage'];
+var TONES = ['Straightforward','Warm','Punchy'];
+
+var LAKE_COMMUNITIES = ['mahogany','auburn bay','chestermere','lake bonavista','midnapore','sundance','mckenzie lake','arbour lake','coral springs','auburnbay'];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var S = {
+  type:'listed', size:'square', style:'impact',
+  accent: RLS_RED,
+  headline:'JUST\nLISTED',
+  line1:'', line2:'',
+  s1:'', s2:'', s3:'', price:'',
+  m1v:'', m1l:'', m2v:'', m2l:'', m3v:'', m3l:'', period:'',
+  zoom:1, ox:0, oy:0,
+  scrim:0.34, bloom:0.42,
+  showSwoosh:true, showHead:true, showLogo:true, showGlow:true,
+  sigName:'Kyle Duiker', sigTitle:'Associate Broker', sigContact:'', sigFont:'Allura',
+  tone:'Straightforward', propType:'Detached',
+  variant:0
+};
+
+var photoImg = null, headImg = null, logoImg = null;
+var fontsReady = false;
+
+var canvas = document.getElementById('c');
+var ctx = canvas ? canvas.getContext('2d') : null;
+
+/* Render errors are surfaced, never swallowed. */
+function reportError(where, err){
+  var msg = where + ': ' + (err && err.message ? err.message : err);
+  if(window.console && console.error) console.error('[Social Studio]', msg, err);
+  var box = $('errBox');
+  if(box){ box.textContent = msg; box.style.display = ''; }
+}
+function clearError(){
+  var box = $('errBox');
+  if(box){ box.textContent = ''; box.style.display = 'none'; }
+}
+
+/* ============================================================
+   SMALL HELPERS
+   ============================================================ */
+function $(id){ return document.getElementById(id); }
+
+function toast(msg){
+  var t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm = setTimeout(function(){ t.classList.remove('on'); }, 1900);
+}
+
+function activeType(){
+  for(var i=0;i<TYPES.length;i++){ if(TYPES[i].id===S.type) return TYPES[i]; }
+  return TYPES[0];
+}
+function activeSize(){
+  for(var i=0;i<SIZES.length;i++){ if(SIZES[i].id===S.size) return SIZES[i]; }
+  return SIZES[0];
+}
+
+function loadImageFromDataUrl(url, cb){
+  var im = new Image();
+  im.onload = function(){ cb(im); };
+  im.onerror = function(){ cb(null); };
+  im.src = url;
+}
+
+function loadImageCORS(url, cb){
+  var im = new Image();
+  im.crossOrigin = 'anonymous';
+  im.onload = function(){ cb(im); };
+  im.onerror = function(){ cb(null); };
+  im.src = url;
+}
+
+/* Downscale a File to a PNG data URL, preserving transparency. */
+function fileToScaledDataUrl(file, maxDim, cb){
+  var fr = new FileReader();
+  fr.onload = function(){
+    var im = new Image();
+    im.onload = function(){
+      var scale = Math.min(1, maxDim / Math.max(im.width, im.height));
+      var w = Math.max(1, Math.round(im.width * scale));
+      var h = Math.max(1, Math.round(im.height * scale));
+      var oc = document.createElement('canvas');
+      oc.width = w; oc.height = h;
+      oc.getContext('2d').drawImage(im, 0, 0, w, h);
+      cb(oc.toDataURL('image/png'));
+    };
+    im.onerror = function(){ cb(null); };
+    im.src = fr.result;
+  };
+  fr.onerror = function(){ cb(null); };
+  fr.readAsDataURL(file);
+}
+
+function fileToDataUrl(file, cb){
+  var fr = new FileReader();
+  fr.onload = function(){ cb(fr.result); };
+  fr.onerror = function(){ cb(null); };
+  fr.readAsDataURL(file);
+}
+
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('Copied'); }, function(){ legacyCopy(text); });
+  } else { legacyCopy(text); }
+}
+function legacyCopy(text){
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly','');
+  ta.style.position='fixed'; ta.style.top='0'; ta.style.left='0'; ta.style.opacity='0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.setSelectionRange(0, ta.value.length);
+  var ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  toast(ok ? 'Copied' : 'Select the text and copy');
+}
+
+/* ============================================================
+   BRAND KIT PERSISTENCE
+   ============================================================ */
+function saveKit(){
+  var kit = {
+    head: headImg ? headImg.src : null,
+    logo: (logoImg && logoImg.src.indexOf('data:') === 0) ? logoImg.src : null,
+    sigName: S.sigName, sigTitle: S.sigTitle, sigContact: S.sigContact, sigFont: S.sigFont,
+    accent: S.accent
+  };
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(kit)); }
+  catch(e){ toast('Brand kit too large to save'); }
+}
+
+function loadKit(){
+  var raw = null;
+  try{ raw = localStorage.getItem(LS_KEY); }catch(e){ raw = null; }
+  var kit = null;
+  if(raw){ try{ kit = JSON.parse(raw); }catch(e){ kit = null; } }
+  if(!kit) kit = {};
+
+  if(kit.sigName)    S.sigName    = kit.sigName;
+  if(kit.sigTitle)   S.sigTitle   = kit.sigTitle;
+  if(kit.sigContact) S.sigContact = kit.sigContact;
+  if(kit.sigFont)    S.sigFont    = kit.sigFont;
+  if(kit.accent)     S.accent     = kit.accent;
+
+  if(kit.head){
+    loadImageFromDataUrl(kit.head, function(im){ headImg = im; setThumb('headThumb', kit.head); render(); });
+  }
+  if(kit.logo){
+    loadImageFromDataUrl(kit.logo, function(im){ logoImg = im; setThumb('logoThumb', kit.logo); render(); });
+  } else {
+    loadImageCORS(LOGO_URL, function(im){
+      if(im){ logoImg = im; setThumb('logoThumb', LOGO_URL); render(); }
+    });
+  }
+}
+
+function setThumb(id, url){
+  var el = $(id);
+  if(!el) return;
+  el.style.backgroundImage = url ? 'url(' + url + ')' : 'none';
+}
+
+/* ============================================================
+   CANVAS TEXT UTILITIES
+   ============================================================ */
+function setFont(weight, size, family){
+  ctx.font = weight + ' ' + size + 'px "' + family + '", sans-serif';
+}
+
+function trackedWidth(text, tracking){
+  var chars = String(text).split('');
+  var w = 0;
+  for(var i=0;i<chars.length;i++){ w += ctx.measureText(chars[i]).width; }
+  return w + tracking * Math.max(0, chars.length - 1);
+}
+
+/* Draws text with manual letter-spacing. align: 'center' | 'left' | 'right' */
+function drawTracked(text, x, y, tracking, align, mode){
+  var chars = String(text).split('');
+  var total = trackedWidth(text, tracking);
+  var cx = x;
+  if(align === 'center') cx = x - total / 2;
+  else if(align === 'right') cx = x - total;
+  var prevAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  for(var i=0;i<chars.length;i++){
+    if(mode === 'stroke' || mode === 'both') ctx.strokeText(chars[i], cx, y);
+    if(mode === 'fill'   || mode === 'both' || !mode) ctx.fillText(chars[i], cx, y);
+    cx += ctx.measureText(chars[i]).width + tracking;
+  }
+  ctx.textAlign = prevAlign;
+  return total;
+}
+
+/* Shrinks font size until the tracked line fits maxW. Returns the size used. */
+function fitSize(text, weight, family, tracking, maxW, startSize, minSize){
+  var s = startSize;
+  while(s > minSize){
+    setFont(weight, s, family);
+    if(trackedWidth(text, tracking * (s / startSize)) <= maxW) break;
+    s -= 2;
+  }
+  setFont(weight, s, family);
+  return s;
+}
+
+function splitHeadline(text){
+  var raw = String(text || '').replace(/\r/g, '');
+  var lines = raw.split('\n');
+  var out = [];
+  for(var i=0;i<lines.length;i++){
+    var t = lines[i].trim();
+    if(t) out.push(t);
+  }
+  if(out.length === 1 && out[0].length > 11 && out[0].indexOf(' ') > -1){
+    var words = out[0].split(/\s+/);
+    var mid = Math.ceil(words.length / 2);
+    out = [ words.slice(0, mid).join(' '), words.slice(mid).join(' ') ];
+  }
+  return out.length ? out : [''];
+}
+
+/* ============================================================
+   DRAWING
+   ============================================================ */
+function drawPhoto(W, H){
+  if(!photoImg){
+    var g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#3d3630');
+    g.addColorStop(1, '#171412');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    setFont('500', Math.round(W * 0.028), 'Inter');
+    ctx.fillStyle = 'rgba(255,255,255,0.30)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    drawTracked('ADD A PHOTO TO BEGIN', W / 2, H * 0.30, W * 0.006, 'center', 'fill');
+    return;
+  }
+  var iw = photoImg.width, ih = photoImg.height;
+  var base = Math.max(W / iw, H / ih);
+  var s = base * S.zoom;
+  var dw = iw * s, dh = ih * s;
+  var maxX = Math.max(0, (dw - W) / 2);
+  var maxY = Math.max(0, (dh - H) / 2);
+  var dx = (W - dw) / 2 + S.ox * maxX;
+  var dy = (H - dh) / 2 + S.oy * maxY;
+  ctx.drawImage(photoImg, dx, dy, dw, dh);
+}
+
+function drawScrim(W, H){
+  if(S.scrim > 0){
+    ctx.fillStyle = 'rgba(15,15,15,' + S.scrim + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+  // bottom fade for the lockup band
+  var bandTop = H * 0.62;
+  var g = ctx.createLinearGradient(0, bandTop, 0, H);
+  g.addColorStop(0, 'rgba(15,15,15,0)');
+  g.addColorStop(0.55, 'rgba(15,15,15,0.42)');
+  g.addColorStop(1, 'rgba(15,15,15,0.80)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, bandTop, W, H - bandTop);
+}
+
+function drawGlow(W, H, cy){
+  if(!S.showGlow || S.bloom <= 0) return;
+  var r = Math.min(W, H) * 0.44;
+  var g = ctx.createRadialGradient(W / 2, cy, r * 0.12, W / 2, cy, r);
+  g.addColorStop(0, 'rgba(255,255,255,' + S.bloom + ')');
+  g.addColorStop(0.62, 'rgba(255,255,255,' + (S.bloom * 0.42) + ')');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(W / 2, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSwoosh(W, H, yBase){
+  if(!S.showSwoosh) return;
+  var k = W / 1080;
+  ctx.save();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = S.accent;
+  ctx.beginPath();
+  ctx.moveTo(-30, yBase + 40 * k);
+  ctx.bezierCurveTo(W * 0.26, yBase - 62 * k, W * 0.60, yBase + 86 * k, W + 30, yBase - 18 * k);
+  ctx.lineTo(W + 30, yBase + 62 * k);
+  ctx.bezierCurveTo(W * 0.60, yBase + 168 * k, W * 0.26, yBase + 20 * k, -30, yBase + 122 * k);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawHeadlineImpact(W, H, cy, maxW){
+  var lines = splitHeadline(S.headline);
+  var base = Math.min(W * 0.155, (H * 0.30) / Math.max(1, lines.length));
+  var lh = base * 1.02;
+  var startY = cy - ((lines.length - 1) * lh) / 2;
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+
+  for(var i=0;i<lines.length;i++){
+    var tracking = base * 0.02;
+    var size = fitSize(lines[i], '400', 'Anton', tracking, maxW, Math.round(base), 24);
+    var tr = tracking * (size / base);
+    var y = startY + i * lh;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.42)';
+    ctx.shadowBlur = size * 0.16;
+    ctx.shadowOffsetY = size * 0.05;
+    ctx.strokeStyle = S.accent;
+    ctx.lineWidth = Math.max(3, size * 0.085);
+    drawTracked(lines[i], W / 2, y, tr, 'center', 'stroke');
+    ctx.restore();
+
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(lines[i], W / 2, y, tr, 'center', 'fill');
+  }
+  return startY + (lines.length - 1) * lh + base * 0.6;
+}
+
+function drawHeadlineLuxury(W, H, cy, maxW){
+  var lines = splitHeadline(S.headline);
+  var base = Math.min(W * 0.105, (H * 0.26) / Math.max(1, lines.length));
+  var lh = base * 1.24;
+  var startY = cy - ((lines.length - 1) * lh) / 2;
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  for(var i=0;i<lines.length;i++){
+    var tracking = base * 0.16;
+    var size = fitSize(lines[i], '500', 'Cormorant Garamond', tracking, maxW, Math.round(base), 22);
+    var tr = tracking * (size / base);
+    var y = startY + i * lh;
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.45)';
+    ctx.shadowBlur = size * 0.30;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(lines[i], W / 2, y, tr, 'center', 'fill');
+    ctx.restore();
+  }
+
+  var endY = startY + (lines.length - 1) * lh + base * 0.62;
+  ctx.fillStyle = S.accent;
+  ctx.fillRect(W / 2 - W * 0.045, endY, W * 0.09, Math.max(2, W * 0.0035));
+  return endY + W * 0.03;
+}
+
+function drawSubLines(W, H, y){
+  var k = W / 1080;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  if(S.line1){
+    var sz1 = fitSize(S.line1.toUpperCase(), '600', 'Cormorant Garamond', 44 * k * 0.18, W * 0.82, Math.round(52 * k), 20);
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.5)';
+    ctx.shadowBlur = 18 * k;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(S.line1.toUpperCase(), W / 2, y, sz1 * 0.18, 'center', 'fill');
+    ctx.restore();
+    y += 58 * k;
+  }
+  if(S.line2){
+    var sz2 = fitSize(S.line2.toUpperCase(), '600', 'Cormorant Garamond', 40 * k * 0.18, W * 0.82, Math.round(46 * k), 18);
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.5)';
+    ctx.shadowBlur = 18 * k;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(S.line2.toUpperCase(), W / 2, y, sz2 * 0.18, 'center', 'fill');
+    ctx.restore();
+    y += 54 * k;
+  }
+
+  var stats = [];
+  if(S.s1) stats.push(S.s1);
+  if(S.s2) stats.push(S.s2);
+  if(S.s3) stats.push(S.s3);
+  if(stats.length){
+    var txt = stats.join('   ·   ').toUpperCase();
+    var szs = fitSize(txt, '600', 'Inter', 24 * k * 0.14, W * 0.80, Math.round(26 * k), 12);
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.5)';
+    ctx.shadowBlur = 14 * k;
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    drawTracked(txt, W / 2, y, szs * 0.14, 'center', 'fill');
+    ctx.restore();
+    y += 52 * k;
+  }
+
+  if(S.price){
+    var szp = fitSize(S.price, '700', 'Inter', 34 * k * 0.06, W * 0.70, Math.round(38 * k), 16);
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,15,15,0.5)';
+    ctx.shadowBlur = 16 * k;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(S.price, W / 2, y, szp * 0.06, 'center', 'fill');
+    ctx.restore();
+    y += 50 * k;
+  }
+  return y;
+}
+
+function drawMetrics(W, H, y){
+  var k = W / 1080;
+  var metrics = [
+    { v:S.m1v, l:S.m1l },
+    { v:S.m2v, l:S.m2l },
+    { v:S.m3v, l:S.m3l }
+  ].filter(function(m){ return m.v || m.l; });
+  if(!metrics.length) return y;
+
+  var colW = W * 0.82 / metrics.length;
+  var startX = W * 0.09 + colW / 2;
+  ctx.textBaseline = 'middle';
+
+  for(var i=0;i<metrics.length;i++){
+    var cx = startX + i * colW;
+    if(i > 0){
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.fillRect(cx - colW / 2, y - 38 * k, Math.max(1, k), 92 * k);
+    }
+    if(metrics[i].v){
+      var szv = fitSize(metrics[i].v, '700', 'Cormorant Garamond', 0, colW * 0.88, Math.round(74 * k), 20);
+      ctx.save();
+      ctx.shadowColor = 'rgba(15,15,15,0.5)'; ctx.shadowBlur = 18 * k;
+      ctx.fillStyle = '#FFFFFF';
+      drawTracked(metrics[i].v, cx, y, 0, 'center', 'fill');
+      ctx.restore();
+    }
+    if(metrics[i].l){
+      var szl = fitSize(metrics[i].l.toUpperCase(), '600', 'Inter', 18 * k * 0.16, colW * 0.92, Math.round(19 * k), 10);
+      ctx.fillStyle = S.accent;
+      drawTracked(metrics[i].l.toUpperCase(), cx, y + 52 * k, szl * 0.16, 'center', 'fill');
+    }
+  }
+  return y + 110 * k;
+}
+
+function drawLockup(W, H){
+  var k = W / 1080;
+  var bottom = H - (S.size === 'story' ? 190 * k : 44 * k);
+
+  // headshot, anchored bottom-left
+  if(S.showHead && headImg){
+    var hH = (S.size === 'story' ? 0.30 : 0.36) * H;
+    var hW = headImg.width * (hH / headImg.height);
+    var maxHW = W * 0.42;
+    if(hW > maxHW){ hW = maxHW; hH = headImg.height * (hW / headImg.width); }
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 30 * k;
+    ctx.drawImage(headImg, W * 0.01, bottom - hH, hW, hH);
+    ctx.restore();
+  }
+
+  var textX = S.showHead && headImg ? W * 0.30 : W * 0.06;
+  var y = bottom - 26 * k;
+
+  if(S.sigContact){
+    var szc = fitSize(S.sigContact.toUpperCase(), '500', 'Inter', 16 * k * 0.14, W * 0.56, Math.round(17 * k), 9);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10 * k;
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    drawTracked(S.sigContact.toUpperCase(), textX, y, szc * 0.14, 'left', 'fill');
+    ctx.restore();
+    y -= 34 * k;
+  }
+
+  if(S.sigTitle){
+    var szt = fitSize(S.sigTitle.toUpperCase(), '600', 'Inter', 20 * k * 0.20, W * 0.56, Math.round(21 * k), 10);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10 * k;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(S.sigTitle.toUpperCase(), textX, y, szt * 0.20, 'left', 'fill');
+    ctx.restore();
+    y -= 46 * k;
+  }
+
+  if(S.sigName){
+    var isScript = (S.sigFont === 'Allura');
+    var weight = isScript ? '400' : '600';
+    var szn = fitSize(S.sigName, weight, S.sigFont, 0, W * 0.60, Math.round((isScript ? 108 : 74) * k), 22);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20 * k;
+    ctx.fillStyle = '#FFFFFF';
+    drawTracked(S.sigName, textX, y - (isScript ? 8 * k : 0), 0, 'left', 'fill');
+    ctx.restore();
+  }
+
+  if(S.showLogo && logoImg){
+    var lW = W * 0.24;
+    var lH = logoImg.height * (lW / logoImg.width);
+    var maxLH = H * 0.10;
+    if(lH > maxLH){ lH = maxLH; lW = logoImg.width * (lH / logoImg.height); }
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 22 * k;
+    ctx.drawImage(logoImg, W - lW - W * 0.055, bottom - lH - 4 * k, lW, lH);
+    ctx.restore();
+  }
+}
+
+function renderCanvas(){
+  if(!ctx || !canvas) return;
+  var sz = activeSize();
+  var W = sz.w, H = sz.h;
+  if(canvas.width !== W || canvas.height !== H){
+    canvas.width = W; canvas.height = H;
+  }
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+
+  drawPhoto(W, H);
+  drawScrim(W, H);
+
+  var isMarket = (S.type === 'market');
+  var contentCy = S.size === 'story' ? H * 0.36 : H * 0.36;
+
+  drawGlow(W, H, contentCy);
+
+  var maxW = W * 0.84;
+  var y;
+  if(S.style === 'luxury' || isMarket){
+    y = drawHeadlineLuxury(W, H, contentCy, maxW);
+  } else {
+    y = drawHeadlineImpact(W, H, contentCy, maxW);
+  }
+
+  y += W * 0.035;
+
+  if(isMarket){
+    if(S.period){
+      var szp = fitSize(S.period.toUpperCase(), '600', 'Inter', 20 * (W/1080) * 0.18, W * 0.8, Math.round(22 * (W/1080)), 10);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.textBaseline = 'middle';
+      drawTracked(S.period.toUpperCase(), W / 2, y, szp * 0.18, 'center', 'fill');
+      y += 60 * (W/1080);
+    }
+    if(S.line1){
+      var szc = fitSize(S.line1.toUpperCase(), '600', 'Cormorant Garamond', 52 * (W/1080) * 0.18, W * 0.82, Math.round(56 * (W/1080)), 20);
+      ctx.fillStyle = '#FFFFFF';
+      drawTracked(S.line1.toUpperCase(), W / 2, y, szc * 0.18, 'center', 'fill');
+      y += 80 * (W/1080);
+    }
+    y = drawMetrics(W, H, y);
+  } else {
+    y = drawSubLines(W, H, y);
+  }
+
+  drawSwoosh(W, H, H - (S.size === 'story' ? 300 : 220) * (W / 1080));
+  drawLockup(W, H);
+
+  ctx.restore();
+}
+
+/* Public entry point. A drawing failure must never take the rest of the page
+   down with it — and it must never fail quietly. */
+function render(){
+  try{
+    renderCanvas();
+    clearError();
+  }catch(err){
+    try{ ctx && ctx.restore(); }catch(e){}
+    reportError('Preview', err);
+  }
+}
+
+/* ============================================================
+   CAPTION ENGINE
+   ============================================================ */
+function pascal(str){
+  return String(str || '').replace(/[^a-zA-Z0-9 ]/g, '').split(/\s+/)
+    .filter(Boolean)
+    .map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); })
+    .join('');
+}
+
+function isLake(community){
+  var c = String(community || '').toLowerCase().trim();
+  return LAKE_COMMUNITIES.indexOf(c) > -1;
+}
+
+function buildHashtags(){
+  var t = activeType();
+  var comm = S.line1.trim();
+  var cityRaw = S.line2.split(',')[0].trim();
+  var C = pascal(comm);
+  var City = pascal(cityRaw) || 'Calgary';
+  var P = pascal(S.propType);
+  var tags = [];
+
+  function add(tag){
+    if(!tag) return;
+    var full = '#' + tag;
+    if(tags.indexOf(full) === -1) tags.push(full);
+  }
+
+  add(t.tag);
+  if(C){
+    add(C + 'RealEstate');
+    add(C + 'Homes');
+    add(C + 'Realtor');
+    add(C + 'HomesForSale');
+    if(isLake(comm)){ add(C + 'Lake'); add('LakeLiving'); add('LakeCommunity'); }
+  }
+  add(City + 'RealEstate');
+  add(City + 'Homes');
+  add(City + 'Realtor');
+  add(City + 'AB');
+
+  if(S.type === 'market'){ add('CalgaryMarketUpdate'); add('YYCMarket'); }
+  else if(S.propType === 'Condo'){ add('CondoLiving'); add('CondoForSale'); }
+  else if(S.propType === 'Townhouse'){ add('TownhouseLiving'); }
+  else if(S.propType === 'Acreage'){ add('AcreageLiving'); }
+  else if(S.propType === 'Villa'){ add('VillaLiving'); add('AdultLiving'); }
+  else { add(P.replace('-', '') + 'Home'); }
+
+  add('AlbertaRealEstate');
+  add('CalgaryAreaRealEstate');
+  add('YYCRealEstate');
+  add('RoyalLePageSolutions');
+  add('RoyalLePage');
+  add('DuikerProperties');
+  add('KyleDuiker');
+
+  return tags.slice(0, 28);
+}
+
+function captionBody(){
+  var comm = S.line1.trim() || 'this community';
+  var city = S.line2.trim();
+  var place = city ? (comm + ', ' + city) : comm;
+  var prop = S.propType.toLowerCase();
+  var stats = [S.s1, S.s2, S.s3].filter(Boolean).join(' · ');
+  var price = S.price.trim();
+  var v = S.variant;
+
+  var sets = {
+    listed: {
+      Straightforward: [
+        'Just listed in ' + place + '.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nBook a showing and I will walk you through it.',
+        'New to the market in ' + place + '. A ' + prop + ' that shows well and prices right for where this pocket is trading today.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nSend me a message to arrange a private viewing.'
+      ],
+      Warm: [
+        'There is a new one available in ' + place + ', and I think it is going to make someone very happy.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nIf it looks like your next chapter, let us go see it.',
+        'Fresh listing in ' + place + '. Bright, well kept, and in a spot people tend to stay in for a long time.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nMessage me and I will get you in this week.'
+      ],
+      Punchy: [
+        'New listing. ' + place + '.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nWho wants the first look?',
+        'Just hit the market in ' + place + '.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nShowings start now. Send me a DM.'
+      ]
+    },
+    soon: {
+      Straightforward: [
+        'Coming soon to ' + place + '.' + (stats ? '\n\n' + stats : '') + '\n\nMessage me for details before it goes live.',
+        'Preparing a ' + prop + ' for market in ' + place + '.' + (stats ? '\n\n' + stats : '') + '\n\nIf you would like advance notice, send me a message.'
+      ],
+      Warm: [
+        'Something lovely is on its way in ' + place + '. Photos soon.' + (stats ? '\n\n' + stats : '') + '\n\nWant the early look? Just say the word.',
+        'A quiet heads-up: a ' + prop + ' in ' + place + ' is nearly ready to list.' + (stats ? '\n\n' + stats : '') + '\n\nMessage me for a preview.'
+      ],
+      Punchy: [
+        'Coming soon. ' + place + '.\n\nDM for first access.',
+        'Not live yet. ' + place + '.\n\nWant in early? Message me.'
+      ]
+    },
+    open: {
+      Straightforward: [
+        'Open house in ' + place + '.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nDrop by, no appointment needed. Details in the comments.',
+        'Hosting an open house in ' + place + ' this weekend.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nCome through and have a look.'
+      ],
+      Warm: [
+        'The kettle is on. Open house in ' + place + ' this weekend.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nBring a friend, bring your questions.',
+        'Come see it in person. Open house in ' + place + '.' + (stats ? '\n\n' + stats : '') + (price ? '\n' + price : '') + '\n\nI will be there to answer anything.'
+      ],
+      Punchy: [
+        'Open house. ' + place + '. This weekend.' + (price ? '\n' + price : '') + '\n\nSee you there.',
+        'Doors open in ' + place + ' this weekend.' + (price ? '\n' + price : '') + '\n\nNo appointment. Just show up.'
+      ]
+    },
+    price: {
+      Straightforward: [
+        'New price in ' + place + '.' + (price ? '\n\n' + price : '') + (stats ? '\n' + stats : '') + '\n\nIf you looked before, it is worth a second look.',
+        'Price adjustment on the ' + prop + ' in ' + place + '.' + (price ? '\n\n' + price : '') + '\n\nMessage me to book a showing.'
+      ],
+      Warm: [
+        'Good news for anyone who has been watching this one in ' + place + '.' + (price ? '\n\n' + price : '') + '\n\nStill the same home. Better number.',
+        'A fresh price in ' + place + '.' + (price ? '\n\n' + price : '') + '\n\nIf it was close before, it may be right now.'
+      ],
+      Punchy: [
+        'New price. ' + place + '.' + (price ? '\n' + price : '') + '\n\nGo look again.',
+        'Price improved in ' + place + '.' + (price ? '\n' + price : '') + '\n\nThis one will move.'
+      ]
+    },
+    sold: {
+      Straightforward: [
+        'Sold in ' + place + '. Congratulations to the sellers.\n\nIf you are wondering what your home would bring in today\u2019s market, I am happy to run the numbers.',
+        'Another one closed in ' + place + '.\n\nThinking about a move? Send me a message and I will put together a proper valuation.'
+      ],
+      Warm: [
+        'Sold in ' + place + '. It was a pleasure helping this family close one chapter and open the next.\n\nIf you are thinking about your own move, I would love to help.',
+        'Keys handed over in ' + place + '. Congratulations to my sellers, and thank you for the trust.\n\nCurious what your place is worth? Just ask.'
+      ],
+      Punchy: [
+        'Sold. ' + place + '.\n\nWho is next?',
+        'Another one done in ' + place + '.\n\nWant to know your number? Ask me.'
+      ]
+    },
+    over: {
+      Straightforward: [
+        'Sold over asking in ' + place + '.\n\nPricing and preparation are what get this result. Happy to show you how the numbers work in your community.',
+        'Over asking in ' + place + '. Congratulations to the sellers.\n\nIf you want to know what your home would draw right now, message me.'
+      ],
+      Warm: [
+        'Over asking in ' + place + ', and very well deserved. The sellers did the work up front and the market answered.\n\nThinking of listing? Let us talk strategy.',
+        'This one went over asking in ' + place + '. Proud of my clients for trusting the plan.\n\nHappy to walk you through what we did.'
+      ],
+      Punchy: [
+        'Over asking. ' + place + '.\n\nPreparation beats luck every time.',
+        'Sold over list in ' + place + '.\n\nWant that result? Let us talk.'
+      ]
+    },
+    purchased: {
+      Straightforward: [
+        'Keys handed over in ' + place + '. Congratulations to my buyers.\n\nIf you are starting your own search, I am happy to help you plan it properly.',
+        'Possession day in ' + place + '. Congratulations to the new owners.\n\nBuying soon? Let us map out the steps together.'
+      ],
+      Warm: [
+        'Congratulations to my buyers, now officially home in ' + place + '. Watching people get the keys never gets old.\n\nIf you are dreaming about a move, I would love to help.',
+        'New keys, new address, new chapter in ' + place + '. So happy for these two.\n\nReady to start your own search? Send me a message.'
+      ],
+      Punchy: [
+        'Keys handed over in ' + place + '.\n\nCongratulations, you two.',
+        'Bought in ' + place + '.\n\nYour turn?'
+      ]
+    },
+    clients: {
+      Straightforward: [
+        'Congratulations to my clients on their move in ' + place + '.\n\nThank you for trusting me with it.',
+        'A good day in ' + place + '. Congratulations to my clients, and thank you for the referral trust along the way.'
+      ],
+      Warm: [
+        'These two made it easy from the first coffee to the last signature. Congratulations on ' + place + '.\n\nThank you for letting me be part of it.',
+        'Every so often a transaction is genuinely fun. This was one of them. Congratulations on ' + place + '.'
+      ],
+      Punchy: [
+        'Congratulations. ' + place + '. Done and done.',
+        'Happy clients in ' + place + '. That is the whole job.'
+      ]
+    },
+    market: {
+      Straightforward: [
+        (S.period ? S.period + ' numbers' : 'The latest numbers') + ' for ' + comm + '.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nCity-wide averages do not tell you much about your street. Message me for the full ' + comm + ' report.',
+        'Here is where ' + comm + ' sat ' + (S.period ? 'in ' + S.period : 'last month') + '.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nWant the detailed breakdown for your property type? Just ask.'
+      ],
+      Warm: [
+        'A quick look at ' + comm + (S.period ? ' for ' + S.period : '') + '.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nIf you have been wondering where your home sits in all this, I am glad to walk you through it.',
+        comm + ' numbers are in' + (S.period ? ' for ' + S.period : '') + '.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nHappy to send you the full report. No obligation, just good information.'
+      ],
+      Punchy: [
+        comm + (S.period ? ', ' + S.period : '') + '.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nWant your street, not the city average? DM me.',
+        'The real ' + comm + ' numbers.\n\n' + [S.m1l && (S.m1l + ': ' + S.m1v), S.m2l && (S.m2l + ': ' + S.m2v), S.m3l && (S.m3l + ': ' + S.m3v)].filter(Boolean).join('\n') + '\n\nFull report on request.'
+      ]
+    }
+  };
+
+  var set = sets[S.type] || sets.listed;
+  var arr = set[S.tone] || set.Straightforward;
+  return arr[v % arr.length];
+}
+
+function buildCaption(){
+  var body = captionBody();
+  var sig = '\n\nKyle Duiker · Associate Broker\nRoyal LePage Solutions · Duiker Properties';
+  return body + sig + '\n\n' + buildHashtags().join(' ');
+}
+
+function renderCaption(){
+  var box = $('capBox');
+  if(!box) return;
+  try{
+    box.textContent = buildCaption();
+  }catch(err){
+    reportError('Caption', err);
+  }
+}
+
+/* ============================================================
+   UI WIRING
+   ============================================================ */
+function buildChips(containerId, items, getVal, isOn, onPick){
+  var el = $(containerId);
+  el.innerHTML = '';
+  items.forEach(function(item){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (isOn(item) ? ' on' : '');
+    b.textContent = typeof item === 'string' ? item : item.label;
+    b.addEventListener('click', function(){
+      onPick(item);
+      buildChips(containerId, items, getVal, isOn, onPick);
+    });
+    el.appendChild(b);
+  });
+}
+
+function refreshTypeUI(){
+  var isMarket = (S.type === 'market');
+  $('marketSect').style.display = isMarket ? '' : 'none';
+  var pf = $('propField'); if(pf) pf.style.display = isMarket ? 'none' : '';
+  $('statsField').style.display = isMarket ? 'none' : '';
+  $('priceField').style.display = isMarket ? 'none' : '';
+}
+
+function initChips(){
+  buildChips('typeChips', TYPES,
+    function(t){ return t.id; },
+    function(t){ return t.id === S.type; },
+    function(t){
+      S.type = t.id;
+      S.headline = t.headline;
+      $('headline').value = t.headline;
+      S.variant = 0;
+      refreshTypeUI();
+      renderCaption(); render();
+    });
+
+  buildChips('sizeChips', SIZES,
+    function(s){ return s.id; },
+    function(s){ return s.id === S.size; },
+    function(s){ S.size = s.id; render(); });
+
+  buildChips('styleChips',
+    [{ id:'impact', label:'Bold Impact' }, { id:'luxury', label:'Refined Serif' }],
+    function(s){ return s.id; },
+    function(s){ return s.id === S.style; },
+    function(s){ S.style = s.id; render(); });
+
+  buildChips('toggleChips',
+    [
+      { id:'showSwoosh', label:'Red ribbon' },
+      { id:'showHead',   label:'Headshot' },
+      { id:'showLogo',   label:'Logo' },
+      { id:'showGlow',   label:'Centre glow' }
+    ],
+    function(t){ return t.id; },
+    function(t){ return !!S[t.id]; },
+    function(t){ S[t.id] = !S[t.id]; render(); });
+
+  buildChips('toneChips', TONES,
+    function(t){ return t; },
+    function(t){ return t === S.tone; },
+    function(t){ S.tone = t; S.variant = 0; renderCaption(); });
+
+  buildChips('propChips', PROP_TYPES,
+    function(t){ return t; },
+    function(t){ return t === S.propType; },
+    function(t){ S.propType = t; renderCaption(); });
+}
+
+function initSwatches(){
+  var colors = [RLS_RED, ALT_RED, '#0F0F0F', '#2C2420', '#C9A96E', '#A0714F', '#4A5C4E', '#6B2737'];
+  var el = $('swatches');
+  el.innerHTML = '';
+  colors.forEach(function(col){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sw' + (col.toLowerCase() === S.accent.toLowerCase() ? ' on' : '');
+    b.style.background = col;
+    b.title = col;
+    b.addEventListener('click', function(){
+      S.accent = col;
+      saveKit();
+      initSwatches();
+      render();
+    });
+    el.appendChild(b);
+  });
+}
+
+function bindText(id, key, alsoCaption){
+  var el = $(id);
+  if(!el) return;
+  el.value = S[key] || '';
+  el.addEventListener('input', function(){
+    S[key] = el.value;
+    if(alsoCaption) renderCaption();
+    render();
+  });
+}
+
+function bindRange(id, key, transform){
+  var el = $(id);
+  el.addEventListener('input', function(){
+    S[key] = transform(parseFloat(el.value));
+    render();
+  });
+}
+
+function initInputs(){
+  $('headline').value = S.headline;
+  $('headline').addEventListener('input', function(){ S.headline = this.value; render(); });
+
+  bindText('line1', 'line1', true);
+  bindText('line2', 'line2', true);
+  bindText('s1', 's1', true);
+  bindText('s2', 's2', true);
+  bindText('s3', 's3', true);
+  bindText('price', 'price', true);
+
+  ['m1v','m1l','m2v','m2l','m3v','m3l','period'].forEach(function(k){ bindText(k, k, true); });
+
+  bindText('sigName', 'sigName');
+  bindText('sigTitle', 'sigTitle');
+  bindText('sigContact', 'sigContact');
+
+  ['sigName','sigTitle','sigContact'].forEach(function(id){
+    $(id).addEventListener('change', saveKit);
+  });
+
+  $('sigFont').value = S.sigFont;
+  $('sigFont').addEventListener('change', function(){ S.sigFont = this.value; saveKit(); render(); });
+
+  bindRange('zoom', 'zoom', function(v){ return v / 100; });
+  bindRange('ox', 'ox', function(v){ return v / 100; });
+  bindRange('oy', 'oy', function(v){ return v / 100; });
+  bindRange('scrim', 'scrim', function(v){ return v / 100; });
+  bindRange('bloom', 'bloom', function(v){ return v / 100; });
+
+  $('photoIn').addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    fileToDataUrl(f, function(url){
+      if(!url){ toast('Could not read that image'); return; }
+      loadImageFromDataUrl(url, function(im){
+        if(!im){ toast('Could not read that image'); return; }
+        photoImg = im;
+        S.zoom = 1; S.ox = 0; S.oy = 0;
+        $('zoom').value = 100; $('ox').value = 0; $('oy').value = 0;
+        $('photoLabel').textContent = 'Change property photo';
+        render();
+      });
+    });
+  });
+
+  $('headIn').addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    fileToScaledDataUrl(f, 800, function(url){
+      if(!url){ toast('Could not read that image'); return; }
+      loadImageFromDataUrl(url, function(im){
+        headImg = im; setThumb('headThumb', url); saveKit(); render();
+      });
+    });
+  });
+
+  $('logoIn').addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    fileToScaledDataUrl(f, 700, function(url){
+      if(!url){ toast('Could not read that image'); return; }
+      loadImageFromDataUrl(url, function(im){
+        logoImg = im; setThumb('logoThumb', url); saveKit(); render();
+      });
+    });
+  });
+
+  $('clearKit').addEventListener('click', function(){
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    headImg = null; logoImg = null;
+    setThumb('headThumb', null); setThumb('logoThumb', null);
+    loadImageCORS(LOGO_URL, function(im){
+      if(im){ logoImg = im; setThumb('logoThumb', LOGO_URL); }
+      render();
+    });
+    toast('Brand kit cleared');
+  });
+
+  $('copyCap').addEventListener('click', function(){ copyText(buildCaption()); });
+  $('copyTags').addEventListener('click', function(){ copyText(buildHashtags().join(' ')); });
+  $('reroll').addEventListener('click', function(){ S.variant++; renderCaption(); });
+}
+
+/* ---------- drag to reposition ---------- */
+function initDrag(){
+  var dragging = false, lastX = 0, lastY = 0;
+  canvas.addEventListener('pointerdown', function(e){
+    if(!photoImg) return;
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var dx = (e.clientX - lastX) / rect.width;
+    var dy = (e.clientY - lastY) / rect.height;
+    lastX = e.clientX; lastY = e.clientY;
+    S.ox = Math.max(-1, Math.min(1, S.ox + dx * 2.2));
+    S.oy = Math.max(-1, Math.min(1, S.oy + dy * 2.2));
+    $('ox').value = Math.round(S.ox * 100);
+    $('oy').value = Math.round(S.oy * 100);
+    render();
+  });
+  function stop(e){
+    dragging = false;
+    try{ canvas.releasePointerCapture(e.pointerId); }catch(err){}
+  }
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+}
+
+/* ---------- export ---------- */
+function fileName(){
+  var t = activeType();
+  var slug = (S.line1 || 'post').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return t.id + '-' + slug + '-' + S.size + '.png';
+}
+
+function canvasToBlob(cb){
+  if(canvas.toBlob){ canvas.toBlob(cb, 'image/png'); return; }
+  try{
+    var url = canvas.toDataURL('image/png');
+    var parts = url.split(',');
+    var bin = atob(parts[1]);
+    var arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    cb(new Blob([arr], { type:'image/png' }));
+  }catch(e){ cb(null); }
+}
+
+function initExport(){
+  $('dlBtn').addEventListener('click', function(){
+    canvasToBlob(function(blob){
+      if(!blob){ toast('Export failed'); return; }
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = fileName();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      toast('Downloaded');
+    });
+  });
+
+  $('saveBtn').addEventListener('click', function(){
+    try{
+      $('modalImg').src = canvas.toDataURL('image/png');
+      $('modal').classList.add('on');
+    }catch(e){ toast('Export blocked — re-upload your logo'); }
+  });
+
+  $('closeModal').addEventListener('click', function(){ $('modal').classList.remove('on'); });
+  $('modal').addEventListener('click', function(e){ if(e.target === $('modal')) $('modal').classList.remove('on'); });
+
+  var canShareFiles = false;
+  try{
+    canShareFiles = !!(navigator.canShare && navigator.share &&
+      navigator.canShare({ files: [new File([''], 'a.png', { type:'image/png' })] }));
+  }catch(e){ canShareFiles = false; }
+
+  if(canShareFiles){
+    var sb = $('shareBtn');
+    sb.style.display = '';
+    sb.addEventListener('click', function(){
+      canvasToBlob(function(blob){
+        if(!blob) return;
+        var file = new File([blob], fileName(), { type:'image/png' });
+        navigator.share({ files:[file], title:'Inside The Sphere' }).catch(function(){});
+      });
+    });
+  }
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function ensureFonts(){
+  var specs = [
+    '400 100px Anton',
+    '400 100px Allura',
+    '500 100px "Cormorant Garamond"',
+    '600 100px "Cormorant Garamond"',
+    '700 100px "Cormorant Garamond"',
+    '500 100px Inter',
+    '600 100px Inter',
+    '700 100px Inter',
+    '600 100px Raleway'
+  ];
+  if(!document.fonts || !document.fonts.load){ return Promise.resolve(); }
+  return Promise.all(specs.map(function(s){
+    return document.fonts.load(s).catch(function(){ return null; });
+  })).then(function(){
+    return document.fonts.ready.catch(function(){ return null; });
+  });
+}
+
+function boot(){
+  loadKit();
+  initChips();
+  initSwatches();
+  initInputs();
+  initDrag();
+  initExport();
+  refreshTypeUI();
+  renderCaption();
+  render();
+
+  ensureFonts().then(function(){
+    fontsReady = true;
+    render();
+  });
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+
+})();
+</script>
+</body>
+</html>
