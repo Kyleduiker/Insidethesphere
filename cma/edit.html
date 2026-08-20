@@ -981,6 +981,8 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
       <button onclick="document.getElementById('pdf-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload Matrix PDF</button>
       <span style="font-size:12px;color:#8C8479;flex:1" id="pdf-status">Upload a Matrix Client Full report — single or multiple listings</span>
     </div>
+    <!-- SKIPPED ADDRESS LINES -->
+    <div id="pdf-skipped-panel" style="display:none;padding:10px 22px;background:#F7F4EF;border-bottom:0.5px solid #6B2737"></div>
     <!-- MULTI-LISTING REVIEW PANEL -->
     <div id="multi-review-panel" style="display:none;padding:16px 22px;background:#fff;border-bottom:0.5px solid #D9D3CB;max-height:320px;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -2108,7 +2110,22 @@ const STATUS_MAP = {
   Terminated:'terminated', Withdrawn:'terminated', T:'terminated'
 };
 
-const ADDR_RE = /^\d+[A-Z]?,?\s+.+?\s+(?:SE|SW|NE|NW)\s+[A-Za-z .'-]+,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d/;
+// Anchor on the ", AB <postal>" tail, NOT the quadrant. Chestermere, Airdrie and
+// the other surrounding towns carry no quadrant, so a quadrant-anchored pattern
+// never opened a chunk for them and dropped those listings entirely.
+const ADDR_RE = /^\d+[A-Z]?,?\s+.+,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d/;
+
+// Looks like an address heading but did not match ADDR_RE. Reported in the UI
+// rather than dropped silently.
+const NEAR_ADDR_RE = /^\d+.*,\s*AB\b/;
+
+// Sorted longest-first so the longest name wins the tail match.
+const CITY_NAMES = [
+  'Calgary','Chestermere','Airdrie','Okotoks','Cochrane','Strathmore','Langdon',
+  'De Winton','Heritage Pointe','High River','Rocky View County','Bragg Creek',
+  'Priddis','Springbank','Conrich','Dalemead','Indus','Carseland','Lyalta',
+  'Delacour','Balzac','Beiseker','Irricana','Crossfield'
+].sort((a, b) => b.length - a.length);
 
 // Matrix offsets labels and values by ~1 unit vertically. Rounding y to an
 // integer splits them onto separate rows and breaks every label-anchored
@@ -2133,11 +2150,15 @@ function clusterRows(items, tol) {
 
 // Anchor on the address heading. The old "^Residential" split returns zero
 // matches on Client Full, where "Residential" is a mid-line field value.
-function splitListings(pageTexts) {
+function splitListings(pageTexts, skipped) {
   const flat = [];
   pageTexts.forEach((lines, pi) => lines.forEach(l => flat.push({ line: l, page: pi + 1 })));
   const starts = [];
-  flat.forEach((r, i) => { if (ADDR_RE.test(r.line.trim())) starts.push(i); });
+  flat.forEach((r, i) => {
+    const line = r.line.trim();
+    if (ADDR_RE.test(line)) starts.push(i);
+    else if (skipped && NEAR_ADDR_RE.test(line)) skipped.push({ line: line, page: r.page });
+  });
   return starts.map((s, i) => {
     const end = i + 1 < starts.length ? starts[i + 1] : flat.length;
     const slice = flat.slice(s, end);
@@ -2173,6 +2194,15 @@ function parsePrinted(s) {
   return new Date(+m[3], +m[1] - 1, +m[2], h, +m[5], +m[6]).getTime();
 }
 
+// Strip an exact city name off the end of a line. Returns null when the line
+// does not end with that city, so the caller can try the next strategy.
+function stripCityTail(line, city) {
+  if (!line || !city) return null;
+  const lit = city.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = line.match(new RegExp('^(.*\\S)[ \\t,]+' + lit + '$', 'i'));
+  return m ? (m[1].replace(/[ \t,]+$/, '').trim() || null) : null;
+}
+
 // Every pattern uses [ \t]* — never \s* — so a match can never cross a
 // newline and pick up the neighbouring column's value. That is the bug that
 // produced "sqft 2011" (the year) instead of 1456.
@@ -2182,11 +2212,25 @@ function extractMatrixFields(chunk) {
   const flags = [];
 
   const firstLine = (text.split('\n')[0] || '').trim();
-  const qm = firstLine.match(/^(.+?\s+(?:SE|SW|NE|NW))\s+\S/);
-  const address = qm
-    ? qm[1].trim()
-    : firstLine.replace(/,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d.*$/i, '')
-              .replace(/\s+[A-Za-z .'-]+$/, '').trim();
+  // "264 Mahogany Cove SE Calgary, AB T3M 2K5" -> "264 Mahogany Cove SE Calgary"
+  const noTail = firstLine.replace(/,\s*AB\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d.*$/i, '').trim();
+
+  // (a) The sheet's own City field is authoritative.
+  let address = stripCityTail(noTail, g(/\bCity:[ \t]*([A-Za-z .'-]+?)[ \t]*$/m));
+
+  // (b) No City field — take the longest known city name off the tail.
+  if (!address) {
+    for (const c of CITY_NAMES) {
+      address = stripCityTail(noTail, c);
+      if (address) break;
+    }
+  }
+
+  // (c) Unknown city — fall back to the original quadrant split.
+  if (!address) {
+    const qm = firstLine.match(/^(.+?\s+(?:SE|SW|NE|NW))\s+\S/);
+    address = qm ? qm[1].trim() : noTail.replace(/\s+[A-Za-z .'-]+$/, '').trim();
+  }
 
   const stM   = text.match(/^(Active|Sold|Expired|Pending|Terminated|Withdrawn|T)[ \t]+(A\d{7})\b/m);
   const status = stM ? (STATUS_MAP[stM[1]] || 'active') : null;
@@ -2271,6 +2315,8 @@ async function parseMatrixPDF(input) {
 
   const statusEl = document.getElementById('pdf-status');
   document.getElementById('multi-review-panel').style.display = 'none';
+  const skippedLines = [];
+  showSkippedLines([]);   // clear last run
 
   if (typeof pdfjsLib === 'undefined') {
     statusEl.textContent = '⚠ PDF library not loaded';
@@ -2309,7 +2355,9 @@ async function parseMatrixPDF(input) {
         pages.push(clusterRows(tc.items));
       }
 
-      const chunks = splitListings(pages);
+      const before = skippedLines.length;
+      const chunks = splitListings(pages, skippedLines);
+      for (let s = before; s < skippedLines.length; s++) skippedLines[s].sourceFile = file.name;
       if (!chunks.length) { failed.push(file.name + ' (no listings found)'); continue; }
 
       chunks.forEach(c => {
@@ -2326,6 +2374,9 @@ async function parseMatrixPDF(input) {
   }
 
   input.value = '';
+
+  // Before every return below, so the "no listings found" case reports too.
+  showSkippedLines(skippedLines);
 
   if (!all.length) {
     statusEl.textContent = '⚠ Could not read any listings — please fill fields manually';
@@ -2372,6 +2423,16 @@ function fillCompForm(d) {
   set('comp-garage',    d.garage);
   set('comp-photo',     d.photoUrl);
   set('comp-notes',     d.notes ? d.notes.slice(0, 200) : '');
+}
+
+function showSkippedLines(skipped) {
+  const panel = document.getElementById('pdf-skipped-panel');
+  if (!panel) return;
+  if (!skipped || !skipped.length) { panel.innerHTML = ''; panel.style.display = 'none'; return; }
+  panel.innerHTML =
+    `<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B2737;margin-bottom:6px">⚠ ${skipped.length} address line${skipped.length !== 1 ? 's' : ''} skipped — not read as listings</div>` +
+    skipped.map(s => `<div style="font-size:11px;color:#6B2737;margin-bottom:2px">${esc(s.line)} <span style="color:#8C8479">(${esc(s.sourceFile)} p.${s.page})</span></div>`).join('');
+  panel.style.display = 'block';
 }
 
 function showMultiReview(listings) {
