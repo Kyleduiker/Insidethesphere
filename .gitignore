@@ -1,0 +1,3 @@
+# Local Matrix exports used for parser testing. These are real client data and
+# must never reach a public repo.
+test-pdfs/
