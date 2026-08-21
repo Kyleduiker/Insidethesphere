@@ -11,6 +11,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
+<script>window.sphereActivePage = 'cma';</script>
+<script src="../js/header.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <style>
@@ -24,27 +26,7 @@
 }
 body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height:100vh;display:flex}
 
-/* ── SIDEBAR — identical on every page ── */
-.sidebar{width:220px;flex-shrink:0;background:#fff;border-right:0.5px solid #D9D3CB;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;font-family:'Inter',-apple-system,sans-serif}
-.sb-logo{padding:22px 20px 18px;border-bottom:0.5px solid #D9D3CB;flex-shrink:0}
-.sb-logo-text{font-family:'Cormorant Garamond',Georgia,serif;font-size:1rem;font-weight:300;color:#0F0F0F;letter-spacing:.04em;line-height:1.2;text-decoration:none;display:block}
-.sb-logo-text span{color:#A0714F}
-.sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;margin-top:3px;display:block}
-.sb-section{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;padding:14px 20px 5px;flex-shrink:0;display:block}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:400;color:#8C8479;border-left:2px solid transparent;transition:color .12s,background .12s,border-color .12s;text-decoration:none;background:transparent;font-family:'Inter',sans-serif}
-.sb-item:hover{color:#0F0F0F;background:#F7F4EF}
-.sb-item.active{color:#0F0F0F;font-weight:500;border-left-color:#A0714F;background:#F7F4EF}
-.sb-item.soon{opacity:.4;pointer-events:none;cursor:default}
-.sb-soon-tag{font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#D9D3CB;margin-left:auto}
-.sb-footer{margin-top:auto;padding:14px 20px;border-top:0.5px solid #D9D3CB;flex-shrink:0}
-.sb-agent{display:flex;align-items:center;gap:10px;padding:8px;border-radius:2px;text-decoration:none;transition:background .12s;background:transparent;width:100%}
-.sb-agent:hover{background:#F7F4EF}
-.sb-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #D9D3CB;display:block}
-.sb-initials{width:32px;height:32px;border-radius:50%;background:#A0714F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em}
-.sb-name{font-size:12px;font-weight:500;color:#0F0F0F;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-role{font-size:10px;color:#8C8479;margin-top:1px;display:block}
-.sb-logout{width:100%;margin-top:8px;padding:8px;border:0.5px solid #D9D3CB;background:transparent;border-radius:2px;font-size:10px;font-weight:500;color:#8C8479;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;transition:border-color .12s,color .12s;display:block}
-.sb-logout:hover{border-color:#0F0F0F;color:#0F0F0F}
+/* Sidebar styles now live in js/header.js */
 
 /* MAIN */
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
@@ -383,7 +365,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @media(max-width:900px){
-  .sidebar{display:none}
+  /* header.js hides #sphere-sidebar at this same breakpoint */
   .main,.loading{margin-left:0}
   .sec-nav{display:none}
   .content{padding:20px}
@@ -398,32 +380,8 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
   <p style="font-size:13px;color:var(--stone)">Loading CMA...</p>
 </div>
 
-<!-- SIDEBAR -->
-<nav class="sidebar" id="sidebar" style="display:none">
-  <div class="sb-logo">
-    <a href="../smarttools/" class="sb-logo-text">Inside The <span>Sphere</span></a>
-    <div class="sb-logo-sub">Real Estate Tools</div>
-  </div>
-  <div class="sb-section">Tools</div>
-  <a href="../smarttools/" class="sb-item"><span>◻</span> Dashboard</a>
-  <a href="../cma/" class="sb-item active"><span>◻</span> CMA Builder</a>
-  <a href="../newsletter/" class="sb-item"><span>◻</span> Newsletter</a>
-  <a href="../Bold-trail-newsletter/" class="sb-item"><span>◻</span> Bold Trail</a>
-  <div class="sb-section">Coming soon</div>
-  <div class="sb-item soon"><span>◻</span> Listing Checklist <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-item soon"><span>◻</span> Buyer Checklist <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-item soon"><span>◻</span> Market Reports <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-footer">
-    <a href="../profile.html" class="sb-agent">
-      <div class="sb-initials" id="sb-initials">KD</div>
-      <div>
-        <div class="sb-name" id="sb-name">Kyle Duiker</div>
-        <div class="sb-role" id="sb-role">Broker Delegate</div>
-      </div>
-    </a>
-    <button class="sb-logout" onclick="doLogout()">Log out</button>
-  </div>
-</nav>
+<!-- SIDEBAR — injected by js/header.js -->
+<div id="sphere-header"></div>
 
 <!-- MAIN -->
 <div class="main" id="appContent" style="display:none">
@@ -1105,15 +1063,12 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         if (user) {
             currentUser = user;
             loadCMA();
-            loadSidebarProfile(user);
         } else {
             window.location.href = '../login.html';
         }
     });
 
-    function doLogout() {
-        firebase.auth().signOut().then(() => window.location.href = '../login.html');
-    }
+    /* Log out is handled by sphereLogout() in js/header.js */
 
     // ── LOAD CMA ──
     function loadCMA() {
@@ -1139,7 +1094,6 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
                 updatePublishPanel();
 
                 document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('sidebar').style.display = 'flex';
                 document.getElementById('appContent').style.display = 'flex';
                 document.getElementById('breadcrumb-name').textContent = cmaData.clientName || 'Untitled';
 
@@ -1710,34 +1664,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         setTimeout(() => { t.className = 'toast'; }, 3000);
     }
 
-function loadSidebarProfile(user) {
-  db.collection('users').doc(user.uid).get().then(doc => {
-    if (!doc.exists) return;
-    const p = doc.data().agentProfile || {};
-    const first = p.firstName || '';
-    const last  = p.lastName  || '';
-    const title = p.title     || 'Agent';
-    const initials = ((first.charAt(0))+(last.charAt(0)||'')).toUpperCase() || 'KD';
-    const headshot = (p.photoUrls && p.photoUrls.headshot) || '';
-
-    const sbName = document.getElementById('sb-name');
-    const sbRole = document.getElementById('sb-role');
-    let sbInit   = document.getElementById('sb-initials');
-
-    if (sbName) sbName.textContent = [first,last].filter(Boolean).join(' ');
-    if (sbRole) sbRole.textContent = title;
-    if (sbInit) sbInit.textContent = initials;
-
-    if (headshot && sbInit) {
-      const img = document.createElement('img');
-      img.src = headshot;
-      img.className = 'sb-avatar';
-      img.alt = first;
-      img.onerror = () => img.replaceWith(sbInit);
-      sbInit.replaceWith(img);
-    }
-  }).catch(console.error);
-}
+/* The sidebar agent footer is rendered by js/header.js */
 
 
 // ── PROPERTY PHOTO UPLOAD ────────────────────────────────
