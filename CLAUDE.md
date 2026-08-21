@@ -106,8 +106,9 @@ Tools live at repo root: `cma/`, `clients/`, `process-hub/`, `social/`.
   `sphereProfileReady` event, auto-populates elements with `data-sphere` attributes.
 - `js/header.js` — shared sidebar nav
 
-**Rule:** every platform page includes `profile.js` and `header.js` after
-`firebase-config.js`, and sets `window.sphereActivePage`.
+**Rule:** every platform page includes `header.js` after `firebase-config.js` and sets
+`window.sphereActivePage`. `profile.js` is loaded only by pages that consume profile
+data — **currently none**; `header.js` reads Firestore itself for the sidebar footer.
 **Client-facing pages do NOT use `header.js`.**
 
 `header.js` migration is **complete** as of Aug 21, 2026. `js/header.js` is the single
@@ -348,11 +349,9 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
 - **`social/index.html` sets `sphereActivePage = 'social'`**, which matches no key in
   `navItems`, so no item highlights. Social Studio has no nav entry at all — decide
   whether it should get one, or point the page at an existing key.
-- **Four migrated pages lack `profile.js`** — `clients/index.html`,
-  `clients/view.html`, `cma/edit.html`, `cma/index.html`. The shared-JS rule above
-  says every platform page includes it. None of them use `data-sphere` attributes,
-  so nothing is broken; the rule and the reality just disagree. Either add it in one
-  sweep or relax the rule.
+- **`profile.js` has zero consumers repo-wide.** Decide whether it's superseded by
+  `header.js` or scaffolding for planned work. **Do not delete before the Oct 25
+  demo.**
 - **`favicon.ico` returns 404** site-wide. Cosmetic.
 - Five pages (`index.html`, `dashboard.html`, `signup.html`, `newsletter/`,
   `background-customization/`) lack the Storage compat tag, but **none of them use
