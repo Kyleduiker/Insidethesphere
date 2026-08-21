@@ -249,6 +249,11 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   margin-bottom:6px;
   letter-spacing:.01em;
 }
+.cover-specs{
+  font-family:var(--sans);
+  font-size:13px;color:rgba(255,255,255,.62);
+  letter-spacing:.05em;margin-bottom:8px;
+}
 .cover-sub{
   font-size:14px;color:rgba(255,255,255,.45);
   margin-bottom:48px;letter-spacing:.04em;
@@ -576,6 +581,42 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   font-family:var(--serif);
   font-size:1rem;color:var(--muted);
   text-decoration:line-through;
+}
+
+/* SUBJECT PROPERTY — the reference point, not another listing.
+   Sits above the first status group, outside .comp-group, so it needs its
+   own border: inside a group the hairlines come from .comp-group-rows'
+   background showing through the 1px gaps. */
+.subject-card{
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  margin-bottom:44px;
+}
+/* No hover shift — it is not selectable evidence, it is the subject. */
+.subject-card:hover{background:var(--white)}
+/* Collapses when there is no $/sq.ft. to show, so the money column does
+   not leave a dead 172px gutter. */
+.subject-card.no-psf{grid-template-columns:1fr}
+.subject-eyebrow{
+  font-family:var(--sans);
+  font-size:10px;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px;
+}
+.subject-psf{
+  font-family:var(--serif);
+  font-size:1.8rem;font-weight:400;
+  color:var(--dark);letter-spacing:.01em;line-height:1.15;
+}
+.subject-psf-unit{
+  font-family:var(--sans);
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin-top:4px;
+}
+.subject-psf-note{
+  font-family:var(--sans);
+  font-size:10px;color:var(--muted);
+  margin-top:12px;line-height:1.5;
 }
 
 /* VALUE RANGE */
@@ -1022,6 +1063,7 @@ input[type=range]::-moz-range-thumb{
     <div class="cover-content">
       <div class="cover-type" id="cover-type">Private Market Evaluation</div>
       <div class="cover-address" id="cover-address">Property Address</div>
+      <div class="cover-specs" id="cover-specs"></div>
       <div class="cover-sub" id="cover-sub">SE Calgary</div>
       <div class="cover-line"></div>
       <div class="cover-agent">
@@ -1349,6 +1391,13 @@ function populateReport() {
   document.getElementById('cover-address').textContent = d.address || '';
   document.getElementById('cover-sub').textContent =
     (d.community || 'SE Calgary') + ', Alberta · Prepared for ' + (d.clientName || 'you');
+
+  // Compact spec strip under the address. Hidden outright when section 02
+  // has nothing in it, rather than leaving an empty line.
+  const coverSpecsEl = document.getElementById('cover-specs');
+  const coverSpecs = subjectSpecParts(d, false).join(' · ');
+  if (coverSpecs) coverSpecsEl.textContent = coverSpecs;
+  else coverSpecsEl.style.display = 'none';
   document.getElementById('cover-price').textContent = fmt(parseFloat(d.priceRec));
   document.getElementById('sticky-address').textContent = d.address || '';
   document.getElementById('sticky-price').textContent = fmt(parseFloat(d.priceRec));
@@ -1441,8 +1490,8 @@ function populateReport() {
   if (d.marketNarrative) document.getElementById('market-narrative').textContent = d.marketNarrative;
   else document.getElementById('market-narrative').style.display = 'none';
 
-  // COMPS
-  buildComps(d.comps || []);
+  // COMPS — the subject property heads the grid as the reference point
+  buildComps(d.comps || [], d);
 
   // PRICING
   document.getElementById('price-low').textContent = fmt(parseFloat(d.priceLow));
@@ -1594,10 +1643,102 @@ function buildJourney(steps) {
 }
 
 // ── COMPS ────────────────────────────────────────
-function buildComps(comps) {
+// ── SUBJECT PROPERTY ─────────────────────────────
+// Specs for the home being valued, from editor section 02. Every field is
+// optional. Parts are collected then filtered, so a missing field takes
+// its separator with it instead of leaving a stray bullet.
+
+function specNum(v) {
+  const n = parseFloat(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+function specStr(v) {
+  const t = String(v == null ? '' : v).trim();
+  return t || null;
+}
+function specYear(v) {
+  const n = specNum(v);
+  // A fat-fingered year rendering as "built 20111" in front of a seller is
+  // the kind of small error that costs credibility, so range-check it.
+  const max = new Date().getFullYear() + 2;
+  return (n && n >= 1800 && n <= max) ? Math.round(n) : null;
+}
+
+// full:false — cover strip: beds, baths, sqft, built
+// full:true  — subject card: beds, baths, sqft, garage, lot
+//              (the year lives on the community line, as it does on comps)
+function subjectSpecParts(d, full) {
+  const beds  = specNum(d.beds);
+  const baths = specNum(d.baths);
+  const sqft  = specNum(d.sqft);
+  const parts = [
+    beds  ? beds  + ' bed'  + (beds  === 1 ? '' : 's') : null,
+    baths ? baths + ' bath' + (baths === 1 ? '' : 's') : null,
+    sqft  ? sqft.toLocaleString() + ' sq.ft.' : null
+  ];
+  if (full) {
+    const lot = specNum(d.lotSize);
+    // garage is a <select> string — "2 car attached", or "No garage",
+    // which is a stated answer and worth showing when comps have doubles.
+    parts.push(specStr(d.garage));
+    parts.push(lot ? lot.toLocaleString() + ' sq.ft. lot' : null);
+  } else {
+    const yr = specYear(d.yearBuilt);
+    parts.push(yr ? 'built ' + yr : null);
+  }
+  return parts.filter(Boolean);
+}
+
+function subjectCard(d) {
+  if (!d) return '';
+  const addr  = specStr(d.address);
+  const parts = subjectSpecParts(d, true);
+
+  // Nothing to say: render nothing rather than an empty reference card.
+  if (!addr && !parts.length) return '';
+
+  const sqft = specNum(d.sqft);
+  const rec  = specNum(d.priceRec);
+
+  // $/sq.ft. is the one derived figure here, and it is the ASKING price per
+  // foot — not what a buyer paid. Comps show achieved $/sq.ft. in the same
+  // visual slot, so this is labelled rather than left to be read as
+  // evidence for the recommendation it was calculated from.
+  const psf = (sqft && rec) ? Math.round(rec / sqft) : null;
+
+  const money = psf ? `
+      <div class="comp-money">
+        <div class="subject-psf">$${psf.toLocaleString()}</div>
+        <div class="subject-psf-unit">per sq.ft.</div>
+        <div class="subject-psf-note">At recommended price</div>
+      </div>` : '';
+
+  const yr  = specYear(d.yearBuilt);
+  const sub = [specStr(d.community), yr ? 'built ' + yr : null].filter(Boolean).join(' · ');
+
+  return `<div class="comp-card subject-card${psf ? '' : ' no-psf'}">
+      ${money}
+      <div class="comp-body">
+        <div class="subject-eyebrow">Your home</div>
+        <div class="comp-address">${escHtml(addr || 'Your home')}</div>
+        ${sub ? `<div class="comp-community">${escHtml(sub)}</div>` : ''}
+        ${parts.length
+          ? `<div class="comp-specs">${parts.map(escHtml).join('<span>·</span>')}</div>`
+          : ''}
+      </div>
+    </div>`;
+}
+
+function buildComps(comps, subject) {
   const list = document.getElementById('comp-list');
+  // The subject card renders above the first status group, and renders
+  // even when there are no comps yet — it is the reference point, not one
+  // of the results.
+  const subjectHtml = subjectCard(subject);
+
   if (!comps.length) {
-    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:14px;background:var(--white);border:1px solid var(--border)">Comparable properties will appear here.</div>';
+    list.innerHTML = subjectHtml +
+      '<div style="padding:40px;text-align:center;color:var(--muted);font-size:14px;background:var(--white);border:1px solid var(--border)">Comparable properties will appear here.</div>';
     return;
   }
 
@@ -1653,7 +1794,7 @@ function buildComps(comps) {
     </div>`;
   };
 
-  list.innerHTML = ordered.map(k => {
+  list.innerHTML = subjectHtml + ordered.map(k => {
     const rows = groups[k].slice().sort((a, b) =>
       (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
     return `<div class="comp-group">
