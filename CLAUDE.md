@@ -110,8 +110,17 @@ Tools live at repo root: `cma/`, `clients/`, `process-hub/`, `social/`.
 `firebase-config.js`, and sets `window.sphereActivePage`.
 **Client-facing pages do NOT use `header.js`.**
 
-`header.js` migration is in progress — piloted on `cma/index.html`. Until it's complete,
-the baked-in sidebar on each page is the source of truth.
+`header.js` migration is **complete** as of Aug 21, 2026. `js/header.js` is the single
+source of truth for platform nav — edit `navItems` there and every page follows on the
+next deploy. No baked-in sidebars remain.
+
+Migrating any new page takes five edits: add `sphereActivePage` and the `header.js`
+include, swap the `<nav class="sidebar">` for `<div id="sphere-header">`, delete the
+`.sidebar` / `.sb-*` CSS, drop `.sidebar{display:none}` from the 900px media query, and
+remove the JS that writes to `sb-name` / `sb-role` / `sb-initials`. Keep the page's own
+`.main{margin-left:220px}` — `header.js` does not supply it. And delete any
+`getElementById('sidebar').style.display` line: the injected element is
+`#sphere-sidebar`, so that returns `null` and throws.
 
 ---
 
@@ -259,6 +268,47 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
   account with **no `users/{uid}` document and no `profileComplete` flag**. Fixed,
   with a visible error on the write.
 
+### Done — Aug 21, 2026
+
+- **`header.js` migration complete.** Every platform page now renders its sidebar
+  from `js/header.js`; no baked-in copies remain. Migrated in order:
+  `clients/view.html` (`8530d07`), `clients/index.html` (`a6418a1`),
+  `smarttools/index.html` (`8d345ba`), `cma/edit.html` (`9691b19`), each a
+  self-contained revertible commit. The nav is now genuinely single-source — edit
+  `navItems` in `header.js` and every page follows on the next deploy.
+
+  Each page needed the same five edits: add `sphereActivePage` + the `header.js`
+  include, swap the `<nav class="sidebar">` for `<div id="sphere-header">`, delete
+  the `.sidebar` / `.sb-*` CSS, drop `.sidebar{display:none}` from the 900px media
+  query, and strip the JS that wrote to `sb-name` / `sb-role` / `sb-initials`.
+
+  **Every page also carried `document.getElementById('sidebar').style.display =
+  'flex'`.** The injected element is `#sphere-sidebar`, so post-migration that line
+  returns `null` and throws, killing every statement after it in the same callback.
+  On `cma/edit.html` it sat between the spinner hide and the editor reveal — it
+  would have left a blank page with no visible error. Removed in the same pass on
+  all four. If any page is migrated later, remove this line with it.
+
+  Two things fixed in passing: `cma/edit.html`'s hardcoded nav had no Clients link,
+  so the CMA editor was the one page you couldn't reach Clients from — `header.js`
+  renders the full list. And `smarttools/index.html`'s sidebar writes were the only
+  consumers of four locals in `loadDashboard` (`lastName`, `title`, `initials`,
+  `headshot`), removed with them.
+
+  `mobile-nav.js` needed no change — it already targets `.sidebar, #sphere-sidebar`
+  and `header.js` sets `className='sidebar'` on the injected nav.
+  `cma/client/index.html` is untouched and must stay that way.
+
+- **`profile.html` layout under the injected sidebar** (`1b4d462`). The page loaded
+  `header.js` from the original pilot but never had the `margin-left:220px` the
+  fixed rail requires, so content rendered underneath it. Its own unscoped
+  `.sidebar` rule also bled onto the injected nav — `header.js` sets
+  `className='sidebar'` — leaking two properties it does not itself declare:
+  `padding:20px 0` and `height:calc(100vh - 113px)`. Together those rendered the
+  rail 113px short with extra padding, clipping the Log out button off the bottom.
+  Scoped the page's rule to `.layout .sidebar` and added the offset, reset below
+  900px to match where `header.js` hides its own rail.
+
 ### Next
 
 1. **sqft / year-built parser collision.** Year and RMS SQFT can land on the same
@@ -266,9 +316,7 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
    reproduced — six listings across three PDFs on Aug 20 all parsed sqft correctly
    (including 4,513.15 on a sheet where `Year Built: 1986` and `RMS SQFT: 4,513.15`
    share a row). **Find a PDF that actually triggers it before attempting a fix.**
-2. **Complete the `header.js` migration.** Piloted on `cma/index.html`; the sidebar
-   is still baked into every other page.
-3. **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
+2. **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
    image inputs to Imgur with a hardcoded client ID. Imgur URLs are reachable by
    anyone with the link, with no auth and no expiry. `agentPhoto`, `agentLogo` and
    `brokerageLogo` are Kyle's own branding and fine; `eventImage` and `customBanner`
@@ -277,11 +325,11 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
    both on compliance and on positioning, given the luxury-presentation-layer pitch.
    Firebase Storage is already on Blaze and working elsewhere in the platform. Move
    these to Storage.
-4. **CREB 360 community data into the CMA tool** — Mahogany, Auburn Bay, Cranston,
+3. **CREB 360 community data into the CMA tool** — Mahogany, Auburn Bay, Cranston,
    Legacy. The single biggest differentiator; still unbuilt.
-5. **PDF export from the client page.**
-6. **Client page polish to 9/10.**
-7. **Offline demo path** — a pre-parsed CMA with cached images that renders with no
+4. **PDF export from the client page.**
+5. **Client page polish to 9/10.**
+6. **Offline demo path** — a pre-parsed CMA with cached images that renders with no
    network call, as insurance against conference wifi.
 
 ### Loose ends
@@ -289,6 +337,22 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
 - **Audit for orphaned accounts.** Any Google sign-up before Aug 20 may have an Auth
   user with no Firestore profile. Check Firebase Console → Authentication → Users
   against the `users` collection.
+- **`profile.html` still carries stale topbar offset math.** The page predates the
+  `header.js` pilot, when a 60px horizontal topbar sat above a 53px subheader.
+  `header.js` replaced that with a left rail, but the arithmetic survived:
+  `.page-subheader{position:sticky;top:60px}`, `.layout{min-height:calc(100vh -
+  113px)}` and `.layout .sidebar{top:113px;height:calc(100vh - 113px)}`. The visible
+  symptom is a 60px dead band above the subheader once the page is scrolled. The
+  `1b4d462` fix deliberately left this alone — it addressed the overlap and the CSS
+  bleed only. Cosmetic, but it's the one page where the migration still shows.
+- **`social/index.html` sets `sphereActivePage = 'social'`**, which matches no key in
+  `navItems`, so no item highlights. Social Studio has no nav entry at all — decide
+  whether it should get one, or point the page at an existing key.
+- **Four migrated pages lack `profile.js`** — `clients/index.html`,
+  `clients/view.html`, `cma/edit.html`, `cma/index.html`. The shared-JS rule above
+  says every platform page includes it. None of them use `data-sphere` attributes,
+  so nothing is broken; the rule and the reality just disagree. Either add it in one
+  sweep or relax the rule.
 - **`favicon.ico` returns 404** site-wide. Cosmetic.
 - Five pages (`index.html`, `dashboard.html`, `signup.html`, `newsletter/`,
   `background-customization/`) lack the Storage compat tag, but **none of them use
