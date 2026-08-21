@@ -13,6 +13,7 @@
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'dashboard';</script>
 <script src="../js/profile.js"></script>
+<script src="../js/header.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 
@@ -39,38 +40,7 @@ body{
   display:flex;
 }
 
-/* ── SIDEBAR — identical on every page ── */
-.sidebar{
-  width:220px;flex-shrink:0;background:#fff;
-  border-right:0.5px solid #D9D3CB;
-  display:flex;flex-direction:column;
-  position:fixed;top:0;left:0;bottom:0;z-index:100;
-  font-family:'Inter',-apple-system,sans-serif;
-}
-.sb-logo{padding:22px 20px 18px;border-bottom:0.5px solid #D9D3CB;flex-shrink:0}
-.sb-logo-text{
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-size:1rem;font-weight:300;color:#0F0F0F;
-  letter-spacing:.04em;line-height:1.2;
-  text-decoration:none;display:block;
-}
-.sb-logo-text span{color:#A0714F}
-.sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;margin-top:3px;display:block}
-.sb-section{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#D9D3CB;padding:14px 20px 5px;flex-shrink:0;display:block}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:400;color:#8C8479;border-left:2px solid transparent;transition:color .12s,background .12s,border-color .12s;text-decoration:none;background:transparent;font-family:'Inter',sans-serif}
-.sb-item:hover{color:#0F0F0F;background:#F7F4EF}
-.sb-item.active{color:#0F0F0F;font-weight:500;border-left-color:#A0714F;background:#F7F4EF}
-.sb-item.soon{opacity:.4;pointer-events:none;cursor:default}
-.sb-soon-tag{font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#D9D3CB;margin-left:auto}
-.sb-footer{margin-top:auto;padding:14px 20px;border-top:0.5px solid #D9D3CB;flex-shrink:0}
-.sb-agent{display:flex;align-items:center;gap:10px;padding:8px;border-radius:2px;text-decoration:none;transition:background .12s;background:transparent;width:100%}
-.sb-agent:hover{background:#F7F4EF}
-.sb-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #D9D3CB;display:block}
-.sb-initials{width:32px;height:32px;border-radius:50%;background:#A0714F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;letter-spacing:.04em}
-.sb-name{font-size:12px;font-weight:500;color:#0F0F0F;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-role{font-size:10px;color:#8C8479;margin-top:1px;display:block}
-.sb-logout{width:100%;margin-top:8px;padding:8px;border:0.5px solid #D9D3CB;background:transparent;border-radius:2px;font-size:10px;font-weight:500;color:#8C8479;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;transition:border-color .12s,color .12s;display:block}
-.sb-logout:hover{border-color:#0F0F0F;color:#0F0F0F}
+/* Sidebar styles now live in js/header.js */
 
 /* ── MAIN ── */
 .main{
@@ -361,7 +331,8 @@ body{
 
 /* RESPONSIVE */
 @media(max-width:900px){
-  .sidebar{display:none}
+  /* header.js hides #sphere-sidebar at this same breakpoint;
+     mobile-nav.js then re-shows it as a slide-in drawer. */
   .main{margin-left:0}
   .loading{margin-left:0}
   .stat-row{grid-template-columns:1fr 1fr}
@@ -487,33 +458,8 @@ body{
   <p style="font-size:13px;color:var(--stone)">Loading your dashboard...</p>
 </div>
 
-<!-- SIDEBAR -->
-<nav class="sidebar" id="sidebar" style="display:none">
-  <div class="sb-logo">
-    <a href="" class="sb-logo-text">Inside The <span>Sphere</span></a>
-    <div class="sb-logo-sub">Real Estate Tools</div>
-  </div>
-  <div class="sb-section">Tools</div>
-  <a href="" class="sb-item active" id="nav-dashboard"><span>◻</span> Dashboard</a>
-  <a href="../clients/" class="sb-item" id="nav-clients"><span>◻</span> Clients</a>
-  <a href="../cma/" class="sb-item" id="nav-cma"><span>◻</span> CMA Builder</a>
-  <a href="../newsletter/" class="sb-item" id="nav-newsletter"><span>◻</span> Newsletter</a>
-  <a href="../Bold-trail-newsletter/" class="sb-item" id="nav-boldtrail"><span>◻</span> Bold Trail</a>
-  <div class="sb-section">Coming soon</div>
-  <div class="sb-item soon"><span>◻</span> Listing Checklist <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-item soon"><span>◻</span> Buyer Checklist <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-item soon"><span>◻</span> Market Reports <span class="sb-soon-tag">Soon</span></div>
-  <div class="sb-footer">
-    <a href="../profile.html" class="sb-agent" id="sb-agent">
-      <div class="sb-initials" id="sb-initials">KD</div>
-      <div>
-        <div class="sb-name" id="sb-name">Kyle Duiker</div>
-        <div class="sb-role" id="sb-role">Broker Delegate</div>
-      </div>
-    </a>
-    <button class="sb-logout" onclick="doLogout()">Log out</button>
-  </div>
-</nav>
+<!-- SIDEBAR — injected by js/header.js -->
+<div id="sphere-header"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -872,10 +818,6 @@ function loadDashboard(user) {
   db.collection('users').doc(user.uid).get()
     .then(doc => {
       let firstName = user.displayName?.split(' ')[0] || 'there';
-      let lastName = '';
-      let initials = 'KD';
-      let headshot = '';
-      let title = 'Agent';
       let plan = 'free';
       let profileComplete = false;
 
@@ -883,30 +825,14 @@ function loadDashboard(user) {
         const data = doc.data();
         const p = data.agentProfile || {};
         firstName = p.firstName || firstName;
-        lastName = p.lastName || '';
-        title = p.title || 'Agent';
-        headshot = p.photoUrls?.headshot || '';
         plan = data.plan || 'free';
         profileComplete = data.profileComplete || false;
-        initials = ((firstName.charAt(0)) + (lastName.charAt(0) || '')).toUpperCase();
       }
 
       // Welcome
       document.getElementById('welcome-name').textContent = firstName;
 
-      // Sidebar
-      const sbName = document.getElementById('sb-name');
-      const sbRole = document.getElementById('sb-role');
-      let sbInit = document.getElementById('sb-initials');
-      if (sbName) sbName.textContent = [firstName, lastName].filter(Boolean).join(' ');
-      if (sbRole) sbRole.textContent = title;
-      if (sbInit) sbInit.textContent = initials;
-      if (headshot && sbInit) {
-        const img = document.createElement('img');
-        img.src = headshot; img.className = 'sb-avatar'; img.alt = firstName;
-        img.onerror = () => img.replaceWith(sbInit);
-        sbInit.replaceWith(img);
-      }
+      // Sidebar name, role and headshot are rendered by js/header.js
 
       // Plan
       const planLabel = {free:'Free trial',pro:'Pro',team:'Team'}[plan] || 'Free trial';
@@ -988,7 +914,6 @@ function loadDashboard(user) {
     .catch(err => console.error('Dashboard load failed:', err))
     .finally(() => {
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('sidebar').style.display = 'flex';
       document.getElementById('main').style.display = 'flex';
     });
 }
@@ -997,13 +922,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeClientModal();
 });
 
-function doLogout() {
-  if (confirm('Log out of Inside The Sphere?')) {
-    firebase.auth().signOut().then(() => {
-      window.location.href = '../login.html';
-    });
-  }
-}
+/* Log out is handled by sphereLogout() in js/header.js */
 </script>
 
 <script src="../js/mobile-nav.js"></script>
