@@ -15,6 +15,8 @@
 <script src="../js/header.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="../js/market-import.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -407,6 +409,61 @@ details.override>summary:hover{color:var(--obs)}
 .modal-close:hover{color:var(--obs)}
 .modal-body{padding:22px;max-height:70vh;overflow-y:auto}
 .modal-footer{padding:14px 22px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── market data import modal ── */
+.mkt-drop{
+  border:1px dashed var(--border);background:var(--ivory);
+  padding:30px 22px;text-align:center;border-radius:2px;cursor:pointer;
+  transition:border-color .12s,background .12s;
+}
+.mkt-drop:hover,.mkt-drop.over{border-color:var(--copper);background:#FCFAF7}
+.mkt-drop input{display:none}
+.mkt-drop-t{font-family:var(--serif);font-size:1.05rem}
+.mkt-drop-s{font-size:11.5px;color:var(--stone);margin-top:5px}
+.mkt-err{
+  border:0.5px solid var(--ox);background:#FBF6F7;border-radius:2px;
+  padding:13px 16px;margin-top:14px;font-size:12px;color:var(--esp);
+  line-height:1.6;white-space:pre-wrap;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+.mkt-sum{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:0.5px solid var(--border);margin-top:16px;
+}
+.mkt-sum > div{padding:12px 14px;border-right:0.5px solid var(--border)}
+.mkt-sum > div:last-child{border-right:none}
+.mkt-sum-l{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--stone)}
+.mkt-sum-v{font-family:var(--serif);font-size:1.15rem;margin-top:4px;line-height:1.1}
+.mkt-sub{
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--stone);margin:20px 0 8px;
+}
+.mkt-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.mkt-table th{
+  text-align:left;font-size:8.5px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--stone);
+  padding:6px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap;
+}
+.mkt-table td{padding:6px 8px;border-bottom:0.5px solid #EFEBE4}
+.mkt-table tr:last-child td{border-bottom:none}
+.mkt-table s{color:var(--ox);opacity:.6}
+.mkt-tag{
+  display:inline-block;font-size:8px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 6px;border-radius:2px;
+  border:0.5px solid var(--border);color:var(--stone);white-space:nowrap;
+}
+.mkt-tag.sup{border-color:var(--ox);color:var(--ox)}
+.mkt-tag.ok{border-color:var(--sage);color:var(--sage)}
+.mkt-path{
+  margin-top:14px;padding:10px 12px;background:var(--parch);border-radius:2px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--esp);
+  line-height:1.7;word-break:break-all;
+}
+.mkt-ok{
+  border:0.5px solid var(--sage);background:#F6F8F6;border-radius:2px;
+  padding:13px 16px;margin-top:14px;font-size:12px;color:var(--esp);line-height:1.7;
+}
+.mkt-ok code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px}
 .btn-cancel{padding:8px 16px;background:transparent;border:0.5px solid var(--border);border-radius:2px;font-size:11px;font-weight:500;color:var(--stone);cursor:pointer;font-family:var(--sans);letter-spacing:.06em;transition:all .12s}
 .btn-cancel:hover{border-color:var(--obs);color:var(--obs)}
 .btn-save{padding:8px 18px;background:var(--obs);border:none;border-radius:2px;font-size:11px;font-weight:500;color:#fff;cursor:pointer;font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase;transition:background .12s}
@@ -1034,6 +1091,65 @@ details.override>summary:hover{color:var(--obs)}
 </div><!-- /main -->
 
 <!-- COMP MODAL -->
+<!-- ══ MARKET DATA IMPORT ══════════════════════════════════════════════
+     Second door into the same store the /market-data/ page writes to.
+     Parsing and the Firestore batch both come from js/market-import.js,
+     so the two cannot diverge. This modal owns only its own rendering. -->
+<div class="modal-overlay" id="mktModal" onclick="if(event.target===this)closeMktModal()">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div class="modal-title">Import CREB 360 workbook</div>
+      <button class="modal-close" onclick="closeMktModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="mkt-drop" id="mktDrop">
+        <input type="file" id="mktFile" accept=".xlsx,.xls">
+        <div class="mkt-drop-t" id="mktDropT">Drop the 360 Monthly workbook here</div>
+        <div class="mkt-drop-s" id="mktDropS">or click to choose a file · .xlsx</div>
+      </div>
+
+      <div id="mktErr" class="mkt-err" style="display:none"></div>
+
+      <div id="mktReview" style="display:none">
+        <div class="mkt-sum" id="mktSum"></div>
+
+        <div class="mkt-sub">Thin data — months at or below <span id="mktThinN">5</span> sales</div>
+        <table class="mkt-table" id="mktThin"></table>
+
+        <div id="mktWarn"></div>
+
+        <div class="frow" style="margin-top:16px">
+          <div class="fg">
+            <label>Community name</label>
+            <input class="fi" id="mktName" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label>Slug <span>— Firestore key</span></label>
+            <input class="fi" id="mktSlug" autocomplete="off">
+          </div>
+        </div>
+        <div class="fg">
+          <label>City</label>
+          <select class="fsel" id="mktCity">
+            <option>Calgary</option><option>Chestermere</option>
+            <option>Okotoks</option><option>Airdrie</option>
+            <option>Cochrane</option><option>Strathmore</option>
+          </select>
+        </div>
+        <div class="mkt-path" id="mktPath"></div>
+        <div id="mktExisting"></div>
+      </div>
+
+      <div id="mktResult"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeMktModal()">Close</button>
+      <button class="btn-save" id="mktWriteBtn" onclick="mktWrite()" disabled>Write to Firestore</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="compModal" onclick="if(event.target===this)closeCompModal()">
   <div class="modal">
     <div class="modal-header">
@@ -2046,11 +2162,12 @@ function loadCommunityOptions() {
 
       if (!snap.size) {
         hint.innerHTML = 'No CREB communities imported yet — ' +
-          '<a href="../market-data/">import a 360 workbook</a>.';
+          '<a href="#" onclick="event.preventDefault();openMktModal()">import a 360 workbook</a>.';
         hint.className = 'fhint';
       } else {
-        hint.textContent = snap.size + ' communit' +
-          (snap.size === 1 ? 'y' : 'ies') + ' imported.';
+        hint.innerHTML = snap.size + ' communit' +
+          (snap.size === 1 ? 'y' : 'ies') + ' imported · ' +
+          '<a href="#" onclick="event.preventDefault();openMktModal()">import another</a>';
         hint.className = 'fhint';
       }
       onMarketSourceChange();
@@ -2075,6 +2192,267 @@ function escAttr(v) { return escHtml(v); }
 function onMarketSourceChange() {
   if (typeof renderMarketPanel === 'function') renderMarketPanel();
 }
+
+// ── MARKET DATA IMPORT MODAL ─────────────────────────────
+// A second door into users/{uid}/communities/{slug}. Parsing, the display
+// contract and the Firestore batch all come from js/market-import.js, the
+// same module /market-data/ uses, so the two paths cannot diverge. What
+// lives here is only this modal's rendering — a reduced review: source
+// summary, thin-data table, warnings, destination.
+
+var MI = window.SphereMarketImport;
+var mktParsed = null;
+var mktFileName = null;
+
+function openMktModal() {
+  mktParsed = null;
+  mktFileName = null;
+  document.getElementById('mktReview').style.display = 'none';
+  document.getElementById('mktErr').style.display = 'none';
+  document.getElementById('mktResult').innerHTML = '';
+  document.getElementById('mktExisting').innerHTML = '';
+  document.getElementById('mktDropT').textContent = 'Drop the 360 Monthly workbook here';
+  document.getElementById('mktDropS').textContent = 'or click to choose a file · .xlsx';
+  document.getElementById('mktWriteBtn').disabled = true;
+  document.getElementById('mktFile').value = '';
+  document.getElementById('mktModal').classList.add('open');
+}
+
+function closeMktModal() {
+  document.getElementById('mktModal').classList.remove('open');
+}
+
+function mktShowError(msg) {
+  var el = document.getElementById('mktErr');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('mktReview').style.display = 'none';
+  document.getElementById('mktWriteBtn').disabled = true;
+}
+
+function mktHandleFile(file) {
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    mktShowError('The spreadsheet library did not load. Check the network tab for xlsx.full.min.js.');
+    return;
+  }
+  mktFileName = file.name;
+  document.getElementById('mktErr').style.display = 'none';
+  document.getElementById('mktDropT').textContent = file.name;
+  document.getElementById('mktDropS').textContent =
+    Math.round(file.size / 1024) + ' KB · parsing…';
+
+  var reader = new FileReader();
+  reader.onerror = function () { mktShowError('Could not read the file off disk.'); };
+  reader.onload = function (e) {
+    try {
+      mktParsed = MI.parseWorkbook(e.target.result);
+      mktRenderReview();
+      document.getElementById('mktDropS').textContent =
+        Math.round(file.size / 1024) + ' KB · parsed';
+    } catch (err) {
+      console.error('Workbook parse failed:', err);
+      mktShowError(err && err.message ? err.message : String(err));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function mktRenderReview() {
+  var p = mktParsed;
+  var det = p.types.det;
+
+  document.getElementById('mktSum').innerHTML = [
+    ['Community', escHtml(p.community || '—')],
+    ['Report month', escHtml(p.reportMonth || '—')],
+    ['Monthly rows', String(det.monthCount)],
+    ['Range', escHtml(det.firstMonth + ' → ' + det.lastMonth)]
+  ].map(function (r) {
+    return '<div><div class="mkt-sum-l">' + r[0] + '</div>' +
+           '<div class="mkt-sum-v">' + r[1] + '</div></div>';
+  }).join('');
+
+  document.getElementById('mktThinN').textContent = MI.THIN_MAX_SALES;
+
+  var order = ['res', 'det', 'semi', 'row', 'apt'];
+  document.getElementById('mktThin').innerHTML =
+    '<tr><th>Type</th><th>Latest sales</th><th>Benchmark</th><th>Median</th>' +
+    '<th>DOM</th><th>Latest month</th><th>Thin months</th></tr>' +
+    order.map(function (k) {
+      var t = p.types[k];
+      if (!t) return '';
+      var keys = Object.keys(t.months);
+      var thin = keys.filter(function (m) { return MI.isThin(t.months[m]); }).length;
+      var last = t.lastMonth ? t.months[t.lastMonth] : null;
+      var lt = MI.isThin(last);
+      var pct = keys.length ? Math.round(thin / keys.length * 100) : 0;
+      var money = function (v) { return v == null ? '—' : '$' + Math.round(v).toLocaleString(); };
+      return '<tr><td>' + k + '</td>' +
+        '<td>' + (last && last.sales != null ? last.sales : '—') + '</td>' +
+        '<td>' + money(last && last.benchmarkPrice) + '</td>' +
+        '<td>' + (lt ? '<s>' + money(last.medianPrice) + '</s>' : money(last && last.medianPrice)) + '</td>' +
+        '<td>' + (lt ? '<s>' + (last.dom != null ? last.dom.toFixed(0) : '—') + '</s>'
+                     : (last && last.dom != null ? last.dom.toFixed(0) : '—')) + '</td>' +
+        '<td>' + (lt ? '<span class="mkt-tag sup">4 withheld</span>'
+                     : '<span class="mkt-tag ok">full detail</span>') + '</td>' +
+        '<td>' + thin + ' / ' + keys.length + ' (' + pct + '%)</td></tr>';
+    }).join('');
+
+  // Warnings that change what gets written or how it must be read.
+  var w = [];
+  Object.keys(p.types).forEach(function (k) {
+    p.types[k].issues.forEach(function (m) {
+      w.push('<div class="mkt-flag bad"><strong>Structure — ' + k + '.</strong> ' + escHtml(m) + '</div>');
+    });
+  });
+  if (det.emptyMonths.length) {
+    w.push('<div class="mkt-flag"><strong>Skipped ' + det.emptyMonths.length +
+      ' unpopulated month rows.</strong> ' + escHtml(det.emptyMonths.join(', ')) + '.</div>');
+  }
+  var partial = Object.keys(det.annual).filter(function (y) { return det.annual[y].partial; });
+  if (partial.length) {
+    w.push('<div class="mkt-flag"><strong>Partial annual rollup — ' + escHtml(partial.join(', ')) +
+      '.</strong> Covers part of the year only; stored with partial:true.</div>');
+  }
+  p.hpi.issues.forEach(function (m) {
+    w.push('<div class="mkt-flag bad"><strong>HPI Summary.</strong> ' + escHtml(m) + '</div>');
+  });
+  document.getElementById('mktWarn').innerHTML = w.join('');
+
+  // Destination, prefilled but editable — the sheet names the community
+  // and says nothing about which city it is in.
+  document.getElementById('mktName').value = p.community || '';
+  document.getElementById('mktSlug').value = p.communitySlug || '';
+  var citySel = document.getElementById('mktCity');
+  for (var i = 0; i < citySel.options.length; i++) {
+    if (citySel.options[i].value.toLowerCase() === (p.communitySlug || '')) {
+      citySel.selectedIndex = i; break;
+    }
+  }
+
+  document.getElementById('mktReview').style.display = 'block';
+  mktUpdatePath();
+  mktCheckExisting();
+}
+
+function mktMeta() {
+  return {
+    name: (document.getElementById('mktName').value || '').trim(),
+    slug: MI.slugify(document.getElementById('mktSlug').value || ''),
+    city: document.getElementById('mktCity').value
+  };
+}
+
+function mktUpdatePath() {
+  var m = mktMeta();
+  var uid = currentUser ? currentUser.uid : '{uid}';
+  var slug = m.slug || '{slug}';
+  var lines = ['users/' + uid + '/communities/' + slug];
+  Object.keys(mktParsed ? mktParsed.types : {}).forEach(function (k) {
+    lines.push('users/' + uid + '/communities/' + slug + '/types/' + k);
+  });
+  document.getElementById('mktPath').innerHTML = lines.map(escHtml).join('<br>');
+  document.getElementById('mktWriteBtn').disabled =
+    !(mktParsed && currentUser && m.slug && m.name);
+}
+
+// Read the existing community doc so an overwrite is never silent.
+function mktCheckExisting() {
+  var box = document.getElementById('mktExisting');
+  var m = mktMeta();
+  if (!currentUser || !m.slug) { box.innerHTML = ''; return; }
+  MI.communityRef(currentUser.uid, m.slug).get()
+    .then(function (doc) {
+      if (!doc.exists) {
+        box.innerHTML = '<div class="mkt-flag"><strong>New community.</strong> ' +
+          'No existing record at this path.</div>';
+        return;
+      }
+      var d = doc.data();
+      var older = mktParsed.reportMonth && d.reportMonth &&
+                  mktParsed.reportMonth < d.reportMonth;
+      box.innerHTML = '<div class="mkt-flag' + (older ? ' bad' : '') +
+        '"><strong>Overwrites an existing import.</strong> ' +
+        escHtml(d.name || '?') + ', report month ' + escHtml(d.reportMonth || '?') +
+        '. Incoming file covers through ' + escHtml(mktParsed.reportMonth || '?') +
+        (older ? ' — the incoming file is OLDER than what is stored.' : '.') + '</div>';
+    })
+    .catch(function (err) {
+      console.error('Existing-record check failed:', err);
+      box.innerHTML = '<div class="mkt-flag bad"><strong>Could not check for an ' +
+        'existing record.</strong> ' + escHtml(err.message || err.code || String(err)) +
+        ' — the write may still work, but you are writing blind.</div>';
+    });
+}
+
+function mktWrite() {
+  var btn = document.getElementById('mktWriteBtn');
+  var out = document.getElementById('mktResult');
+  var m = mktMeta();
+  if (!currentUser) { out.innerHTML = '<div class="mkt-err">Not signed in.</div>'; return; }
+  if (!m.slug || !m.name) {
+    out.innerHTML = '<div class="mkt-err">Community name and slug are both required.</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Writing…';
+  out.innerHTML = '';
+
+  MI.writeCommunity(mktParsed, m, currentUser.uid, mktFileName)
+    .then(function (paths) {
+      btn.textContent = 'Write to Firestore';
+      out.innerHTML = '<div class="mkt-ok"><strong>Written — ' + paths.length +
+        ' documents.</strong><br><code>' + paths.map(escHtml).join('</code><br><code>') +
+        '</code></div>';
+      showToast('Market data imported for ' + m.name);
+      // The picker in section 02 and the panel in section 03 both read this
+      // store, so refresh them rather than making the agent reload.
+      // marketCache is a const binding — empty it in place rather than
+      // rebinding, which would throw.
+      Object.keys(marketCache).forEach(function (k) { delete marketCache[k]; });
+      loadCommunityOptions().then(function () {
+        var sel = document.getElementById('communityId');
+        if (sel && !sel.value) { sel.value = m.slug; markDirty(); }
+        onMarketSourceChange();
+      });
+      mktCheckExisting();
+    })
+    .catch(function (err) {
+      console.error('Firestore write failed:', err);
+      btn.textContent = 'Write to Firestore';
+      btn.disabled = false;
+      out.innerHTML = '<div class="mkt-err">Firestore rejected the write.\n\n' +
+        (err.code ? 'code: ' + err.code + '\n' : '') + (err.message || String(err)) +
+        '\n\nIf this is permission-denied, check the rules allow ' +
+        'users/{uid}/communities/**.</div>';
+    });
+}
+
+(function wireMktModal() {
+  var drop = document.getElementById('mktDrop');
+  var input = document.getElementById('mktFile');
+  if (!drop || !input) return;
+  drop.addEventListener('click', function () { input.click(); });
+  drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+  drop.addEventListener('drop', function (e) {
+    e.preventDefault(); drop.classList.remove('over');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) mktHandleFile(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', function () {
+    if (input.files && input.files[0]) mktHandleFile(input.files[0]);
+  });
+  ['mktName', 'mktSlug', 'mktCity'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      mktUpdatePath();
+      if (id === 'mktSlug') mktCheckExisting();
+    });
+    el.addEventListener('change', mktUpdatePath);
+  });
+})();
 
 // ── SECTION 03 — READ THE COMMUNITY STORE ────────────────
 // Figures are read from users/{uid}/communities/{slug}/types/{type} and
@@ -2149,7 +2527,7 @@ function renderMarketPanel() {
     box.innerHTML = '<div class="mkt-empty">' +
       'No CREB community selected for this CMA. Choose one under ' +
       '<strong>02 · Property details</strong>, or ' +
-      '<a href="../market-data/">import a 360 workbook</a> first.<br>' +
+      '<a href="#" onclick="event.preventDefault();openMktModal()">import a 360 workbook</a> first.<br>' +
       'Until then the manual override below is what the client page renders.' +
       '</div>';
     return;
