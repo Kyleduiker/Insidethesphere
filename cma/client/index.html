@@ -1620,6 +1620,55 @@ function buildComps(comps) {
 }
 
 
+// ── REVIEWS ──────────────────────────────────────
+// Written by profile.html as {stars, text, author, year, result}.
+//
+// These were called but never defined, so populateReport() threw here on
+// every load and everything below the call died with it: the shelter text
+// override and the sticky-bar scroll listener both stopped running.
+
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g,
+    c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function buildReviews(reviews) {
+  const grid = document.getElementById('reviews-grid');
+  if (!grid) return;
+
+  const list = (reviews || []).filter(r => r && String(r.text || '').trim());
+
+  // No reviews: hide the whole section. Leaving it visible renders a
+  // "What clients say" heading over 160px of empty space, which reads as
+  // broken to the one audience that matters.
+  const section = grid.closest('section');
+  if (!list.length) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = '';
+
+  grid.innerHTML = list.map(r => {
+    const n = parseInt(r.stars, 10);
+    const stars = Math.max(1, Math.min(5, isNaN(n) ? 5 : n));
+    const meta = [r.author, r.year, r.result].filter(Boolean).join(' · ');
+    return `<div class="review-card">
+      <div class="review-stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>
+      <div class="review-text">${escHtml(r.text)}</div>
+      ${meta ? `<div class="review-author">${escHtml(meta)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// Deliberately empty. A seller reads this page as genuine client
+// testimony, so there is no honest placeholder — sample quotes here would
+// be fabricated reviews attributed to real-sounding people. When the agent
+// has none, the section is hidden instead. Add reviews in profile.html.
+function defaultReviews() {
+  return [];
+}
+
+
 // ── MLS SHEET MODAL ──────────────────────────────
 // iOS Safari does not render PDFs reliably inside an iframe, so on iOS the
 // sheet opens directly instead of being embedded.
