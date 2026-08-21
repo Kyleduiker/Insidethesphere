@@ -352,6 +352,13 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
 - **`profile.js` has zero consumers repo-wide.** Decide whether it's superseded by
   `header.js` or scaffolding for planned work. **Do not delete before the Oct 25
   demo.**
+
+  The measurable symptom: `profile.html` fetches `users/{uid}` **three times** on
+  load — once by `profile.js`, once by `header.js`, once by its own `loadProfile()`.
+  Same document, three round trips. `header.js` reimplements the read `profile.js`
+  already does, and `profile.html` writes with a direct `.set()` rather than
+  `sphereSaveProfile()`, so the abstraction is bypassed from both ends. Harmless at
+  current scale, but it's what makes the call obvious later.
 - **`favicon.ico` returns 404** site-wide. Cosmetic.
 - Five pages (`index.html`, `dashboard.html`, `signup.html`, `newsletter/`,
   `background-customization/`) lack the Storage compat tag, but **none of them use
