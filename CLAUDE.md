@@ -203,11 +203,33 @@ push," not because the change looks obviously safe. Kyle pushes, or explicitly s
 "push."
 
 This repo deploys to a live site on every push to `main`. Commit is local and
-reversible; push is public and irreversible in practice. Keeping them separate is the
-only thing standing between an untested change and insidethesphere.com.
+reversible; push is public in practice.
 
-The sequence is always: commit → Kyle tests on localhost → Kyle says push. A change
-that hasn't been seen in a browser does not go live.
+The sequence is always: commit → Kyle tests on localhost → Kyle says push.
+
+### What is actually at risk on a push
+
+Recorded Aug 21, 2026, because the rule above was being justified by a broader fear
+than the facts support.
+
+`insidethesphere.com` is live but **has no users other than Kyle**. There is no
+audience to break. Pushing a half-finished backend page costs nothing.
+
+- **Backend / agent pages** — `smarttools/`, `cma/edit.html`, `clients/`, `social/`,
+  `market-data/`, `newsletter/`, `profile.html`. Pushing these mid-build is fine.
+  Nobody but Kyle will ever load them, and a broken state is visible only to him.
+- **Client-facing pages** — `cma/client/index.html` and any presentation view a
+  seller sees. This is where the caution belongs, and it is not about the general
+  public: a published CMA link sits in a real seller's inbox, and they may open it
+  at any moment, including during or right after a listing appointment. A broken or
+  wrong-looking client page is a credibility problem in front of the one audience
+  that matters.
+
+So the risk is concentrated, not diffuse. Treat a client-page change as the thing
+that needs testing before it ships; treat backend pages as cheap to iterate on.
+
+**This does not relax the push rule itself.** Claude still never runs `git push`
+without being told — that is about who decides, not about how risky the change is.
 
 ### Session start
 
