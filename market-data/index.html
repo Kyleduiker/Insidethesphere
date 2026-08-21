@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Data Import — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>window.sphereActivePage = 'cma';</script>
+<script src="../js/header.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --obs:#0F0F0F;--esp:#2C2420;--stone:#8C8479;
+  --parch:#EDE8E0;--ivory:#F7F4EF;--border:#D9D3CB;
+  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;--ox:#6B2737;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height:100vh;display:flex}
+
+/* Sidebar styles now live in js/header.js */
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* TOPBAR */
+.topbar{
+  background:#fff;border-bottom:0.5px solid var(--border);
+  padding:0 36px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:13px;font-weight:500}
+.topbar-meta{font-size:11px;color:var(--stone)}
+
+.page{padding:36px;flex:1;max-width:1180px}
+
+/* SECTION HEADS */
+.eyebrow{
+  font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--copper);display:block;margin-bottom:7px;
+}
+.accent{width:40px;height:1px;background:var(--copper);margin-bottom:14px}
+h1{font-family:var(--serif);font-size:2rem;font-weight:300;letter-spacing:.01em;line-height:1.15}
+h2{font-family:var(--serif);font-size:1.3rem;font-weight:400;margin-bottom:2px}
+.lede{font-size:13px;color:var(--stone);line-height:1.65;margin-top:10px;max-width:70ch}
+
+section{margin-top:40px}
+
+/* DROP ZONE */
+.drop{
+  border:1px dashed var(--border);background:#fff;
+  padding:38px 28px;text-align:center;border-radius:2px;
+  transition:border-color .12s,background .12s;cursor:pointer;margin-top:18px;
+}
+.drop:hover,.drop.over{border-color:var(--copper);background:#FCFAF7}
+.drop-t{font-family:var(--serif);font-size:1.15rem;font-weight:400}
+.drop-s{font-size:12px;color:var(--stone);margin-top:6px}
+.drop input{display:none}
+
+/* CARDS */
+.card{background:#fff;border:0.5px solid var(--border);border-radius:2px;padding:22px 24px;margin-bottom:16px}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:16px}
+.card-t{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--obs)}
+.card-n{font-size:11px;color:var(--stone)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:0.5px solid var(--border);background:#fff;border-radius:2px}
+.stat{padding:16px 20px;border-right:0.5px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-l{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+.stat-v{font-family:var(--serif);font-size:1.5rem;font-weight:400;margin-top:5px;line-height:1}
+.stat-s{font-size:11px;color:var(--stone);margin-top:4px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{
+  text-align:left;font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--stone);
+  padding:8px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;
+}
+td{padding:7px 10px;border-bottom:0.5px solid #EFEBE4;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.col{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--stone)}
+.src{color:var(--obs)}
+.fld{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--copper);font-weight:500}
+.samp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--stone)}
+.tag{
+  display:inline-block;font-size:8.5px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:2px;border:0.5px solid var(--border);
+  color:var(--stone);white-space:nowrap;
+}
+.tag.frac{border-color:var(--champ);color:#8a7340}
+.tag.cur{border-color:var(--sage);color:var(--sage)}
+.tag.cnt{border-color:var(--border)}
+
+/* WARNINGS */
+.warn{border-left:2px solid var(--champ);background:#FDFBF6;padding:14px 18px;margin-bottom:10px;border-radius:2px}
+.warn.bad{border-left-color:var(--ox);background:#FBF6F7}
+.warn-t{font-size:11px;font-weight:600;letter-spacing:.04em;margin-bottom:5px}
+.warn-b{font-size:12px;color:var(--stone);line-height:1.6}
+.warn-b code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--parch);padding:1px 4px;border-radius:2px;color:var(--esp)}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 20px;border:none;border-radius:2px;
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s;
+}
+.btn-p{background:var(--obs);color:#fff}
+.btn-p:hover{background:var(--esp)}
+.btn-p:disabled{background:var(--parch);color:var(--stone);cursor:not-allowed}
+.btn-g{background:transparent;border:0.5px solid var(--border);color:var(--stone)}
+.btn-g:hover{border-color:var(--obs);color:var(--obs)}
+.actions{display:flex;align-items:center;gap:14px;margin-top:22px;padding-top:20px;border-top:0.5px solid var(--border)}
+.actions-n{font-size:11.5px;color:var(--stone);line-height:1.6;max-width:60ch}
+
+.hidden{display:none}
+.err-box{border:0.5px solid var(--ox);background:#FBF6F7;padding:16px 20px;border-radius:2px;margin-top:18px}
+.err-t{font-size:11px;font-weight:600;color:var(--ox);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.err-m{font-size:12px;color:var(--esp);line-height:1.6;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR — injected by js/header.js -->
+<div id="sphere-header"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Market Data Import</div>
+    <div class="topbar-meta">CREB 360 Monthly · XLSX</div>
+  </div>
+
+  <div class="page">
+
+    <span class="eyebrow">CREB 360</span>
+    <div class="accent"></div>
+    <h1>Community market data</h1>
+    <p class="lede">
+      Upload the CREB 360 Monthly workbook for a community. This screen parses the file
+      and shows exactly what was read and how each column maps to a stored field.
+      Nothing is written to Firestore from here yet — review first.
+    </p>
+
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept=".xlsx,.xls">
+      <div class="drop-t">Drop the 360 Monthly workbook here</div>
+      <div class="drop-s">or click to choose a file · .xlsx</div>
+    </div>
+
+    <div id="errBox" class="err-box hidden">
+      <div class="err-t">Parse failed</div>
+      <div class="err-m" id="errMsg"></div>
+    </div>
+
+    <div id="results" class="hidden">
+
+      <section>
+        <span class="eyebrow">Source</span>
+        <div class="accent"></div>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section>
+        <span class="eyebrow">Review</span>
+        <div class="accent"></div>
+        <h2>Normalised field names</h2>
+        <p class="lede">
+          Seventeen columns per monthly row. The four <code>Y/Y%</code> headers are
+          duplicates in the source and are keyed positionally — each belongs to the
+          column immediately before it.
+        </p>
+        <div class="card" style="margin-top:16px">
+          <div class="card-h">
+            <div class="card-t">Monthly series — <span id="fieldSheet">Det</span></div>
+            <div class="card-n" id="fieldMonth"></div>
+          </div>
+          <table id="fieldTable"></table>
+        </div>
+      </section>
+
+      <section>
+        <span class="eyebrow">Coverage</span>
+        <div class="accent"></div>
+        <h2>Per property type</h2>
+        <div class="card" style="margin-top:16px">
+          <table id="typeTable"></table>
+        </div>
+      </section>
+
+      <section>
+        <span class="eyebrow">HPI Summary</span>
+        <div class="accent"></div>
+        <h2>Benchmark home attributes</h2>
+        <p class="lede">
+          The HPI Summary sheet is laid out as a two-dimensional grid rather than a
+          table, and the attribute set differs by property type. Verify this against
+          the sheet before it is trusted.
+        </p>
+        <div class="card" style="margin-top:16px">
+          <table id="hpiTable"></table>
+        </div>
+      </section>
+
+      <section>
+        <span class="eyebrow">Flags</span>
+        <div class="accent"></div>
+        <h2>What needs a decision</h2>
+        <div id="warnings" style="margin-top:16px"></div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn-p" id="writeBtn" disabled>Write to Firestore</button>
+        <button class="btn btn-g" id="jsonBtn">Download parsed JSON</button>
+        <div class="actions-n">
+          The write step is deliberately not built yet. Confirm the field names and
+          the HPI mapping first.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   CREB 360 Monthly — parser
+
+   Sheet layout, verified against Cranston (Aug 2026 export):
+
+     r1     community name in column A
+     r2     header row  (col B === 'Sales')
+     r3-r67 five year-blocks of 13 rows: 12 months + 1 annual rollup
+     r68    community name again
+     r69    header row again
+     r70+   five more year-blocks
+
+   The title and header rows repeat every 67 rows — once per FIVE-year block,
+   not once per year. So block boundaries cannot be assumed at a fixed row
+   number. Data rows are collected in document order, then walked in groups
+   of 13; index 12 of each group is the annual rollup.
+
+   The annual row carries the SAME date serial as that year's January row
+   (2017 annual is dated 2017-01-01, identical to Jan-2017). Keying on date
+   alone silently overwrites January with the annual figures. Position within
+   the 13-row group is the only safe discriminator.
+
+   Trailing months of the current year are present as rows but hold the
+   shared string ' ' rather than a blank cell. Number(' ') === 0, so a naive
+   numeric coercion writes a $0 benchmark price instead of failing. Every
+   cell goes through numOrNull(), which rejects non-numeric cell types.
+   ───────────────────────────────────────────────────────────────────────── */
+
+var TYPE_SHEETS = ['Res', 'Det', 'Semi', 'Row', 'Apt'];
+
+/* Column B..R, in order. `frac` marks values stored as fractions (0.043),
+   never as percentage strings. */
+var FIELDS = [
+  { col: 'B', src: 'Sales',            name: 'sales',              kind: 'count' },
+  { col: 'C', src: 'Y/Y%',             name: 'salesYoY',           kind: 'frac'  },
+  { col: 'D', src: 'New Listings',     name: 'newListings',        kind: 'count' },
+  { col: 'E', src: 'Y/Y%',             name: 'newListingsYoY',     kind: 'frac'  },
+  { col: 'F', src: 'S/NL Ratio',       name: 'salesToNewListings', kind: 'frac'  },
+  { col: 'G', src: 'Inventory',        name: 'inventory',          kind: 'count' },
+  { col: 'H', src: 'Y/Y%',             name: 'inventoryYoY',       kind: 'frac'  },
+  { col: 'I', src: 'Months of Supply', name: 'monthsOfSupply',     kind: 'num'   },
+  { col: 'J', src: 'DOM',              name: 'dom',                kind: 'num'   },
+  { col: 'K', src: 'SP/LP',            name: 'spToLp',             kind: 'frac'  },
+  { col: 'L', src: 'Benchmark Price',  name: 'benchmarkPrice',     kind: 'cur'   },
+  { col: 'M', src: 'Y/Y%',             name: 'benchmarkPriceYoY',  kind: 'frac'  },
+  { col: 'N', src: 'Median Price',     name: 'medianPrice',        kind: 'cur'   },
+  { col: 'O', src: 'Y/Y%',             name: 'medianPriceYoY',     kind: 'frac'  },
+  { col: 'P', src: 'Average Price',    name: 'averagePrice',       kind: 'cur'   },
+  { col: 'Q', src: 'Y/Y%',             name: 'averagePriceYoY',    kind: 'frac'  },
+  { col: 'R', src: 'Index',            name: 'hpiIndex',           kind: 'num'   }
+];
+
+/* HPI Summary attribute labels -> stored field names. */
+var HPI_FIELDS = {
+  'Gross Living Area (Above Ground)': 'grossLivingArea',
+  'Lot Size':                         'lotSize',
+  'Above Ground Bedrooms':            'bedsAboveGround',
+  'Below Ground Bedrooms':            'bedsBelowGround',
+  'Year Built':                       'yearBuilt',
+  'Full Bathrooms':                   'bathsFull',
+  'Half Bathrooms':                   'bathsHalf',
+  'Finished Basement':                'basement',
+  'Covered Parking Spaces':           'coveredParking'
+};
+
+var parsed = null;
+
+/* ── cell helpers ──────────────────────────────────────────────────────── */
+
+function cellAt(ws, col, row) {
+  return ws[col + row] || null;
+}
+
+/* Numeric or null. Rejects every non-numeric cell type outright — the
+   ' ' placeholders, '-' not-applicable markers and #REF! errors all
+   become null rather than 0. */
+function numOrNull(c) {
+  if (!c) return null;
+  if (c.t === 'n' && typeof c.v === 'number' && isFinite(c.v)) return c.v;
+  return null;
+}
+
+function textOrNull(c) {
+  if (!c) return null;
+  if (c.t === 'e') return null;
+  var v = (c.v === undefined || c.v === null) ? '' : String(c.v);
+  v = v.trim();
+  if (v === '' || v === '-') return null;
+  return v;
+}
+
+function isErrorCell(c) { return !!c && c.t === 'e'; }
+
+/* Excel serial -> 'YYYY-MM'. Epoch 1899-12-30 (correct for all dates
+   after 1900-03-01, which covers everything in this workbook). */
+function serialToMonth(serial) {
+  var ms = Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000;
+  var d = new Date(ms);
+  var m = d.getUTCMonth() + 1;
+  return d.getUTCFullYear() + '-' + (m < 10 ? '0' : '') + m;
+}
+function serialToParts(serial) {
+  var ms = Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000;
+  var d = new Date(ms);
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+}
+
+/* ── type sheet ────────────────────────────────────────────────────────── */
+
+function parseTypeSheet(wb, sheetName) {
+  var ws = wb.Sheets[sheetName];
+  if (!ws) throw new Error('Sheet "' + sheetName + '" not found in workbook.');
+
+  var range = XLSX.utils.decode_range(ws['!ref']);
+  var community = textOrNull(cellAt(ws, 'A', 1));
+
+  /* Collect data rows in document order: column A numeric, and not a header. */
+  var dataRows = [];
+  for (var r = range.s.r + 1; r <= range.e.r + 1; r++) {
+    var a = cellAt(ws, 'A', r);
+    if (!a || a.t !== 'n') continue;                 // title rows, blanks, junk
+    if (textOrNull(cellAt(ws, 'B', r)) === 'Sales') continue;  // header row
+    dataRows.push({ row: r, serial: a.v });
+  }
+
+  var issues = [];
+  if (dataRows.length === 0) throw new Error('No data rows found on "' + sheetName + '".');
+  if (dataRows.length % 13 !== 0) {
+    issues.push('Expected a multiple of 13 data rows (12 months + 1 annual per year). Found ' +
+      dataRows.length + '. Block detection may be wrong — do not trust this sheet.');
+  }
+
+  var months = {}, annual = {}, monthOrder = [];
+  var emptyMonths = [], errorCells = [];
+  var groups = Math.floor(dataRows.length / 13);
+
+  for (var g = 0; g < groups; g++) {
+    var base = g * 13;
+    var janParts = serialToParts(dataRows[base].serial);
+    var annualRow = dataRows[base + 12];
+    var annParts = serialToParts(annualRow.serial);
+
+    /* The structural assertion: the annual row must repeat January's date. */
+    if (annParts.month !== 1 || annParts.year !== janParts.year) {
+      issues.push('Year block ' + janParts.year + ': row ' + annualRow.row +
+        ' was expected to be the annual rollup dated ' + janParts.year +
+        '-01 but is dated ' + serialToMonth(annualRow.serial) +
+        '. Positional block assumption broken.');
+      continue;
+    }
+
+    var populatedInYear = 0;
+
+    for (var i = 0; i < 12; i++) {
+      var dr = dataRows[base + i];
+      var key = serialToMonth(dr.serial);
+      var rec = readRecord(ws, dr.row, errorCells, sheetName);
+      if (rec === null) { emptyMonths.push(key); continue; }
+      months[key] = rec;
+      monthOrder.push(key);
+      populatedInYear++;
+    }
+
+    var annRec = readRecord(ws, annualRow.row, errorCells, sheetName);
+    if (annRec !== null) {
+      annRec.monthsCounted = populatedInYear;
+      annRec.partial = populatedInYear < 12;
+      annual[String(janParts.year)] = annRec;
+    }
+  }
+
+  monthOrder.sort();
+
+  return {
+    sheet: sheetName,
+    community: community,
+    months: months,
+    annual: annual,
+    monthCount: monthOrder.length,
+    firstMonth: monthOrder[0] || null,
+    lastMonth: monthOrder[monthOrder.length - 1] || null,
+    emptyMonths: emptyMonths,
+    errorCells: errorCells,
+    issues: issues,
+    dataRowCount: dataRows.length
+  };
+}
+
+/* A row is 'empty' when Sales is not a number. Returns null in that case. */
+function readRecord(ws, row, errorCells, sheetName) {
+  var salesCell = cellAt(ws, 'B', row);
+  if (numOrNull(salesCell) === null) return null;
+
+  var rec = {};
+  for (var i = 0; i < FIELDS.length; i++) {
+    var f = FIELDS[i];
+    var c = cellAt(ws, f.col, row);
+    if (isErrorCell(c)) {
+      errorCells.push(sheetName + '!' + f.col + row + ' (' + f.name + ') = ' + (c.w || '#ERR'));
+    }
+    rec[f.name] = numOrNull(c);
+  }
+  return rec;
+}
+
+/* ── HPI Summary ───────────────────────────────────────────────────────── */
+
+/* The sheet is a grid, not a table. Two vertical blocks:
+
+     block 1 (from r1)   labels in col A -> Detached:  E One Storey, F Two Storey, G Total
+                         labels in col H -> Attached:  L Semi-Detached, M Row, N Total
+     block 2 (from r17)  labels in col B -> Apartment: F Total
+                         labels in col H -> Total Residential: L Total
+
+   Labels are matched by text rather than row number, since the attribute
+   set differs per type (Apartment has Covered Parking Spaces and no Lot
+   Size or Below Ground Bedrooms). */
+function parseHPI(wb) {
+  var ws = wb.Sheets['HPI Summary'];
+  if (!ws) return { types: {}, issues: ['HPI Summary sheet not found.'], reportMonth: null };
+
+  var range = XLSX.utils.decode_range(ws['!ref']);
+  var issues = [];
+
+  var targets = [
+    { type: 'det',  labelCol: 'A', valueCol: 'G', label: 'Detached — Total' },
+    { type: 'semi', labelCol: 'H', valueCol: 'L', label: 'Semi-Detached' },
+    { type: 'row',  labelCol: 'H', valueCol: 'M', label: 'Row' },
+    { type: 'apt',  labelCol: 'B', valueCol: 'F', label: 'Apartment — Total' },
+    { type: 'res',  labelCol: 'H', valueCol: 'L', label: 'Total Residential', minRow: 17 }
+  ];
+
+  var reportMonth = null;
+  var out = {};
+
+  targets.forEach(function (t) {
+    var rec = {}, found = 0;
+    for (var r = (t.minRow || range.s.r + 1); r <= range.e.r + 1; r++) {
+      var label = textOrNull(cellAt(ws, t.labelCol, r));
+      if (!label) continue;
+
+      /* 'JUL-2026 Benchmark Price' / 'JUL-2026 Index value' carry the month. */
+      var bm = label.match(/^([A-Z]{3})-(\d{4})\s+Benchmark Price$/i);
+      if (bm) {
+        rec.benchmarkPrice = numOrNull(cellAt(ws, t.valueCol, r));
+        reportMonth = reportMonth || monthFromLabel(bm[1], bm[2]);
+        found++;
+        continue;
+      }
+      if (/^[A-Z]{3}-\d{4}\s+Index value$/i.test(label)) {
+        rec.hpiIndex = numOrNull(cellAt(ws, t.valueCol, r));
+        found++;
+        continue;
+      }
+
+      var field = HPI_FIELDS[label];
+      if (!field) continue;
+      if (rec.hasOwnProperty(field)) continue;   // first match wins, blocks repeat labels
+
+      var c = cellAt(ws, t.valueCol, r);
+      /* Finished Basement is descriptive text; everything else is numeric. */
+      rec[field] = (field === 'basement') ? textOrNull(c) : numOrNull(c);
+      found++;
+    }
+    if (found === 0) issues.push('No HPI attributes matched for ' + t.label + ' (' + t.type + ').');
+    out[t.type] = rec;
+  });
+
+  return { types: out, issues: issues, reportMonth: reportMonth };
+}
+
+var MONTHS3 = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function monthFromLabel(mon, year) {
+  var i = MONTHS3.indexOf(mon.toUpperCase());
+  if (i < 0) return null;
+  return year + '-' + (i < 9 ? '0' : '') + (i + 1);
+}
+
+/* ── orchestration ─────────────────────────────────────────────────────── */
+
+function parseWorkbook(buf) {
+  var wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+
+  var missing = TYPE_SHEETS.filter(function (s) { return !wb.Sheets[s]; });
+  if (missing.length) {
+    throw new Error('Workbook is missing expected sheet(s): ' + missing.join(', ') +
+      '\nSheets present: ' + wb.SheetNames.join(', '));
+  }
+
+  var types = {};
+  TYPE_SHEETS.forEach(function (s) {
+    types[s.toLowerCase()] = parseTypeSheet(wb, s);
+  });
+
+  var hpi = parseHPI(wb);
+
+  var communities = {};
+  Object.keys(types).forEach(function (k) {
+    var c = types[k].community;
+    if (c) communities[c] = true;
+  });
+  var names = Object.keys(communities);
+
+  return {
+    sheetNames: wb.SheetNames,
+    community: names[0] || null,
+    communitySlug: names[0] ? slugify(names[0]) : null,
+    communityConflict: names.length > 1 ? names : null,
+    types: types,
+    hpi: hpi,
+    reportMonth: hpi.reportMonth || types.det.lastMonth
+  };
+}
+
+function slugify(s) {
+  return String(s).toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/* ── rendering ─────────────────────────────────────────────────────────── */
+
+function esc(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+}
+
+function fmtSample(v, kind) {
+  if (v === null || v === undefined) return '—';
+  if (kind === 'cur')   return '$' + Number(v).toLocaleString();
+  if (kind === 'frac')  return Number(v).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+  if (kind === 'count') return String(v);
+  return String(Math.round(Number(v) * 1000) / 1000);
+}
+
+function kindTag(kind) {
+  if (kind === 'frac')  return '<span class="tag frac">fraction</span>';
+  if (kind === 'cur')   return '<span class="tag cur">currency</span>';
+  if (kind === 'count') return '<span class="tag cnt">count</span>';
+  return '<span class="tag">number</span>';
+}
+
+function render(p) {
+  var det = p.types.det;
+
+  /* stats */
+  document.getElementById('stats').innerHTML = [
+    stat('Community', esc(p.community || '—'), p.communitySlug ? 'slug: ' + esc(p.communitySlug) : ''),
+    stat('Report month', esc(p.reportMonth || '—'), 'from HPI Summary label'),
+    stat('Monthly rows', String(det.monthCount), esc(det.firstMonth + ' → ' + det.lastMonth)),
+    stat('Property types', String(Object.keys(p.types).length), 'res · det · semi · row · apt')
+  ].join('');
+
+  /* field table — sampled from the last populated month of Det */
+  var sampleKey = det.lastMonth;
+  var sample = sampleKey ? det.months[sampleKey] : {};
+  document.getElementById('fieldMonth').textContent =
+    sampleKey ? 'sample values from ' + sampleKey : '';
+
+  var rows = FIELDS.map(function (f) {
+    return '<tr>' +
+      '<td class="col">' + f.col + '</td>' +
+      '<td class="src">' + esc(f.src) + '</td>' +
+      '<td class="fld">' + esc(f.name) + '</td>' +
+      '<td>' + kindTag(f.kind) + '</td>' +
+      '<td class="samp">' + esc(fmtSample(sample[f.name], f.kind)) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('fieldTable').innerHTML =
+    '<tr><th>Col</th><th>Source header</th><th>Stored field</th><th>Stored as</th><th>Sample</th></tr>' +
+    rows +
+    '<tr><td class="col">A</td><td class="src">(unlabelled date)</td>' +
+    '<td class="fld">— map key —</td><td><span class="tag">YYYY-MM</span></td>' +
+    '<td class="samp">' + esc(sampleKey || '—') + '</td></tr>';
+
+  /* per type */
+  var tRows = Object.keys(p.types).map(function (k) {
+    var t = p.types[k];
+    var flag = t.issues.length
+      ? '<span class="tag" style="border-color:var(--ox);color:var(--ox)">' + t.issues.length + ' issue</span>'
+      : '<span class="tag cur">clean</span>';
+    return '<tr>' +
+      '<td class="fld">' + esc(k) + '</td>' +
+      '<td class="src">' + esc(t.sheet) + '</td>' +
+      '<td class="samp">' + t.dataRowCount + '</td>' +
+      '<td class="samp">' + t.monthCount + '</td>' +
+      '<td class="samp">' + Object.keys(t.annual).length + '</td>' +
+      '<td class="samp">' + esc(t.firstMonth + ' → ' + t.lastMonth) + '</td>' +
+      '<td class="samp">' + esc(fmtSample(
+          t.lastMonth ? t.months[t.lastMonth].benchmarkPrice : null, 'cur')) + '</td>' +
+      '<td>' + flag + '</td>' +
+      '</tr>';
+  }).join('');
+  document.getElementById('typeTable').innerHTML =
+    '<tr><th>Type</th><th>Sheet</th><th>Data rows</th><th>Months</th><th>Annual</th>' +
+    '<th>Range</th><th>Latest benchmark</th><th></th></tr>' + tRows;
+
+  /* HPI */
+  var hpiKeys = ['grossLivingArea','lotSize','bedsAboveGround','bedsBelowGround',
+                 'yearBuilt','bathsFull','bathsHalf','coveredParking','basement',
+                 'benchmarkPrice','hpiIndex'];
+  var order = ['res','det','semi','row','apt'];
+  var hRows = hpiKeys.map(function (key) {
+    var cells = order.map(function (t) {
+      var v = p.hpi.types[t] ? p.hpi.types[t][key] : undefined;
+      var disp = (v === undefined || v === null) ? '—'
+        : (key === 'benchmarkPrice' ? '$' + Number(v).toLocaleString() : String(v));
+      return '<td class="samp">' + esc(disp) + '</td>';
+    }).join('');
+    return '<tr><td class="fld">' + esc(key) + '</td>' + cells + '</tr>';
+  }).join('');
+  document.getElementById('hpiTable').innerHTML =
+    '<tr><th>Field</th><th>res</th><th>det</th><th>semi</th><th>row</th><th>apt</th></tr>' + hRows;
+
+  renderWarnings(p);
+
+  document.getElementById('results').classList.remove('hidden');
+}
+
+function stat(l, v, s) {
+  return '<div class="stat"><div class="stat-l">' + l + '</div>' +
+    '<div class="stat-v">' + v + '</div>' +
+    '<div class="stat-s">' + (s || '') + '</div></div>';
+}
+
+function warn(title, body, bad) {
+  return '<div class="warn' + (bad ? ' bad' : '') + '">' +
+    '<div class="warn-t">' + title + '</div>' +
+    '<div class="warn-b">' + body + '</div></div>';
+}
+
+function renderWarnings(p) {
+  var w = [];
+  var det = p.types.det;
+
+  /* hard structural issues first */
+  Object.keys(p.types).forEach(function (k) {
+    p.types[k].issues.forEach(function (msg) {
+      w.push(warn('Structure — ' + k, esc(msg), true));
+    });
+  });
+
+  if (p.communityConflict) {
+    w.push(warn('Community name differs between sheets',
+      'Found: ' + esc(p.communityConflict.join(', ')) +
+      '. The slug must be chosen explicitly.', true));
+  }
+
+  /* empty trailing months */
+  if (det.emptyMonths.length) {
+    w.push(warn('Unpopulated month rows — skipped',
+      'The workbook carries rows for <code>' + esc(det.emptyMonths.join('</code>, <code>')) +
+      '</code> but their cells hold the shared string <code>&quot; &quot;</code>, not blanks. ' +
+      'These are skipped. Note <code>Number(&quot; &quot;)</code> is <code>0</code>, so a naive ' +
+      'parse would have written a $0 benchmark price for these months instead of failing.'));
+  }
+
+  /* partial annual rollups */
+  var partials = [];
+  Object.keys(det.annual).forEach(function (y) {
+    if (det.annual[y].partial) partials.push(y + ' (' + det.annual[y].monthsCounted + ' months)');
+  });
+  if (partials.length) {
+    w.push(warn('Partial annual rollup',
+      'The annual row for ' + esc(partials.join(', ')) + ' covers only part of the year. ' +
+      'Sales and New Listings are sums over those months; Inventory, DOM and the three ' +
+      'price columns are averages. It is <strong>not</strong> comparable to a full-year ' +
+      'row and must not be charted alongside one without a label. Stored with ' +
+      '<code>partial: true</code> and <code>monthsCounted</code>.'));
+  }
+
+  /* thin data */
+  var thin = [];
+  Object.keys(p.types).forEach(function (k) {
+    var t = p.types[k];
+    if (!t.lastMonth) return;
+    var s = t.months[t.lastMonth].sales;
+    if (s !== null && s <= 3) thin.push(k + ': ' + s + ' sale' + (s === 1 ? '' : 's'));
+  });
+  if (thin.length) {
+    w.push(warn('Thin data in the latest month',
+      'Benchmark drawn from very few transactions — ' + esc(thin.join(', ')) +
+      '. Per the house rule these must be flagged in the review UI rather than quoted ' +
+      'as fact.'));
+  }
+
+  /* error cells */
+  var errs = [];
+  Object.keys(p.types).forEach(function (k) {
+    errs = errs.concat(p.types[k].errorCells);
+  });
+  if (errs.length) {
+    w.push(warn('Error cells in source',
+      'Stored as null: <code>' + esc(errs.slice(0, 8).join('</code>, <code>')) + '</code>' +
+      (errs.length > 8 ? ' and ' + (errs.length - 8) + ' more' : '') + '.'));
+  }
+
+  /* HPI issues */
+  p.hpi.issues.forEach(function (msg) {
+    w.push(warn('HPI Summary', esc(msg), true));
+  });
+  w.push(warn('HPI Summary needs verification',
+    'The sheet is a grid, not a table, and the attribute set differs per type — ' +
+    'Apartment has <code>coveredParking</code> and no <code>lotSize</code> or ' +
+    '<code>bedsBelowGround</code>. Column mapping used: ' +
+    '<code>det</code>→G (Detached Total), <code>semi</code>→L, ' +
+    '<code>row</code>→M, <code>apt</code>→F (block 2), ' +
+    '<code>res</code>→L (block 2, Total Residential). ' +
+    'Check these against the sheet before trusting them.'));
+
+  document.getElementById('warnings').innerHTML = w.join('');
+}
+
+/* ── wiring ────────────────────────────────────────────────────────────── */
+
+var drop = document.getElementById('drop');
+var fileInput = document.getElementById('file');
+
+drop.addEventListener('click', function () { fileInput.click(); });
+drop.addEventListener('dragover', function (e) {
+  e.preventDefault(); drop.classList.add('over');
+});
+drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+drop.addEventListener('drop', function (e) {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function () {
+  if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function showError(msg) {
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('errBox').classList.remove('hidden');
+  document.getElementById('results').classList.add('hidden');
+}
+
+function handleFile(file) {
+  document.getElementById('errBox').classList.add('hidden');
+  document.querySelector('.drop-t').textContent = file.name;
+  document.querySelector('.drop-s').textContent =
+    Math.round(file.size / 1024) + ' KB · parsing…';
+
+  var reader = new FileReader();
+  reader.onerror = function () { showError('Could not read the file off disk.'); };
+  reader.onload = function (e) {
+    try {
+      parsed = parseWorkbook(e.target.result);
+      render(parsed);
+      document.querySelector('.drop-s').textContent =
+        Math.round(file.size / 1024) + ' KB · parsed';
+    } catch (err) {
+      console.error(err);
+      showError(err && err.message ? err.message : String(err));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+document.getElementById('jsonBtn').addEventListener('click', function () {
+  if (!parsed) return;
+  var blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (parsed.communitySlug || 'community') + '-360-parsed.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+});
+
+firebase.auth().onAuthStateChanged(function (user) {
+  if (!user) window.location.href = '../login.html';
+});
+</script>
+</body>
+</html>
