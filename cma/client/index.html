@@ -1225,14 +1225,7 @@ input[type=range]::-moz-range-thumb{
       <div class="eyebrow">05 · Marketing plan</div>
       <div class="section-title">How we sell <em>your home</em></div>
       <div class="title-line"></div>
-      <div class="marketing-items">
-        <div class="marketing-item"><div class="marketing-num">01</div><div><div class="marketing-title">Professional photography & virtual tour</div><div class="marketing-desc">Twilight exterior, full interior suite, and Matterport 3D walkthrough. Your home stops the scroll before a single showing is booked.</div><span class="marketing-tag">Day 1</span></div></div>
-        <div class="marketing-item"><div class="marketing-num">02</div><div><div class="marketing-title">Coordinated MLS launch</div><div class="marketing-desc">Listed Thursday. Showings Friday through Monday. Offers Tuesday evening. Controlled urgency consistently produces competing offers in SE Calgary lake communities.</div><span class="marketing-tag">Day 3–5</span></div></div>
-        <div class="marketing-item"><div class="marketing-num">03</div><div><div class="marketing-title">Targeted digital advertising</div><div class="marketing-desc">Facebook and Instagram geo-targeted to qualified buyers already active in your community. 30-day retargeting campaign.</div><span class="marketing-tag">Week 1</span></div></div>
-        <div class="marketing-item"><div class="marketing-num">04</div><div><div class="marketing-title">Sphere database — 554 contacts</div><div class="marketing-desc">Direct outreach to qualified Duiker Properties contacts — past clients, active buyers, and referral partners already looking in this neighbourhood.</div><span class="marketing-tag">Day of launch</span></div></div>
-        <div class="marketing-item"><div class="marketing-num">05</div><div><div class="marketing-title">Curated open house</div><div class="marketing-desc">Pre-promoted, staged, and strategic — targeted invitations to buyers already showing digital interest in your neighbourhood.</div><span class="marketing-tag">Weekend 1</span></div></div>
-        <div class="marketing-item"><div class="marketing-num">06</div><div><div class="marketing-title">Royal LePage Solutions network</div><div class="marketing-desc">South Calgary · North Calgary · Okotoks · Canmore / Banff — four active markets, one coordinated buyer reach.</div><span class="marketing-tag">Ongoing</span></div></div>
-      </div>
+      <div class="marketing-items" id="marketing-items"></div>
     </div>
   </section>
 
@@ -1547,6 +1540,9 @@ function populateReport() {
   // cma/edit.html, so the two cannot drift apart.
   netCalc(rec);
 
+  // MARKETING — tier 1 from editor section 07, tier 2 standing
+  buildMarketing(d);
+
   // REVIEWS from agent profile
   buildReviews(p.reviews || defaultReviews());
 
@@ -1746,6 +1742,81 @@ function subjectCard(d) {
           : ''}
       </div>
     </div>`;
+}
+
+// ── MARKETING PLAN ───────────────────────────────
+// Two tiers.
+//
+// Tier 1 is per-listing and comes from editor section 07. It renders only
+// what was actually entered — the launch schedule and the shot list are the
+// agent's own words, not markup. Previously this section asserted "Listed
+// Thursday. Showings Friday through Monday. Offers Tuesday evening" and a
+// Matterport walkthrough on every CMA regardless of what had been agreed.
+//
+// Tier 2 is standing service commitments that hold for every listing. The
+// test applied is "could this be defended if a seller challenged it" — not
+// "is there a field for it". Removed on that test: "554 contacts" (a
+// precise number nobody maintains), "30-day retargeting campaign" (same
+// defect), and the open house item (pure adjectives, nothing checkable —
+// if it matters for a listing it belongs in offerStrategy).
+
+function prose(t) {
+  return escHtml(t).replace(/\r?\n/g, '<br>');
+}
+
+function buildMarketing(d) {
+  const el = document.getElementById('marketing-items');
+  if (!el) return;
+
+  const items = [];
+
+  // Tier 1 — from section 07, only when entered.
+  const photog = specStr(d.photographerName);
+  const shoot  = specStr(d.shootDate);
+  const shot   = specStr(d.shotList);
+  if (photog || shoot || shot) {
+    items.push({
+      title: 'Professional photography' + (photog ? ' · ' + photog : ''),
+      desc:  shot,
+      // The real shoot date beats a generic "Day 1" — it is specific and
+      // it is true.
+      tag:   shoot ? fmtDate(shoot) : ''
+    });
+  }
+
+  const offer = specStr(d.offerStrategy);
+  if (offer) {
+    items.push({ title: 'Listing launch & offer strategy', desc: offer, tag: '' });
+  }
+
+  // Tier 2 — always true, no per-listing data, no unmaintained numbers.
+  items.push({
+    title: 'Targeted digital advertising',
+    desc:  'Facebook and Instagram geo-targeted to qualified buyers already active in your community.',
+    tag:   ''
+  });
+  items.push({
+    title: 'Sphere database outreach',
+    desc:  'Direct outreach to qualified Duiker Properties contacts — past clients, active buyers, and referral partners already looking in this neighbourhood.',
+    tag:   ''
+  });
+  items.push({
+    title: 'Royal LePage Solutions network',
+    desc:  'South Calgary · North Calgary · Okotoks · Canmore / Banff — four active markets, one coordinated buyer reach.',
+    tag:   ''
+  });
+
+  // Numbers are computed, not baked in, so a skipped tier-1 item cannot
+  // leave a gap in the sequence.
+  el.innerHTML = items.map((it, i) => `
+    <div class="marketing-item">
+      <div class="marketing-num">${String(i + 1).padStart(2, '0')}</div>
+      <div>
+        <div class="marketing-title">${escHtml(it.title)}</div>
+        ${it.desc ? `<div class="marketing-desc">${prose(it.desc)}</div>` : ''}
+        ${it.tag  ? `<span class="marketing-tag">${escHtml(it.tag)}</span>` : ''}
+      </div>
+    </div>`).join('');
 }
 
 // Comp photos are pasted by hand today, so the value is whatever was in the
