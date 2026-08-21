@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../js/firebase-config.js"></script>
-<script>window.sphereActivePage = 'cma';</script>
+<script>window.sphereActivePage = 'market-data';</script>
 <script src="../js/header.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -99,6 +99,9 @@ tr:last-child td{border-bottom:none}
 .tag.frac{border-color:var(--champ);color:#8a7340}
 .tag.cur{border-color:var(--sage);color:var(--sage)}
 .tag.cnt{border-color:var(--border)}
+.tag.sup{border-color:var(--ox);color:var(--ox)}
+.tag.alw{border-color:var(--sage);color:var(--sage)}
+td s{color:var(--ox);opacity:.65;text-decoration-thickness:1px}
 
 /* WARNINGS */
 .warn{border-left:2px solid var(--champ);background:#FDFBF6;padding:14px 18px;margin-bottom:10px;border-radius:2px}
@@ -198,6 +201,21 @@ tr:last-child td{border-bottom:none}
       </section>
 
       <section>
+        <span class="eyebrow">Thin data</span>
+        <div class="accent"></div>
+        <h2>Months at or below <span id="thinN">5</span> sales</h2>
+        <p class="lede">
+          At or below the threshold, <code>medianPrice</code>, <code>averagePrice</code>,
+          <code>dom</code> and <code>spToLp</code> are absent from client-facing output
+          entirely. <code>benchmarkPrice</code> and <code>hpiIndex</code> always render,
+          with the sales count shown alongside.
+        </p>
+        <div class="card" style="margin-top:16px">
+          <table id="thinTable"></table>
+        </div>
+      </section>
+
+      <section>
         <span class="eyebrow">HPI Summary</span>
         <div class="accent"></div>
         <h2>Benchmark home attributes</h2>
@@ -283,6 +301,40 @@ var FIELDS = [
   { col: 'Q', src: 'Y/Y%',             name: 'averagePriceYoY',    kind: 'frac'  },
   { col: 'R', src: 'Index',            name: 'hpiIndex',           kind: 'num'   }
 ];
+
+/* ── THIN DATA RULE ─────────────────────────────────────────────────────
+   Set 21 Aug 2026.
+
+   At or below THIN_MAX_SALES transactions in a month, the fields in
+   SUPPRESS_WHEN_THIN are ABSENT from client-facing output — not caveated,
+   not greyed out, not footnoted. Absent. A caveat still puts a number in
+   front of a seller, and a number in front of a seller is a number they
+   remember.
+
+   ALWAYS_RENDER fields still render at any transaction count, with the
+   sales count shown alongside so the basis is visible.
+
+   Why the split: benchmarkPrice and hpiIndex come from CREB's HPI model,
+   which is built on the whole community's price history rather than the
+   month's sales, so they stay meaningful at low n. medianPrice,
+   averagePrice, dom and spToLp are computed directly from that month's
+   transactions — at n=2 a median IS one of two numbers.
+
+   Live example in the Cranston export: semi-detached, Jul 2026 —
+   benchmark $498,900 on 2 sales.
+
+   Deliberately NOT stored as a flag on month records. `sales` is already
+   stored, so the renderer applies this rule at display time and changing
+   the threshold needs no re-import. Storing a derived `thin: true` would
+   freeze 5 into every document.
+   ─────────────────────────────────────────────────────────────────────── */
+var THIN_MAX_SALES = 5;
+var SUPPRESS_WHEN_THIN = ['medianPrice', 'averagePrice', 'dom', 'spToLp'];
+var ALWAYS_RENDER      = ['benchmarkPrice', 'hpiIndex'];
+
+function isThin(rec) {
+  return !!rec && rec.sales !== null && rec.sales <= THIN_MAX_SALES;
+}
 
 /* HPI Summary attribute labels -> stored field names. */
 var HPI_FIELDS = {
@@ -593,21 +645,29 @@ function render(p) {
     sampleKey ? 'sample values from ' + sampleKey : '';
 
   var rows = FIELDS.map(function (f) {
+    var rule = SUPPRESS_WHEN_THIN.indexOf(f.name) >= 0
+      ? '<span class="tag sup">suppressed if thin</span>'
+      : (ALWAYS_RENDER.indexOf(f.name) >= 0
+          ? '<span class="tag alw">always renders</span>' : '');
     return '<tr>' +
       '<td class="col">' + f.col + '</td>' +
       '<td class="src">' + esc(f.src) + '</td>' +
       '<td class="fld">' + esc(f.name) + '</td>' +
       '<td>' + kindTag(f.kind) + '</td>' +
+      '<td>' + rule + '</td>' +
       '<td class="samp">' + esc(fmtSample(sample[f.name], f.kind)) + '</td>' +
       '</tr>';
   }).join('');
 
   document.getElementById('fieldTable').innerHTML =
-    '<tr><th>Col</th><th>Source header</th><th>Stored field</th><th>Stored as</th><th>Sample</th></tr>' +
+    '<tr><th>Col</th><th>Source header</th><th>Stored field</th><th>Stored as</th>' +
+    '<th>Client-facing rule</th><th>Sample</th></tr>' +
     rows +
     '<tr><td class="col">A</td><td class="src">(unlabelled date)</td>' +
     '<td class="fld">— map key —</td><td><span class="tag">YYYY-MM</span></td>' +
-    '<td class="samp">' + esc(sampleKey || '—') + '</td></tr>';
+    '<td></td><td class="samp">' + esc(sampleKey || '—') + '</td></tr>';
+
+  renderThin(p);
 
   /* per type */
   var tRows = Object.keys(p.types).map(function (k) {
@@ -651,6 +711,47 @@ function render(p) {
   renderWarnings(p);
 
   document.getElementById('results').classList.remove('hidden');
+}
+
+/* Per-type thin-data coverage: how much of the series would lose fields,
+   and whether the latest month — the one a CMA actually quotes — is thin. */
+function renderThin(p) {
+  document.getElementById('thinN').textContent = THIN_MAX_SALES;
+
+  var order = ['res', 'det', 'semi', 'row', 'apt'];
+  var rows = order.map(function (k) {
+    var t = p.types[k];
+    if (!t) return '';
+    var keys = Object.keys(t.months);
+    var thinCount = 0;
+    keys.forEach(function (m) { if (isThin(t.months[m])) thinCount++; });
+
+    var latest = t.lastMonth ? t.months[t.lastMonth] : null;
+    var latestThin = isThin(latest);
+    var pct = keys.length ? Math.round(thinCount / keys.length * 100) : 0;
+
+    var verdict = latestThin
+      ? '<span class="tag sup">4 fields suppressed</span>'
+      : '<span class="tag alw">full detail</span>';
+
+    return '<tr>' +
+      '<td class="fld">' + esc(k) + '</td>' +
+      '<td class="samp">' + (latest && latest.sales !== null ? latest.sales : '—') + '</td>' +
+      '<td class="samp">' + esc(fmtSample(latest ? latest.benchmarkPrice : null, 'cur')) + '</td>' +
+      '<td class="samp">' + (latestThin ? '<s>' +
+          esc(fmtSample(latest.medianPrice, 'cur')) + '</s>' :
+          esc(fmtSample(latest ? latest.medianPrice : null, 'cur'))) + '</td>' +
+      '<td class="samp">' + (latestThin ? '<s>' +
+          esc(fmtSample(latest.dom, 'num')) + '</s>' :
+          esc(fmtSample(latest ? latest.dom : null, 'num'))) + '</td>' +
+      '<td>' + verdict + '</td>' +
+      '<td class="samp">' + thinCount + ' / ' + keys.length + ' (' + pct + '%)</td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('thinTable').innerHTML =
+    '<tr><th>Type</th><th>Latest sales</th><th>Benchmark</th><th>Median</th><th>DOM</th>' +
+    '<th>Latest month</th><th>Thin months in series</th></tr>' + rows;
 }
 
 function stat(l, v, s) {
@@ -705,19 +806,21 @@ function renderWarnings(p) {
       '<code>partial: true</code> and <code>monthsCounted</code>.'));
   }
 
-  /* thin data */
+  /* thin data — latest month is the one a CMA actually quotes */
   var thin = [];
   Object.keys(p.types).forEach(function (k) {
     var t = p.types[k];
     if (!t.lastMonth) return;
-    var s = t.months[t.lastMonth].sales;
-    if (s !== null && s <= 3) thin.push(k + ': ' + s + ' sale' + (s === 1 ? '' : 's'));
+    var rec = t.months[t.lastMonth];
+    if (isThin(rec)) thin.push(k + ': ' + rec.sales + ' sale' + (rec.sales === 1 ? '' : 's'));
   });
   if (thin.length) {
-    w.push(warn('Thin data in the latest month',
-      'Benchmark drawn from very few transactions — ' + esc(thin.join(', ')) +
-      '. Per the house rule these must be flagged in the review UI rather than quoted ' +
-      'as fact.'));
+    w.push(warn('Latest month is thin — fields will be suppressed',
+      'At or below ' + THIN_MAX_SALES + ' sales in ' + esc(det.lastMonth) + ': <code>' +
+      esc(thin.join('</code>, <code>')) + '</code>. For these types <code>' +
+      SUPPRESS_WHEN_THIN.join('</code>, <code>') + '</code> must be absent from ' +
+      'client-facing output — not caveated, absent. <code>benchmarkPrice</code> and ' +
+      '<code>hpiIndex</code> still render, with the sales count alongside.'));
   }
 
   /* error cells */

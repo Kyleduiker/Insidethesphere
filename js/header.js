@@ -14,7 +14,7 @@
  *      <script>window.sphereActivePage = 'cma';</script>
  *      <script src="../js/header.js"></script>
  *
- *    Keys: dashboard, clients, cma, newsletter, boldtrail, profile
+ *    Keys: dashboard, clients, cma, market-data, newsletter, boldtrail, profile
  *
  * 3. Before </body>, AFTER header.js:
  *      <script src="../js/mobile-nav.js"></script>
@@ -41,11 +41,12 @@ if (thisScript && thisScript.src) {
 /* ── NAVIGATION — edit here, updates everywhere ────────────────────────── */
 
 var navItems = [
-  { key: 'dashboard',  label: 'Dashboard',   href: 'smarttools/' },
-  { key: 'clients',    label: 'Clients',     href: 'clients/' },
-  { key: 'cma',        label: 'CMA Builder', href: 'cma/' },
-  { key: 'newsletter', label: 'Newsletter',  href: 'newsletter/' },
-  { key: 'boldtrail',  label: 'Bold Trail',  href: 'Bold-trail-newsletter/' }
+  { key: 'dashboard',   label: 'Dashboard',   href: 'smarttools/' },
+  { key: 'clients',     label: 'Clients',     href: 'clients/' },
+  { key: 'cma',         label: 'CMA Builder', href: 'cma/' },
+  { key: 'market-data', label: 'Market Data', href: 'market-data/' },
+  { key: 'newsletter',  label: 'Newsletter',  href: 'newsletter/' },
+  { key: 'boldtrail',   label: 'Bold Trail',  href: 'Bold-trail-newsletter/' }
 ];
 
 var soonItems = [
