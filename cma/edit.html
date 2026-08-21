@@ -136,6 +136,62 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
   color:var(--stone);margin-bottom:5px;
 }
 .fg label span{font-weight:400;text-transform:none;letter-spacing:0;color:var(--border);font-size:10px}
+/* ── SECTION 03 market figures ── */
+.mkt-empty{font-size:12.5px;color:var(--stone);line-height:1.7;padding:6px 0}
+.mkt-empty a{color:var(--copper);text-decoration:none;border-bottom:0.5px solid var(--copper)}
+.mkt-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.mkt-src{font-size:11px;color:var(--stone)}
+.mkt-src strong{color:var(--obs);font-weight:500}
+.mkt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:0.5px solid var(--border)}
+.mkt-cell{padding:13px 15px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+.mkt-cell:nth-child(4n){border-right:none}
+.mkt-cell:nth-last-child(-n+4){border-bottom:none}
+.mkt-lbl{font-size:8.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--stone)}
+.mkt-val{font-family:var(--serif);font-size:1.32rem;font-weight:400;margin-top:5px;line-height:1}
+.mkt-sub{font-size:10.5px;color:var(--stone);margin-top:4px}
+.mkt-cell.suppressed .mkt-val{font-family:var(--sans);font-size:11px;color:var(--ox);font-style:italic}
+.mkt-cell.hero{background:var(--ivory)}
+.mkt-cell.hero .mkt-val{font-size:1.55rem;color:var(--obs)}
+.mkt-cell.hero .mkt-sub{color:var(--copper);font-weight:500}
+.mkt-note{font-size:11.5px;color:var(--stone);line-height:1.6;margin-bottom:14px}
+.mkt-flag{
+  border-left:2px solid var(--champ);background:#FDFBF6;
+  padding:11px 15px;margin-top:14px;font-size:11.5px;color:var(--stone);line-height:1.6;
+}
+.mkt-flag.bad{border-left-color:var(--ox);background:#FBF6F7}
+.mkt-flag strong{color:var(--obs);font-weight:500}
+
+/* ── override block ── */
+details.override{
+  background:#fff;border:0.5px solid var(--border);border-radius:2px;
+  margin-bottom:18px;
+}
+details.override>summary{
+  padding:15px 20px;cursor:pointer;list-style:none;
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);display:flex;align-items:center;gap:10px;
+}
+details.override>summary::-webkit-details-marker{display:none}
+details.override>summary::before{content:'+';font-size:14px;color:var(--copper);line-height:1}
+details.override[open]>summary::before{content:'−'}
+details.override>summary:hover{color:var(--obs)}
+.override-state{
+  margin-left:auto;font-size:9px;font-weight:600;letter-spacing:.08em;
+  padding:2px 7px;border-radius:2px;border:0.5px solid var(--border);color:var(--stone);
+}
+.override-state.on{border-color:var(--ox);color:var(--ox)}
+.override-body{padding:0 20px 20px}
+.override-body>.card{border:none;padding:0;margin-bottom:18px;background:transparent}
+.override-body>.card:last-of-type{margin-bottom:0}
+.ovr-clear{
+  margin-top:14px;padding:7px 14px;background:transparent;
+  border:0.5px solid var(--border);border-radius:2px;
+  font-family:var(--sans);font-size:10px;font-weight:500;color:var(--stone);
+  letter-spacing:.09em;text-transform:uppercase;cursor:pointer;
+  transition:border-color .12s,color .12s;
+}
+.ovr-clear:hover{border-color:var(--ox);color:var(--ox)}
+
 .fhint{font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:5px}
 .fhint a{color:var(--copper);text-decoration:none;border-bottom:0.5px solid var(--copper)}
 .fhint.warn{color:var(--ox)}
@@ -641,18 +697,41 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
         <div class="panel-header">
           <div class="panel-eyebrow">03 · Market data</div>
           <div class="panel-title">Current market conditions</div>
-          <div class="panel-sub">SE Calgary lake communities — pull from Matrix before your appointment</div>
+          <div class="panel-sub">Read from your CREB community import — set the community in section 02</div>
         </div>
-        <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <input type="file" id="creb-file-input" accept=".pdf" style="display:none" onchange="parseCREB(this)">
-          <button onclick="document.getElementById('creb-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload CREB stats PDF</button>
-          <span style="font-size:12px;color:#8C8479;flex:1" id="creb-status">Upload a CREB community Monthly Summary (e.g. Cranston 360) — figures fill in below</span>
+
+        <!-- Community figures, read-only, from users/{uid}/communities -->
+        <div class="card">
+          <div class="card-title">
+            Community figures
+            <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--border)">— from your CREB import</span>
+          </div>
+          <div id="market-figures"><div class="mkt-empty">Loading…</div></div>
         </div>
-        <div class="card" id="creb-review" style="display:none">
-          <div class="card-title" id="creb-review-title">Choose which figures to use</div>
-          <div id="creb-review-body" style="display:flex;flex-direction:column;gap:8px"></div>
-          <button onclick="applyCREB()" style="margin-top:14px;padding:8px 16px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase">Apply to market data</button>
-        </div>
+
+        <!-- Manual override. Collapsed by default: these fields win over the
+             community figures when populated, which is how every CMA created
+             before the community store keeps working untouched. -->
+        <details class="override" id="market-override">
+          <summary>
+            Manual override
+            <span class="override-state" id="override-state"></span>
+          </summary>
+          <div class="override-body">
+            <div class="mkt-note">
+              Anything entered here overrides the community figures above and is what
+              the client page renders. Leave blank to use the CREB figures.
+            </div>
+            <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <input type="file" id="creb-file-input" accept=".pdf" style="display:none" onchange="parseCREB(this)">
+              <button onclick="document.getElementById('creb-file-input').click()" style="padding:7px 14px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0">↑ Upload CREB stats PDF</button>
+              <span style="font-size:12px;color:#8C8479;flex:1" id="creb-status">Legacy path — fills the override fields below from a CREB 360 PDF</span>
+            </div>
+            <div class="card" id="creb-review" style="display:none">
+              <div class="card-title" id="creb-review-title">Choose which figures to use</div>
+              <div id="creb-review-body" style="display:flex;flex-direction:column;gap:8px"></div>
+              <button onclick="applyCREB()" style="margin-top:14px;padding:8px 16px;background:#0F0F0F;border:none;border-radius:2px;font-size:10px;font-weight:500;color:#F7F4EF;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase">Apply to market data</button>
+            </div>
         <div class="card">
           <div class="card-title">Key metrics</div>
           <div class="frow3">
@@ -683,7 +762,11 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
               <input class="fi" id="medianSoldPrice" type="number" placeholder="685000" oninput="markDirty()">
             </div>
           </div>
+          <button type="button" class="ovr-clear" onclick="clearOverride()">Clear override</button>
         </div>
+          </div>
+        </details>
+
         <div class="card">
           <div class="card-title">Market narrative <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--border)">— shown on client page</span></div>
           <div class="fg" style="margin-bottom:0">
@@ -1992,6 +2075,192 @@ function escAttr(v) { return escHtml(v); }
 function onMarketSourceChange() {
   if (typeof renderMarketPanel === 'function') renderMarketPanel();
 }
+
+// ── SECTION 03 — READ THE COMMUNITY STORE ────────────────
+// Figures are read from users/{uid}/communities/{slug}/types/{type} and
+// rendered read-only. Nothing here writes to the CMA document — the six
+// override fields remain the only market values that get saved, which is
+// why every already-published CMA keeps rendering exactly as it does now.
+
+// Cache keyed 'slug/type' so flipping between cuts does not re-read.
+const marketCache = {};
+
+// Fields the six override inputs cover. Used to detect an active override.
+const OVERRIDE_FIELDS = ['absorption', 'domAvg', 'listToSale',
+                         'activeListings', 'soldLast30', 'medianSoldPrice'];
+
+function overrideActive() {
+  return OVERRIDE_FIELDS.some(id => {
+    const el = document.getElementById(id);
+    return el && String(el.value).trim() !== '';
+  });
+}
+
+function clearOverride() {
+  OVERRIDE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  markDirty();
+  renderMarketPanel();
+}
+
+function fmtMoney(v) {
+  return v == null ? '—' : '$' + Math.round(v).toLocaleString();
+}
+function fmtPct(v) {
+  return v == null ? '—' : (v * 100).toFixed(1) + '%';
+}
+function fmtNum(v, dp) {
+  return v == null ? '—' : (dp ? v.toFixed(dp) : String(Math.round(v)));
+}
+
+function monthLabel(key) {
+  if (!key) return '—';
+  const [y, m] = key.split('-').map(Number);
+  return ['January','February','March','April','May','June','July',
+          'August','September','October','November','December'][m - 1] + ' ' + y;
+}
+
+// Months between a YYYY-MM key and today. Used for the staleness flag.
+function monthsBehind(key) {
+  if (!key) return null;
+  const [y, m] = key.split('-').map(Number);
+  const now = new Date();
+  return (now.getFullYear() * 12 + now.getMonth() + 1) - (y * 12 + m);
+}
+
+function renderMarketPanel() {
+  const box = document.getElementById('market-figures');
+  if (!box) return;
+
+  const slug = (document.getElementById('communityId') || {}).value || '';
+  const type = (document.getElementById('marketType') || {}).value || MARKET_TYPE_DEFAULT;
+
+  // Override badge reflects state regardless of whether a community is set.
+  const st = document.getElementById('override-state');
+  if (st) {
+    const on = overrideActive();
+    st.textContent = on ? 'Active — overrides CREB' : 'Empty';
+    st.className = 'override-state' + (on ? ' on' : '');
+  }
+
+  if (!slug) {
+    box.innerHTML = '<div class="mkt-empty">' +
+      'No CREB community selected for this CMA. Choose one under ' +
+      '<strong>02 · Property details</strong>, or ' +
+      '<a href="../market-data/">import a 360 workbook</a> first.<br>' +
+      'Until then the manual override below is what the client page renders.' +
+      '</div>';
+    return;
+  }
+
+  const cacheKey = slug + '/' + type;
+  if (marketCache[cacheKey]) { paintMarket(marketCache[cacheKey], slug, type); return; }
+
+  box.innerHTML = '<div class="mkt-empty">Reading ' + escHtml(slug) + ' · ' + escHtml(type) + '…</div>';
+
+  const base = db.collection('users').doc(currentUser.uid)
+                 .collection('communities').doc(slug);
+
+  Promise.all([base.get(), base.collection('types').doc(type).get()])
+    .then(([parentSnap, typeSnap]) => {
+      if (!parentSnap.exists) throw new Error('Community "' + slug + '" is not imported.');
+      if (!typeSnap.exists) throw new Error('No "' + type + '" data in this import.');
+      const payload = { parent: parentSnap.data(), type: typeSnap.data() };
+      marketCache[cacheKey] = payload;
+      paintMarket(payload, slug, type);
+    })
+    .catch(err => {
+      // Visible, not swallowed — a blank panel would read as "no data".
+      console.error('Market data read failed:', err);
+      box.innerHTML = '<div class="mkt-flag bad"><strong>Could not read market data.</strong><br>' +
+        escHtml(err.message || err.code || String(err)) + '</div>';
+    });
+}
+
+function paintMarket(payload, slug, type) {
+  const box = document.getElementById('market-figures');
+  const parent = payload.parent || {};
+  const t = payload.type || {};
+
+  const key = t.lastMonth;
+  const rec = key && t.months ? t.months[key] : null;
+  if (!rec) {
+    box.innerHTML = '<div class="mkt-flag bad">This import has no monthly rows for ' +
+      escHtml(type) + '.</div>';
+    return;
+  }
+
+  // The display contract travels with the data rather than living in this
+  // file, so the rule cannot drift between importer and renderer.
+  const dc = parent.display || {};
+  const thinMax = dc.thinMaxSales != null ? dc.thinMaxSales : 5;
+  const suppress = dc.suppressWhenThin || ['medianPrice','averagePrice','dom','spToLp'];
+  const thin = rec.sales != null && rec.sales <= thinMax;
+  const salesLabel = rec.sales + ' sale' + (rec.sales === 1 ? '' : 's') + ' this month';
+
+  const cell = (label, value, sub, cls) =>
+    '<div class="mkt-cell ' + (cls || '') + '"><div class="mkt-lbl">' + label + '</div>' +
+    '<div class="mkt-val">' + value + '</div>' +
+    (sub ? '<div class="mkt-sub">' + sub + '</div>' : '') + '</div>';
+
+  const gated = (field, label, value, sub) =>
+    (thin && suppress.indexOf(field) >= 0)
+      ? cell(label, 'Withheld', 'Too few sales to be meaningful', 'suppressed')
+      : cell(label, value, sub);
+
+  const cells = [
+    // benchmarkPrice always carries its sales count — the display contract's
+    // requiredCompanions rule. Never render one without the other.
+    cell('Benchmark price', fmtMoney(rec.benchmarkPrice), salesLabel, 'hero'),
+    cell('HPI index', fmtNum(rec.hpiIndex, 1), 'Jan 2005 = 100'),
+    cell('Sales', fmtNum(rec.sales), 'New listings ' + fmtNum(rec.newListings)),
+    cell('Inventory', fmtNum(rec.inventory), fmtNum(rec.monthsOfSupply, 1) + ' months of supply'),
+    gated('medianPrice', 'Median price', fmtMoney(rec.medianPrice)),
+    gated('averagePrice', 'Average price', fmtMoney(rec.averagePrice)),
+    gated('dom', 'Days on market', fmtNum(rec.dom)),
+    gated('spToLp', 'Sale to list', fmtPct(rec.spToLp))
+  ].join('');
+
+  const behind = monthsBehind(key);
+  let flags = '';
+
+  if (thin) {
+    flags += '<div class="mkt-flag"><strong>Thin month.</strong> ' +
+      escHtml(type) + ' recorded ' + rec.sales + ' sale' + (rec.sales === 1 ? '' : 's') +
+      ' in ' + monthLabel(key) + ', at or below the threshold of ' + thinMax + '. ' +
+      'Median, average, days on market and sale-to-list are withheld rather than ' +
+      'caveated. Benchmark price is HPI-derived and still holds — it renders with ' +
+      'its sale count attached. Switch the market cut to <strong>Total residential</strong> ' +
+      'in section 02 for a fuller picture.</div>';
+  }
+  if (behind != null && behind > 2) {
+    flags += '<div class="mkt-flag bad"><strong>Stale import.</strong> Latest month is ' +
+      monthLabel(key) + ', ' + behind + ' months back. ' +
+      '<a href="../market-data/">Import a newer 360 workbook</a>.</div>';
+  }
+  if (overrideActive()) {
+    flags += '<div class="mkt-flag bad"><strong>Override is active.</strong> ' +
+      'The figures above are not what the client page renders — the manual values ' +
+      'below are. Clear the override to use these.</div>';
+  }
+
+  box.innerHTML =
+    '<div class="mkt-head"><div class="mkt-src">' +
+      '<strong>' + escHtml(parent.name || slug) + '</strong> · ' + escHtml(type) +
+      ' · ' + monthLabel(key) +
+      (parent.sourceFile ? ' · ' + escHtml(parent.sourceFile) : '') +
+    '</div></div>' +
+    '<div class="mkt-grid">' + cells + '</div>' + flags;
+}
+
+// Typing into an override field flips the badge and the warning without
+// waiting for a save. Delegated so the six inline oninput handlers stay
+// as they are.
+document.addEventListener('input', e => {
+  if (e.target && OVERRIDE_FIELDS.indexOf(e.target.id) >= 0) renderMarketPanel();
+});
 
 // ── CREB MONTHLY STATS PARSER ────────────────────────────
 // Reads the CREB community "360" report. One monthly time series per
