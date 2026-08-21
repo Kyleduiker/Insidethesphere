@@ -513,6 +513,16 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   gap:28px;padding:26px 30px;
   transition:background .25s ease;
 }
+/* Photo is opt-in per comp: most have no photoUrl, and a card without one
+   must lay out exactly as it did before. Hence the modifier rather than a
+   third column on every card. */
+.comp-card.has-photo{grid-template-columns:140px 172px 1fr}
+.comp-photo{
+  display:block;width:100%;
+  aspect-ratio:4/3;object-fit:cover;
+  background:var(--off);
+  border:1px solid var(--border);
+}
 .comp-card:hover{background:var(--off)}
 .comp-money{
   text-align:right;padding-right:26px;
@@ -984,6 +994,15 @@ input[type=range]::-moz-range-thumb{
   .comp-card{grid-template-columns:1fr;gap:14px;padding:22px 20px}
   .comp-money{text-align:left;padding-right:0;border-right:none;
     border-bottom:1px solid var(--border);padding-bottom:12px}
+  /* A photo becomes a left rail rather than a third stacked block. Full
+     bleed at this width would be ~380px of image per comp; the rail keeps
+     the card roughly the height it already is and restores a two-column
+     read on iPad portrait. */
+  .comp-card.has-photo{grid-template-columns:110px 1fr;gap:16px}
+  .comp-card.has-photo .comp-photo{
+    grid-row:1 / span 2;
+    aspect-ratio:auto;height:100%;min-height:132px;
+  }
   .stat-block{padding:26px 18px}
   .stat-value{font-size:2.3rem}
   .value-col{padding:28px 18px}
@@ -1729,6 +1748,13 @@ function subjectCard(d) {
     </div>`;
 }
 
+// Comp photos are pasted by hand today, so the value is whatever was in the
+// clipboard. Only absolute http(s) URLs are rendered.
+function safePhotoUrl(v) {
+  const u = String(v == null ? '' : v).trim();
+  return /^https?:\/\/\S+$/i.test(u) ? u : null;
+}
+
 function buildComps(comps, subject) {
   const list = document.getElementById('comp-list');
   // The subject card renders above the first status group, and renders
@@ -1776,7 +1802,17 @@ function buildComps(comps, subject) {
            <span class="comp-sheet-icon"></span>View MLS sheet</a>`
       : '';
 
-    return `<div class="comp-card">
+    // Only http(s) reaches an <img src>. A broken or blocked image removes
+    // itself AND the has-photo class, so the card reflows to its normal
+    // two-column layout instead of leaving an empty 110px rail — which
+    // would look worse than never having had a photo.
+    const photo = safePhotoUrl(c.photoUrl)
+      ? `<img class="comp-photo" src="${escHtml(c.photoUrl)}" alt="" loading="lazy"
+              onerror="this.closest('.comp-card').classList.remove('has-photo');this.remove()">`
+      : '';
+
+    return `<div class="comp-card${photo ? ' has-photo' : ''}">
+      ${photo}
       <div class="comp-money">
         <div class="comp-sale-price">$${price.toLocaleString()}</div>
         ${c.status === 'sold' && c.listPrice
