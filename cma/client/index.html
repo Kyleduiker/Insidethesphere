@@ -549,11 +549,9 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
 }
 .comp-sheet-icon:before{top:5px}
 .comp-sheet-icon:after{top:9px;right:6px}
-@media(max-width:700px){
-  .comp-card{grid-template-columns:1fr;gap:14px;padding:22px 20px}
-  .comp-money{text-align:left;padding-right:0;border-right:none;
-    border-bottom:1px solid var(--border);padding-bottom:12px}
-}
+/* The stacked comp-card treatment lives with the rule that triggers the
+   stack, in the 860px block below. Splitting them left 700–860px showing a
+   stacked card wearing two-column styling. */
 .comp-address{
   font-family:var(--serif);
   font-size:1.4rem;font-weight:400;
@@ -933,13 +931,22 @@ input[type=range]::-moz-range-thumb{
 }
 
 /* RESPONSIVE */
+/* Tablet — 768px portrait is the presentation device. The three-column
+   stats row and the Conservative / Recommended / Maximum price comparison
+   both stay three-up here; the type and padding scale down instead of the
+   grid collapsing. At 768px a seven-figure price needs ~176px and a
+   32px-padded cell leaves 175px, so the scaling is what makes it fit. */
 @media(max-width:860px){
   .section-inner{padding:0 24px}
   .section{padding:56px 0}
   .cover-content{padding:32px 24px}
-  .comp-card{grid-template-columns:1fr}
-  .stats-row{grid-template-columns:1fr}
-  .value-cols{grid-template-columns:1fr}
+  .comp-card{grid-template-columns:1fr;gap:14px;padding:22px 20px}
+  .comp-money{text-align:left;padding-right:0;border-right:none;
+    border-bottom:1px solid var(--border);padding-bottom:12px}
+  .stat-block{padding:26px 18px}
+  .stat-value{font-size:2.3rem}
+  .value-col{padding:28px 18px}
+  .value-col-price{font-size:1.8rem}
   .about-grid{grid-template-columns:1fr}
   .about-photo,.about-photo-placeholder{width:120px;height:140px}
   .shelter-inner{grid-template-columns:1fr}
@@ -951,10 +958,17 @@ input[type=range]::-moz-range-thumb{
   .net-slider-card{padding:32px 24px}
   .net-row{padding:12px 24px}
 }
+/* Below tablet — phones. This is where the grids actually collapse.
+   Ordering matters: every rule here must narrow the layout relative to
+   the 860px block above, never widen it. */
+@media(max-width:700px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .value-cols{grid-template-columns:1fr}
+}
+
 @media(max-width:560px){
   .gate-address{font-size:1.6rem}
   .cover-address{font-size:2rem}
-  .stats-row{grid-template-columns:1fr 1fr}
   .journey-step .step-label{display:none}
 }
 </style>
