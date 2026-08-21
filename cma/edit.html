@@ -20,7 +20,7 @@
 :root{
   --obs:#0F0F0F;--esp:#2C2420;--stone:#8C8479;
   --parch:#EDE8E0;--ivory:#F7F4EF;--border:#D9D3CB;
-  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;
+  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;--ox:#6B2737;
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Inter',-apple-system,sans-serif;
 }
@@ -136,6 +136,9 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
   color:var(--stone);margin-bottom:5px;
 }
 .fg label span{font-weight:400;text-transform:none;letter-spacing:0;color:var(--border);font-size:10px}
+.fhint{font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:5px}
+.fhint a{color:var(--copper);text-decoration:none;border-bottom:0.5px solid var(--copper)}
+.fhint.warn{color:var(--ox)}
 .fi,.fsel,.fta{
   width:100%;padding:10px 12px;background:var(--ivory);
   border:0.5px solid var(--border);border-radius:2px;
@@ -534,6 +537,26 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
                 <option>Seton</option><option>Cranston</option>
                 <option>Legacy</option><option>Chestermere</option><option>Other</option>
               </select>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>CREB market data <span>— drives section 03</span></label>
+              <select class="fsel" id="communityId" onchange="markDirty();onMarketSourceChange()">
+                <option value="">None — enter figures manually</option>
+              </select>
+              <div class="fhint" id="communityIdHint"></div>
+            </div>
+            <div class="fg">
+              <label>Market cut</label>
+              <select class="fsel" id="marketType" onchange="markDirty();onMarketSourceChange()">
+                <option value="res">Total residential</option>
+                <option value="det">Detached</option>
+                <option value="semi">Semi-detached</option>
+                <option value="row">Row</option>
+                <option value="apt">Apartment</option>
+              </select>
+              <div class="fhint">Total residential has the most complete data. Narrow only when the figures hold up.</div>
             </div>
           </div>
           <div class="fg">
@@ -1085,6 +1108,9 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
                 cmaData = doc.data();
                 comps = cmaData.comps || [];
                 populateForm();
+                // After populateForm so the saved slug can be re-applied
+                // once the <option> list actually exists.
+                loadCommunityOptions();
                 renderComps();
                 recalcCompStats();
                 toggleCommission();
@@ -1133,6 +1159,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
             'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
@@ -1146,6 +1173,11 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
                 el.value = cmaData[id];
             }
         });
+
+        // Explicit rather than relying on 'res' happening to be the first
+        // <option>: a reordered markup list must not change the default.
+        const mt = document.getElementById('marketType');
+        if (mt && !cmaData.marketType) mt.value = MARKET_TYPE_DEFAULT;
 
         // Set client URL preview
         updateClientUrl();
@@ -1162,6 +1194,7 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
             'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
@@ -1888,6 +1921,77 @@ function renderPropPhoto() {
   else ready();
 })();
 // ── END PROPERTY PHOTO UPLOAD ────────────────────────────
+
+// ── MARKET DATA SOURCE ───────────────────────────────────
+// Links this CMA to a CREB community imported at /market-data/, so
+// section 03 can read figures instead of having them typed in.
+//
+// marketType defaults to 'res' — total residential — deliberately NOT to
+// the subject property's own type. Cranston semi-detached is thin in 110
+// of 115 months, so defaulting to the specific type would open the common
+// case on four suppressed fields and read as broken. Default to the cut
+// with complete data; narrowing is a choice the agent makes on purpose.
+const MARKET_TYPE_DEFAULT = 'res';
+
+// Populated by loadCommunityOptions(), keyed by slug.
+let communityIndex = {};
+
+function loadCommunityOptions() {
+  const sel = document.getElementById('communityId');
+  const hint = document.getElementById('communityIdHint');
+  if (!sel || !currentUser) return Promise.resolve();
+
+  return db.collection('users').doc(currentUser.uid).collection('communities')
+    .get()
+    .then(snap => {
+      communityIndex = {};
+      const opts = ['<option value="">None — enter figures manually</option>'];
+
+      snap.forEach(doc => {
+        const d = doc.data();
+        communityIndex[doc.id] = d;
+        const label = (d.name || doc.id) +
+          (d.reportMonth ? ' · ' + d.reportMonth : '');
+        opts.push(`<option value="${escAttr(doc.id)}">${escHtml(label)}</option>`);
+      });
+
+      sel.innerHTML = opts.join('');
+
+      // Re-apply the saved value: populateForm() may have run before the
+      // options existed, in which case setting .value silently did nothing.
+      if (cmaData && cmaData.communityId) sel.value = cmaData.communityId;
+
+      if (!snap.size) {
+        hint.innerHTML = 'No CREB communities imported yet — ' +
+          '<a href="../market-data/">import a 360 workbook</a>.';
+        hint.className = 'fhint';
+      } else {
+        hint.textContent = snap.size + ' communit' +
+          (snap.size === 1 ? 'y' : 'ies') + ' imported.';
+        hint.className = 'fhint';
+      }
+      onMarketSourceChange();
+    })
+    .catch(err => {
+      // Never fail silently — a blank picker with no explanation reads as
+      // "no data imported", which is a different and wrong conclusion.
+      console.error('Community list load failed:', err);
+      hint.textContent = 'Could not load your imported communities — ' +
+        (err.message || err.code || 'see console');
+      hint.className = 'fhint warn';
+    });
+}
+
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(v) { return escHtml(v); }
+
+// Called when either picker changes. Section 03 rendering hangs off this.
+function onMarketSourceChange() {
+  if (typeof renderMarketPanel === 'function') renderMarketPanel();
+}
 
 // ── CREB MONTHLY STATS PARSER ────────────────────────────
 // Reads the CREB community "360" report. One monthly time series per
