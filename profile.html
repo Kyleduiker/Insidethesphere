@@ -27,10 +27,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-ghost:hover{background:#eee}
 
 /* LAYOUT */
+/* Offset for the fixed 220px rail injected by js/header.js.
+   header.js hides that rail below 900px, so drop the offset there too. */
+#app,.loading{margin-left:220px}
+@media(max-width:900px){#app,.loading{margin-left:0}}
 .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 113px)}
 
-/* SIDEBAR */
-.sidebar{background:#fff;border-right:1px solid #eee;padding:20px 0;position:sticky;top:113px;height:calc(100vh - 113px);overflow-y:auto}
+/* SIDEBAR — page-local section switcher, scoped so it does not
+   bleed onto the #sphere-sidebar injected by js/header.js */
+.layout .sidebar{background:#fff;border-right:1px solid #eee;padding:20px 0;position:sticky;top:113px;height:calc(100vh - 113px);overflow-y:auto}
 .sb-section{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#ccc;padding:14px 18px 5px}
 .sb-item{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;font-size:13px;color:#777;border-left:2px solid transparent;transition:all .15s;user-select:none}
 .sb-item:hover{color:#0F0F0F;background:#F7F4EF}
@@ -162,7 +167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 @media(max-width:768px){
   .layout{grid-template-columns:1fr}
-  .sidebar{display:none}
+  .layout .sidebar{display:none}
   .main{padding:16px}
   .row2,.row3{grid-template-columns:1fr}
   .plan-cards{grid-template-columns:1fr}
