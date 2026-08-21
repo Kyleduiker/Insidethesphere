@@ -101,6 +101,29 @@ tr:last-child td{border-bottom:none}
 .tag.cnt{border-color:var(--border)}
 .tag.sup{border-color:var(--ox);color:var(--ox)}
 .tag.alw{border-color:var(--sage);color:var(--sage)}
+.tag.comp{border-color:var(--copper);color:var(--copper)}
+
+/* FORM */
+.form{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+.fg label{
+  display:block;font-size:9px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--stone);margin-bottom:6px;
+}
+.fg input,.fg select{
+  width:100%;padding:9px 11px;border:0.5px solid var(--border);border-radius:2px;
+  font-family:var(--sans);font-size:13px;color:var(--obs);background:#fff;
+}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--copper)}
+.path{
+  margin-top:16px;padding:11px 13px;background:var(--parch);border-radius:2px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--esp);
+  line-height:1.7;word-break:break-all;
+}
+.sizes{margin-top:12px;font-size:11px;color:var(--stone);line-height:1.7}
+.ok-box{border:0.5px solid var(--sage);background:#F6F8F6;padding:16px 20px;border-radius:2px;margin-top:18px}
+.ok-t{font-size:11px;font-weight:600;color:var(--sage);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.ok-b{font-size:12px;color:var(--esp);line-height:1.7}
+.ok-b code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px}
 td s{color:var(--ox);opacity:.65;text-decoration-thickness:1px}
 
 /* WARNINGS */
@@ -236,14 +259,54 @@ td s{color:var(--ox);opacity:.65;text-decoration-thickness:1px}
         <div id="warnings" style="margin-top:16px"></div>
       </section>
 
+      <section>
+        <span class="eyebrow">Write</span>
+        <div class="accent"></div>
+        <h2>Save to Firestore</h2>
+        <p class="lede">
+          Scoped to your own account. Nothing is centrally hosted and nothing is
+          shared between agents — this data lands under your uid, the same way your
+          Matrix exports do.
+        </p>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-h"><div class="card-t">Destination</div></div>
+          <div class="form">
+            <div class="fg">
+              <label for="fName">Community name</label>
+              <input id="fName" autocomplete="off">
+            </div>
+            <div class="fg">
+              <label for="fSlug">Slug</label>
+              <input id="fSlug" autocomplete="off">
+            </div>
+            <div class="fg">
+              <label for="fCity">City</label>
+              <select id="fCity">
+                <option>Calgary</option>
+                <option>Chestermere</option>
+                <option>Okotoks</option>
+                <option>Airdrie</option>
+                <option>Cochrane</option>
+                <option>Strathmore</option>
+              </select>
+            </div>
+          </div>
+          <div class="path" id="pathPreview"></div>
+          <div id="existing"></div>
+          <div id="sizes" class="sizes"></div>
+        </div>
+      </section>
+
       <div class="actions">
-        <button class="btn btn-p" id="writeBtn" disabled>Write to Firestore</button>
+        <button class="btn btn-p" id="writeBtn">Write to Firestore</button>
         <button class="btn btn-g" id="jsonBtn">Download parsed JSON</button>
-        <div class="actions-n">
-          The write step is deliberately not built yet. Confirm the field names and
-          the HPI mapping first.
+        <div class="actions-n" id="actionsNote">
+          Writes six documents — one community record plus one per property type.
         </div>
       </div>
+
+      <div id="writeResult"></div>
 
     </div>
   </div>
@@ -334,6 +397,40 @@ var ALWAYS_RENDER      = ['benchmarkPrice', 'hpiIndex'];
 
 function isThin(rec) {
   return !!rec && rec.sales !== null && rec.sales <= THIN_MAX_SALES;
+}
+
+/* ── REQUIRED COMPANIONS ────────────────────────────────────────────────
+   Wherever benchmarkPrice renders client-facing, the sales count behind it
+   renders in the same visual unit. Not a tooltip, not a footnote, not on
+   hover — beside it, in the same breath.
+
+   "Benchmark $498,900" invites a question no agent can answer standing in
+   a kitchen. "$498,900, based on 2 sales this month" answers it before it
+   is asked, and is still a useful number. At 96% thin months for Cranston
+   semi-detached this is the normal case, not an edge case.
+
+   This is a display contract, not a storage rule — both fields are already
+   stored. It is written onto the community document so a renderer reads
+   the contract from the data rather than importing a constants file that
+   may not have been kept in step.
+   ─────────────────────────────────────────────────────────────────────── */
+var REQUIRED_COMPANIONS = { benchmarkPrice: ['sales'] };
+
+function isCompanionField(name) {
+  return Object.keys(REQUIRED_COMPANIONS).some(function (k) {
+    return REQUIRED_COMPANIONS[k].indexOf(name) >= 0;
+  });
+}
+
+function displayContract() {
+  return {
+    thinMaxSales:       THIN_MAX_SALES,
+    suppressWhenThin:   SUPPRESS_WHEN_THIN.slice(),
+    alwaysRender:       ALWAYS_RENDER.slice(),
+    requiredCompanions: { benchmarkPrice: ['sales'] },
+    percentagesAre:     'fraction',
+    setOn:              '2026-08-21'
+  };
 }
 
 /* HPI Summary attribute labels -> stored field names. */
@@ -648,7 +745,12 @@ function render(p) {
     var rule = SUPPRESS_WHEN_THIN.indexOf(f.name) >= 0
       ? '<span class="tag sup">suppressed if thin</span>'
       : (ALWAYS_RENDER.indexOf(f.name) >= 0
-          ? '<span class="tag alw">always renders</span>' : '');
+          ? '<span class="tag alw">always renders</span>' +
+            (REQUIRED_COMPANIONS[f.name]
+              ? ' <span class="tag comp">needs ' +
+                esc(REQUIRED_COMPANIONS[f.name].join(', ')) + '</span>' : '')
+          : (isCompanionField(f.name)
+              ? '<span class="tag comp">required beside benchmarkPrice</span>' : ''));
     return '<tr>' +
       '<td class="col">' + f.col + '</td>' +
       '<td class="src">' + esc(f.src) + '</td>' +
@@ -709,6 +811,22 @@ function render(p) {
     '<tr><th>Field</th><th>res</th><th>det</th><th>semi</th><th>row</th><th>apt</th></tr>' + hRows;
 
   renderWarnings(p);
+
+  /* Prefill the destination from the workbook, but leave it editable —
+     the sheet carries the community name and nothing about which city it
+     belongs to, and Chestermere is not in Calgary. */
+  document.getElementById('fName').value = p.community || '';
+  document.getElementById('fSlug').value = p.communitySlug || '';
+  var citySel = document.getElementById('fCity');
+  for (var i = 0; i < citySel.options.length; i++) {
+    if (citySel.options[i].value.toLowerCase() === (p.communitySlug || '')) {
+      citySel.selectedIndex = i;   /* Chestermere is its own city AND community */
+      break;
+    }
+  }
+  updatePath();
+  renderSizes();
+  checkExisting();
 
   document.getElementById('results').classList.remove('hidden');
 }
@@ -880,6 +998,7 @@ function handleFile(file) {
   document.querySelector('.drop-s').textContent =
     Math.round(file.size / 1024) + ' KB · parsing…';
 
+  sourceFileName = file.name;
   var reader = new FileReader();
   reader.onerror = function () { showError('Could not read the file off disk.'); };
   reader.onload = function (e) {
@@ -896,6 +1015,202 @@ function handleFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
+/* ── WRITE ─────────────────────────────────────────────────────────────
+   users/{uid}/communities/{slug}                  community record
+   users/{uid}/communities/{slug}/types/{type}     one per property type
+
+   Per-user, deliberately. Each agent imports their own CREB report, so
+   nothing is centrally hosted and the presentation-layer framing holds.
+
+   Six documents, one batch — atomic, so a partial import cannot leave
+   three property types on the new report and two on the old.
+   ─────────────────────────────────────────────────────────────────────── */
+
+var currentUser = null;
+var sourceFileName = null;
+
+function targetMeta() {
+  return {
+    name: (document.getElementById('fName').value || '').trim(),
+    slug: slugify(document.getElementById('fSlug').value || ''),
+    city: document.getElementById('fCity').value
+  };
+}
+
+function communityRef(uid, slug) {
+  return db.collection('users').doc(uid).collection('communities').doc(slug);
+}
+
+function buildParentDoc(meta) {
+  var det = parsed.types.det;
+  return {
+    name:           meta.name,
+    slug:           meta.slug,
+    city:           meta.city,
+    source:         'CREB 360 Monthly',
+    sourceFile:     sourceFileName || null,
+    reportMonth:    parsed.reportMonth || null,
+    firstMonth:     det.firstMonth,
+    lastMonth:      det.lastMonth,
+    monthCount:     det.monthCount,
+    availableTypes: Object.keys(parsed.types),
+    display:        displayContract(),
+    /* serverTimestamp() is safe at the top level of a document. It is
+       rejected inside arrays — the recurring trap in this codebase. */
+    importedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+    importedBy:     currentUser.uid
+  };
+}
+
+function buildTypeDoc(k) {
+  var t = parsed.types[k];
+  return {
+    propertyType: k,
+    sheet:        t.sheet,
+    months:       t.months,
+    annual:       t.annual,
+    hpi:          (parsed.hpi.types && parsed.hpi.types[k]) || {},
+    monthCount:   t.monthCount,
+    firstMonth:   t.firstMonth,
+    lastMonth:    t.lastMonth,
+    updatedAt:    firebase.firestore.FieldValue.serverTimestamp()
+  };
+}
+
+/* Rough on-the-wire size, to catch a document approaching the 1 MiB cap
+   before Firestore rejects it. */
+function docBytes(o) {
+  return new Blob([JSON.stringify(o)]).size;
+}
+
+function updatePath() {
+  var meta = targetMeta();
+  var uid = currentUser ? currentUser.uid : '{uid}';
+  var slug = meta.slug || '{slug}';
+  var lines = ['users/' + uid + '/communities/' + slug];
+  Object.keys(parsed ? parsed.types : {}).forEach(function (k) {
+    lines.push('users/' + uid + '/communities/' + slug + '/types/' + k);
+  });
+  document.getElementById('pathPreview').innerHTML = lines.map(esc).join('<br>');
+
+  var btn = document.getElementById('writeBtn');
+  btn.disabled = !(parsed && currentUser && meta.slug && meta.name);
+}
+
+function renderSizes() {
+  if (!parsed) return;
+  var parts = Object.keys(parsed.types).map(function (k) {
+    var b = docBytes(buildTypeDoc(k));
+    return k + ' ' + Math.round(b / 1024) + ' KB';
+  });
+  var max = Math.max.apply(null, Object.keys(parsed.types).map(function (k) {
+    return docBytes(buildTypeDoc(k));
+  }));
+  document.getElementById('sizes').innerHTML =
+    'Document sizes — ' + esc(parts.join(' · ')) +
+    '. Largest is ' + (max / 1048576 * 100).toFixed(1) +
+    '% of the 1 MiB limit.';
+}
+
+/* Read the existing community doc so an overwrite is never silent. */
+function checkExisting() {
+  var box = document.getElementById('existing');
+  var meta = targetMeta();
+  if (!currentUser || !meta.slug) { box.innerHTML = ''; return; }
+
+  communityRef(currentUser.uid, meta.slug).get()
+    .then(function (doc) {
+      if (!doc.exists) {
+        box.innerHTML = warn('New community',
+          'No existing record at this path. This will create it.');
+        return;
+      }
+      var d = doc.data();
+      box.innerHTML = warn('Overwrites an existing import',
+        'A record already exists for <code>' + esc(meta.slug) + '</code> — ' +
+        esc(d.name || '?') + ', report month <code>' + esc(d.reportMonth || '?') +
+        '</code>, imported ' +
+        esc(d.importedAt && d.importedAt.toDate
+              ? d.importedAt.toDate().toLocaleString() : 'unknown') +
+        '. Writing replaces all six documents. The incoming file covers through <code>' +
+        esc(parsed.reportMonth || '?') + '</code>.',
+        parsed.reportMonth && d.reportMonth && parsed.reportMonth < d.reportMonth);
+    })
+    .catch(function (err) {
+      console.error('Existing-record check failed:', err);
+      box.innerHTML = warn('Could not check for an existing record',
+        esc(err.message || String(err)) +
+        ' — the write may still work, but you are writing blind.', true);
+    });
+}
+
+function doWrite() {
+  var btn = document.getElementById('writeBtn');
+  var result = document.getElementById('writeResult');
+  var meta = targetMeta();
+
+  if (!currentUser) { result.innerHTML = errBox('Not signed in.'); return; }
+  if (!meta.slug || !meta.name) {
+    result.innerHTML = errBox('Community name and slug are both required.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Writing…';
+  result.innerHTML = '';
+
+  var base = communityRef(currentUser.uid, meta.slug);
+  var batch = db.batch();
+  var written = ['users/' + currentUser.uid + '/communities/' + meta.slug];
+
+  batch.set(base, buildParentDoc(meta));
+  Object.keys(parsed.types).forEach(function (k) {
+    batch.set(base.collection('types').doc(k), buildTypeDoc(k));
+    written.push('…/communities/' + meta.slug + '/types/' + k);
+  });
+
+  batch.commit()
+    .then(function () {
+      btn.textContent = 'Write to Firestore';
+      btn.disabled = false;
+      result.innerHTML =
+        '<div class="ok-box"><div class="ok-t">Written — ' + written.length +
+        ' documents</div><div class="ok-b"><code>' +
+        written.map(esc).join('</code><br><code>') + '</code></div></div>';
+      checkExisting();
+    })
+    .catch(function (err) {
+      console.error('Firestore write failed:', err);
+      btn.textContent = 'Write to Firestore';
+      btn.disabled = false;
+      result.innerHTML = errBox(
+        'Firestore rejected the write.\n\n' +
+        (err.code ? 'code: ' + err.code + '\n' : '') +
+        (err.message || String(err)) +
+        '\n\nIf this is permission-denied, check the security rules allow ' +
+        'the signed-in user to write users/{uid}/communities/**.');
+    });
+}
+
+function errBox(msg) {
+  return '<div class="err-box"><div class="err-t">Write failed</div>' +
+    '<div class="err-m">' + esc(msg) + '</div></div>';
+}
+
+['fName', 'fSlug', 'fCity'].forEach(function (id) {
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === id) {
+      updatePath();
+      if (id === 'fSlug') checkExisting();
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === id) updatePath();
+  });
+});
+
+document.getElementById('writeBtn').addEventListener('click', doWrite);
+
 document.getElementById('jsonBtn').addEventListener('click', function () {
   if (!parsed) return;
   var blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
@@ -909,7 +1224,9 @@ document.getElementById('jsonBtn').addEventListener('click', function () {
 });
 
 firebase.auth().onAuthStateChanged(function (user) {
-  if (!user) window.location.href = '../login.html';
+  if (!user) { window.location.href = '../login.html'; return; }
+  currentUser = user;
+  if (parsed) { updatePath(); checkExisting(); }
 });
 </script>
 </body>
