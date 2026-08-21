@@ -151,8 +151,9 @@ Established Aug 20, 2026. Every change follows this loop:
 2. **Test on localhost.** In a separate PowerShell window, from the repo root:
    `python -m http.server 8000`, then open `http://localhost:8000/login.html`.
    Leave that window open; closing it stops the server.
-3. **Commit and push** — via GitHub Desktop or Claude Code.
-4. **Verify live** at insidethesphere.com after the Pages build goes green
+3. **Commit** — Claude Code does this automatically. See Git workflow below.
+4. **Push** — Kyle only, and only after the change has been tested on localhost.
+5. **Verify live** at insidethesphere.com after the Pages build goes green
    (~40–60s), with a hard refresh.
 
 Two things that bite:
@@ -167,6 +168,42 @@ Two things that bite:
 Test PDFs live in `test-pdfs/`, which is gitignored. **Keep it that way** — the repo
 is public, and Matrix exports contain real client data: addresses, prices, LINC
 numbers, tax amounts.
+
+---
+
+## Git workflow
+
+Established Aug 21, 2026.
+
+### Commit — automatic
+
+- **Commit after each discrete change, without being asked.** Don't wait for Kyle to
+  request it. Use a conventional-commit subject line: `fix:`, `feat:`, `refactor:`,
+  `docs:`.
+- **One commit per page or file** during any multi-page pass — a migration, a rename,
+  a palette change. Never batch unrelated changes into a single commit. The point of a
+  commit is that it's a revertible unit; batching destroys that.
+- **Report the short hash and subject** after committing, so there's a revert handle if
+  the change turns out to be wrong.
+
+### Push — never automatic
+
+**Never run `git push`.** Not as a convenience, not as the second half of "commit and
+push," not because the change looks obviously safe. Kyle pushes, or explicitly says
+"push."
+
+This repo deploys to a live site on every push to `main`. Commit is local and
+reversible; push is public and irreversible in practice. Keeping them separate is the
+only thing standing between an untested change and insidethesphere.com.
+
+The sequence is always: commit → Kyle tests on localhost → Kyle says push. A change
+that hasn't been seen in a browser does not go live.
+
+### Session start
+
+**Run `git status` before starting work** and report anything uncommitted or unpushed
+from a previous session. Kyle works across sessions and machines; stale local state is
+easy to build on top of by accident, and finding out three days later is expensive.
 
 ---
 
