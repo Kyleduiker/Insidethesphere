@@ -17,6 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="../js/market-import.js"></script>
+<script src="../js/city-stats-import.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1098,18 +1099,33 @@ details.override>summary:hover{color:var(--obs)}
 <div class="modal-overlay" id="mktModal" onclick="if(event.target===this)closeMktModal()">
   <div class="modal" style="max-width:760px">
     <div class="modal-header">
-      <div class="modal-title">Import CREB 360 workbook</div>
+      <div class="modal-title" id="mktModalTitle">Import market data</div>
       <button class="modal-close" onclick="closeMktModal()">✕</button>
     </div>
     <div class="modal-body">
 
       <div class="mkt-drop" id="mktDrop">
-        <input type="file" id="mktFile" accept=".xlsx,.xls">
-        <div class="mkt-drop-t" id="mktDropT">Drop the 360 Monthly workbook here</div>
-        <div class="mkt-drop-s" id="mktDropS">or click to choose a file · .xlsx</div>
+        <input type="file" id="mktFile" accept=".xlsx,.xls,.pdf">
+        <div class="mkt-drop-t" id="mktDropT">Drop a CREB file here</div>
+        <div class="mkt-drop-s" id="mktDropS">360 community workbook (.xlsx) or City of Calgary Monthly Statistics Package (.pdf)</div>
       </div>
 
       <div id="mktErr" class="mkt-err" style="display:none"></div>
+
+      <!-- City of Calgary package — city-wide, no community destination -->
+      <div id="mktCityReview" style="display:none">
+        <div class="mkt-sum" id="mktCitySum"></div>
+
+        <div class="mkt-sub">Total residential</div>
+        <table class="mkt-table" id="mktCityRes"></table>
+
+        <div class="mkt-sub">Property types — confirm before writing</div>
+        <div class="mkt-note" id="mktCityNote"></div>
+        <table class="mkt-table" id="mktCityTypes"></table>
+
+        <div id="mktCityWarn"></div>
+        <div class="mkt-path" id="mktCityPath"></div>
+      </div>
 
       <div id="mktReview" style="display:none">
         <div class="mkt-sum" id="mktSum"></div>
@@ -2201,18 +2217,26 @@ function onMarketSourceChange() {
 // summary, thin-data table, warnings, destination.
 
 var MI = window.SphereMarketImport;
+var CS = window.SphereCityStats;
 var mktParsed = null;
+var mktCity = null;        // parsed City of Calgary package
+var mktMode = null;        // 'xlsx' | 'city'
 var mktFileName = null;
 
 function openMktModal() {
   mktParsed = null;
+  mktCity = null;
+  mktMode = null;
   mktFileName = null;
+  document.getElementById('mktModalTitle').textContent = 'Import market data';
+  document.getElementById('mktCityReview').style.display = 'none';
   document.getElementById('mktReview').style.display = 'none';
   document.getElementById('mktErr').style.display = 'none';
   document.getElementById('mktResult').innerHTML = '';
   document.getElementById('mktExisting').innerHTML = '';
-  document.getElementById('mktDropT').textContent = 'Drop the 360 Monthly workbook here';
-  document.getElementById('mktDropS').textContent = 'or click to choose a file · .xlsx';
+  document.getElementById('mktDropT').textContent = 'Drop a CREB file here';
+  document.getElementById('mktDropS').textContent =
+    '360 community workbook (.xlsx) or City of Calgary Monthly Statistics Package (.pdf)';
   document.getElementById('mktWriteBtn').disabled = true;
   document.getElementById('mktFile').value = '';
   document.getElementById('mktModal').classList.add('open');
@@ -2227,16 +2251,86 @@ function mktShowError(msg) {
   el.textContent = msg;
   el.style.display = 'block';
   document.getElementById('mktReview').style.display = 'none';
+  document.getElementById('mktCityReview').style.display = 'none';
   document.getElementById('mktWriteBtn').disabled = true;
+}
+
+/* PDF.js gives each text item a transform matrix; e and f are the pen
+   position. That is all the city-stats parser needs — it recovers rows by
+   clustering y and ordering by x. */
+function pdfPageRuns(pdf, n) {
+  return pdf.getPage(n).then(function (page) {
+    return page.getTextContent();
+  }).then(function (tc) {
+    return tc.items.map(function (it) {
+      return {
+        x: Math.round(it.transform[4] * 10) / 10,
+        y: Math.round(it.transform[5] * 10) / 10,
+        str: it.str
+      };
+    }).filter(function (r) { return r.str && r.str.trim(); });
+  });
+}
+
+var CITY_PAGES = [1, 3, 5, 6, 13, 15, 17, 19];
+
+function mktHandleCityPdf(file) {
+  var status = document.getElementById('mktDropS');
+  status.textContent = Math.round(file.size / 1024) + ' KB · reading pages…';
+
+  file.arrayBuffer().then(function (buf) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    return pdfjsLib.getDocument({
+      data: new Uint8Array(buf), useWorkerFetch: false,
+      isEvalSupported: false, useSystemFonts: true
+    }).promise;
+  }).then(function (pdf) {
+    var pages = {};
+    var chain = Promise.resolve();
+    CITY_PAGES.forEach(function (n) {
+      chain = chain.then(function () {
+        if (n > pdf.numPages) { pages[String(n)] = []; return; }
+        return pdfPageRuns(pdf, n).then(function (r) { pages[String(n)] = r; });
+      });
+    });
+    return chain.then(function () { return pages; });
+  }).then(function (pages) {
+    mktCity = CS.parseCityStats(pages);
+    mktRenderCity();
+    status.textContent = Math.round(file.size / 1024) + ' KB · parsed';
+  }).catch(function (err) {
+    console.error('City stats parse failed:', err);
+    mktShowError(err && err.message ? err.message : String(err));
+  });
 }
 
 function mktHandleFile(file) {
   if (!file) return;
+  mktFileName = file.name;
+  document.getElementById('mktErr').style.display = 'none';
+  document.getElementById('mktReview').style.display = 'none';
+  document.getElementById('mktCityReview').style.display = 'none';
+  document.getElementById('mktResult').innerHTML = '';
+  document.getElementById('mktWriteBtn').disabled = true;
+  document.getElementById('mktDropT').textContent = file.name;
+
+  if (/\.pdf$/i.test(file.name)) {
+    if (typeof pdfjsLib === 'undefined') {
+      mktShowError('The PDF library did not load. Check the network tab for pdf.min.js.');
+      return;
+    }
+    mktMode = 'city';
+    document.getElementById('mktModalTitle').textContent = 'Import City of Calgary statistics';
+    mktHandleCityPdf(file);
+    return;
+  }
+
+  mktMode = 'xlsx';
+  document.getElementById('mktModalTitle').textContent = 'Import CREB 360 workbook';
   if (typeof XLSX === 'undefined') {
     mktShowError('The spreadsheet library did not load. Check the network tab for xlsx.full.min.js.');
     return;
   }
-  mktFileName = file.name;
   document.getElementById('mktErr').style.display = 'none';
   document.getElementById('mktDropT').textContent = file.name;
   document.getElementById('mktDropS').textContent =
@@ -2335,6 +2429,108 @@ function mktRenderReview() {
   mktCheckExisting();
 }
 
+/* ── City of Calgary review ──────────────────────────────────────────── */
+
+function mktRenderCity() {
+  var p = mktCity;
+  var money = function (v) { return v == null ? '—' : '$' + Math.round(v).toLocaleString(); };
+  var pct   = function (v) { return v == null ? '—' : (v * 100).toFixed(2) + '%'; };
+  var num   = function (v, d) { return v == null ? '—' : v.toFixed(d || 0); };
+
+  document.getElementById('mktCitySum').innerHTML = [
+    ['Report month', escHtml(p.reportMonth)],
+    ['Benchmark', money(p.residential.benchmarkPrice && p.residential.benchmarkPrice.current)],
+    ['Sales', p.residential.sales ? p.residential.sales.current : '—'],
+    ['Rows read', p.rowsRead + ' / 12']
+  ].map(function (r) {
+    return '<div><div class="mkt-sum-l">' + r[0] + '</div>' +
+           '<div class="mkt-sum-v">' + r[1] + '</div></div>';
+  }).join('');
+
+  var R = p.residential;
+  var money_rows = { salesVolume: 1, benchmarkPrice: 1, medianPrice: 1, averagePrice: 1 };
+  var pct_rows   = { salesToNewListings: 1, salesToListPrice: 1 };
+  var LABEL = {
+    sales: 'Total sales', salesVolume: 'Sales volume', newListings: 'New listings',
+    inventory: 'Inventory', monthsOfSupply: 'Months of supply',
+    salesToNewListings: 'Sales to new listings', salesToListPrice: 'Sales to list price',
+    dom: 'Days on market', benchmarkPrice: 'Benchmark price',
+    medianPrice: 'Median price', averagePrice: 'Average price', hpiIndex: 'HPI index'
+  };
+  document.getElementById('mktCityRes').innerHTML =
+    '<tr><th>Metric</th><th>Year ago</th><th>Current</th><th>Y/Y</th>' +
+    '<th>YTD ago</th><th>YTD</th><th>YTD Y/Y</th></tr>' +
+    Object.keys(LABEL).map(function (k) {
+      var v = R[k];
+      if (!v) return '<tr><td>' + LABEL[k] + '</td><td colspan="6">— not read —</td></tr>';
+      var f = money_rows[k] ? money : (pct_rows[k] ? pct : function (x) { return num(x, k === 'monthsOfSupply' ? 2 : 0); });
+      return '<tr><td>' + LABEL[k] + '</td><td>' + f(v.priorYear) + '</td><td>' + f(v.current) +
+        '</td><td>' + pct(v.yoy) + '</td><td>' + f(v.ytdPrior) + '</td><td>' + f(v.ytdCurrent) +
+        '</td><td>' + pct(v.ytdYoy) + '</td></tr>';
+    }).join('');
+
+  // The confirmation half of the page 6 mitigation: the four benchmarks are
+  // shown beside the labelled source they were matched against, so the
+  // assignment is checked by eye as well as by code.
+  var note = document.getElementById('mktCityNote');
+  var types = document.getElementById('mktCityTypes');
+  var ORDER = [['det','Detached'],['semi','Semi-detached'],['row','Row'],['apt','Apartment']];
+
+  if (p.verified) {
+    note.innerHTML = 'Page 6 does not name its four blocks, and their order is not ' +
+      'stable between editions. Each block was matched to a type by benchmark value ' +
+      'against <strong>' + escHtml(p.labelSource) + '</strong>. Confirm these read correctly.';
+    types.innerHTML = '<tr><th>Type</th><th>Benchmark</th><th>Y/Y</th><th>Sales</th>' +
+      '<th>Months of supply</th><th>Cross-check</th></tr>' +
+      ORDER.map(function (o) {
+        var t = p.types[o[0]];
+        if (!t) return '';
+        return '<tr><td>' + o[1] + '</td>' +
+          '<td>' + money(t.benchmarkPrice.current) + '</td>' +
+          '<td>' + pct(t.benchmarkPrice.yoy) + '</td>' +
+          '<td>' + (t.sales ? t.sales.current : '—') + '</td>' +
+          '<td>' + (t.monthsOfSupply ? num(t.monthsOfSupply.current, 2) : '—') + '</td>' +
+          '<td><span class="mkt-tag ok">matches ' + money(p.labelled[o[0]]) + '</span></td></tr>';
+      }).join('');
+  } else {
+    note.innerHTML = '<strong>The cross-check did not pass, so this will not be written.</strong> ' +
+      'Page 6 does not name its four blocks and their order is not stable between ' +
+      'editions, so without a labelled page to match against, an apartment benchmark ' +
+      'could be stored as detached.';
+    types.innerHTML = '<tr><th>Block</th><th>Benchmark on page 6</th><th>Matched to</th></tr>' +
+      p.blocks.map(function (b, i) {
+        var bm = b.benchmarkPrice ? b.benchmarkPrice.current : null;
+        var hit = null;
+        Object.keys(p.labelled).forEach(function (k) {
+          if (bm != null && Math.abs(p.labelled[k] - bm) < 1) hit = k;
+        });
+        return '<tr><td>Block ' + (i + 1) + '</td><td>' + money(bm) + '</td><td>' +
+          (hit ? hit : '<span class="mkt-tag sup">no match</span>') + '</td></tr>';
+      }).join('');
+  }
+
+  var w = p.warnings.map(function (m) {
+    return '<div class="mkt-flag"><strong>Note.</strong> ' + escHtml(m) + '</div>';
+  });
+  if (p.monthSource.indexOf('page 1') === 0) {
+    w.unshift('<div class="mkt-flag"><strong>Report month read from page 1.</strong> ' +
+      'The page 5 column headers are not in this edition\'s text layer. The filename ' +
+      'was not used.</div>');
+  }
+  if (!p.verified) {
+    w.unshift('<div class="mkt-flag bad"><strong>Write blocked.</strong> ' +
+      'The property-type cross-check did not pass.</div>');
+  }
+  document.getElementById('mktCityWarn').innerHTML = w.join('');
+
+  var uid = currentUser ? currentUser.uid : '{uid}';
+  document.getElementById('mktCityPath').textContent =
+    'users/' + uid + '/market/city-calgary/months/' + p.reportMonth;
+
+  document.getElementById('mktCityReview').style.display = 'block';
+  document.getElementById('mktWriteBtn').disabled = !(p.verified && currentUser);
+}
+
 function mktMeta() {
   return {
     name: (document.getElementById('mktName').value || '').trim(),
@@ -2344,6 +2540,9 @@ function mktMeta() {
 }
 
 function mktUpdatePath() {
+  // The destination form belongs to the workbook path only; in city mode
+  // the button state is owned by the cross-check.
+  if (mktMode === 'city') return;
   var m = mktMeta();
   var uid = currentUser ? currentUser.uid : '{uid}';
   var slug = m.slug || '{slug}';
@@ -2385,11 +2584,37 @@ function mktCheckExisting() {
     });
 }
 
+function mktWriteCity() {
+  var btn = document.getElementById('mktWriteBtn');
+  var out = document.getElementById('mktResult');
+  btn.disabled = true;
+  btn.textContent = 'Writing…';
+  out.innerHTML = '';
+
+  // writeCityStats refuses on its own if verified is false — the button
+  // being disabled is the first gate, not the only one.
+  CS.writeCityStats(mktCity, currentUser.uid, mktFileName)
+    .then(function (paths) {
+      btn.textContent = 'Write to Firestore';
+      out.innerHTML = '<div class="mkt-ok"><strong>Written.</strong><br><code>' +
+        escHtml(paths[0]) + '</code></div>';
+      showToast('City of Calgary statistics imported for ' + mktCity.reportMonth);
+    })
+    .catch(function (err) {
+      console.error('City stats write failed:', err);
+      btn.textContent = 'Write to Firestore';
+      btn.disabled = !(mktCity && mktCity.verified);
+      out.innerHTML = '<div class="mkt-err">' + escHtml(err.message || String(err)) + '</div>';
+    });
+}
+
 function mktWrite() {
   var btn = document.getElementById('mktWriteBtn');
   var out = document.getElementById('mktResult');
-  var m = mktMeta();
   if (!currentUser) { out.innerHTML = '<div class="mkt-err">Not signed in.</div>'; return; }
+  if (mktMode === 'city') { mktWriteCity(); return; }
+
+  var m = mktMeta();
   if (!m.slug || !m.name) {
     out.innerHTML = '<div class="mkt-err">Community name and slug are both required.</div>';
     return;
