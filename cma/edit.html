@@ -1652,6 +1652,19 @@ details.override>summary:hover{color:var(--obs)}
             notes: document.getElementById('comp-notes').value
         };
 
+        // Record which fields have been changed by hand, measured against
+        // what the last import put there. A re-import refreshes everything
+        // except these, so a correction made once stays made — while a
+        // field never touched keeps updating from the sheet forever.
+        const prev = (editingCompIndex !== null && comps[editingCompIndex]) || {};
+        const baseline = prev.importedValues || {};
+        const manual = new Set(Array.isArray(prev.manualFields) ? prev.manualFields : []);
+        EDITABLE_FIELDS.forEach(f => {
+            if (!(f in baseline)) return;      // never imported — nothing to diverge from
+            if (!sameValue(baseline[f], comp[f])) manual.add(f);
+        });
+        comp.manualFields = Array.from(manual);
+
         const colRef = db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .collection('comps');
@@ -3382,11 +3395,59 @@ function showMultiReview(listings) {
   const fmt = n => (n ? '$' + parseInt(n, 10).toLocaleString() : '—');
   const multiSource = new Set(listings.map(l => l.sourceFile)).size > 1;
 
+  const label = { status:'status', price:'price', listPrice:'list price',
+    soldPrice:'sold price', soldDate:'sold date', dom:'DOM', sheetUrl:'MLS sheet',
+    address:'address', community:'community', beds:'beds', baths:'baths',
+    sqft:'sqft', year:'year', lotSize:'lot size', garage:'garage',
+    notes:'notes', photoUrl:'photo' };
+  const money = f => /price/i.test(f);
+  const val = (f, v) => v == null || v === '' ? '—'
+    : (money(f) ? '$' + Math.round(parseFloat(v) || 0).toLocaleString() : String(v));
+
   list.innerHTML = listings.map((l, i) => {
     const ratio = (l.soldPrice && l.listPrice)
       ? ' · ' + (l.soldPrice / l.listPrice * 100).toFixed(1) + '% of list' : '';
     const flagRow = l.flags && l.flags.length
       ? `<div class="comp-flag">⚠ ${l.flags.join(' · ')}</div>` : '';
+
+    // What this row will actually do, before anything is written.
+    const existing = findExistingComp(l.mls);
+    let planRow = '';
+    if (existing) {
+      const d = diffAgainstExisting(existing, {
+        status: l.status || 'sold', price: l.price || 0, listPrice: l.listPrice || 0,
+        soldPrice: l.soldPrice || 0, soldDate: l.soldDate || '', dom: l.dom || 0,
+        address: l.address, community: l.community || '', beds: l.beds || 0,
+        baths: l.baths || 0, sqft: l.sqft || 0, year: l.year || 0,
+        lotSize: l.lotSize || 0, garage: l.garage || '',
+        notes: l.notes ? l.notes.slice(0, 200) : '', photoBytes: l.photoBytes
+      });
+      const summary = d.changes.map(c =>
+        c.field === 'status'
+          ? `status ${c.from || '—'} → ${c.to}`
+          : `${label[c.field] || c.field} ${val(c.field, c.from)} → ${val(c.field, c.to)}`
+      );
+      planRow =
+        `<div style="font-size:10.5px;color:#4A5C4E;margin-top:5px;line-height:1.5">
+           <strong style="letter-spacing:.06em;text-transform:uppercase;font-size:9px">Updates existing comp</strong>
+           ${summary.length ? ' — ' + summary.join(' · ') : ' — no changes'}
+         </div>` +
+        (d.skipped.length
+          ? `<div style="font-size:10.5px;color:#A0714F;margin-top:3px;line-height:1.5">
+               Hand-edited, kept as is: ${d.skipped.map(s => label[s.field] || s.field).join(', ')}
+             </div>` : '') +
+        (d.regression
+          ? `<div style="font-size:10.5px;color:#6B2737;margin-top:3px;line-height:1.5">
+               ⚠ <strong>Status goes backwards, sold → ${l.status}.</strong>
+               Legitimate if the deal collapsed — but it is also what a mis-parse looks like. Check the sheet.
+             </div>` : '');
+    } else {
+      planRow =
+        `<div style="font-size:10.5px;color:#8C8479;margin-top:5px">
+           <strong style="letter-spacing:.06em;text-transform:uppercase;font-size:9px">New comp</strong>
+           ${l.mls ? '' : ' — no MLS on this sheet, so it can never be matched on a later import'}
+         </div>`;
+    }
     const src = multiSource
       ? `<span style="font-size:10px;color:#8C8479">${l.sourceFile} p.${l.startPage}</span>` : '';
     return `
@@ -3402,6 +3463,7 @@ function showMultiReview(listings) {
           ${src}
         </div>
         ${flagRow}
+        ${planRow}
       </div>
     </label>`;
   }).join('');
@@ -3581,6 +3643,95 @@ async function uploadSheetPDF(data) {
   }
 }
 
+// ── COMP RE-IMPORT ───────────────────────────────────────
+// Re-importing a sheet used to call colRef.add() unconditionally, so the
+// same MLS number produced two comps. It now matches an existing comp and
+// updates it in place, which is what the common case wants: a listing goes
+// Active to Sold and the sale price should land on the comp already in the
+// CMA rather than beside it.
+//
+// Matching is on `mls` and nothing else. A comp with no MLS — hand-added,
+// or a sheet where the parser flagged "MLS unread" — is always treated as
+// new. An address fallback would silently merge two genuinely different
+// listings at the same address, which is worse than a duplicate you can see.
+//
+// Updating in place also keeps the document id and createdAt, so the
+// editor's orderBy('createdAt') ordering does not scramble and an open
+// edit modal does not end up pointing at a deleted document.
+
+// Fields a re-import refreshes. These are the ones that exist to change
+// over a listing's life.
+const REFRESH_FIELDS = ['status', 'price', 'listPrice', 'soldPrice',
+                        'soldDate', 'dom', 'sheetUrl'];
+
+// Fields the comp form can edit, and therefore the ones manualFields can
+// protect. Must stay in step with saveComp().
+const EDITABLE_FIELDS = ['address', 'community', 'status', 'price', 'listPrice',
+                         'beds', 'baths', 'sqft', 'dom', 'year', 'garage',
+                         'photoUrl', 'notes'];
+
+// Everything else an import writes, refreshed only when untouched by hand.
+const IMPORT_FIELDS = ['address', 'community', 'beds', 'baths', 'sqft',
+                       'year', 'lotSize', 'garage', 'notes'];
+
+function sameValue(a, b) {
+  if (a == null && b == null) return true;
+  if (typeof a === 'number' || typeof b === 'number') {
+    return (parseFloat(a) || 0) === (parseFloat(b) || 0);
+  }
+  return String(a == null ? '' : a) === String(b == null ? '' : b);
+}
+
+// Snapshot of what the last import put in each editable field, so saveComp
+// can tell a hand edit from an untouched value.
+function snapshotImported(comp) {
+  const snap = {};
+  EDITABLE_FIELDS.forEach(f => { snap[f] = comp[f] === undefined ? null : comp[f]; });
+  return snap;
+}
+
+// What a re-import would do to an existing comp. Returns the field changes
+// that will be applied and the ones skipped because they are hand-edited,
+// so both can be shown before anything is written.
+function diffAgainstExisting(existing, incoming) {
+  const manual  = Array.isArray(existing.manualFields) ? existing.manualFields : [];
+  const changes = [];
+  const skipped = [];
+
+  REFRESH_FIELDS.concat(IMPORT_FIELDS).forEach(f => {
+    let next = incoming[f];
+    if (next === undefined) return;
+    if (f === 'notes' && typeof next === 'string') next = next.slice(0, 200);
+    if (sameValue(existing[f], next)) return;
+    if (manual.indexOf(f) >= 0) skipped.push({ field: f, from: existing[f], to: next });
+    else changes.push({ field: f, from: existing[f], to: next });
+  });
+
+  // photoUrl keeps the manual-wins rule from 49ad185: an extracted photo
+  // only fills an empty field, it never replaces one already set.
+  const hasPhoto = !!(existing.photoUrl && String(existing.photoUrl).trim());
+  const wantsPhoto = !!(incoming.photoBytes);
+  if (wantsPhoto && !hasPhoto) changes.push({ field: 'photoUrl', from: '', to: '(extracted)' });
+  else if (wantsPhoto && hasPhoto) skipped.push({ field: 'photoUrl', from: '(existing)', to: '(extracted)' });
+
+  // Legitimate — a collapsed deal returns a listing to Active — but it is
+  // also exactly what a mis-parse looks like, so it is never silent.
+  const regression = existing.status === 'sold' &&
+                     incoming.status && incoming.status !== 'sold';
+
+  return { changes: changes, skipped: skipped, regression: regression, manual: manual };
+}
+
+function findExistingComp(mls) {
+  if (!mls) return null;
+  const key = String(mls).trim();
+  if (!key) return null;
+  for (let i = 0; i < comps.length; i++) {
+    if (comps[i].mls && String(comps[i].mls).trim() === key) return comps[i];
+  }
+  return null;
+}
+
 async function addSelectedComps() {
   const checkboxes = document.querySelectorAll('#multi-review-list input[type=checkbox]:checked');
   if (!checkboxes.length) { showToast('Select at least one listing', 'error'); return; }
@@ -3594,13 +3745,76 @@ async function addSelectedComps() {
                    .collection('cmas').doc(cmaId)
                    .collection('comps');
 
-  let saved = 0, failed = 0;
+  let saved = 0, failed = 0, updated = 0, skippedTotal = 0;
 
   for (const cb of checkboxes) {
     const data = parsedListings[parseInt(cb.dataset.idx, 10)];
     if (!data || !data.address) continue;
 
     btn.textContent = `Saving ${saved + failed + 1} of ${checkboxes.length}...`;
+
+    const existing = findExistingComp(data.mls);
+
+    if (existing) {
+      // ── UPDATE IN PLACE ──
+      const sheetUrl = await uploadSheetPDF(data);
+      const incoming = {
+        status:    data.status || 'sold',
+        price:     data.price     || 0,
+        listPrice: data.listPrice || 0,
+        soldPrice: data.soldPrice || 0,
+        soldDate:  data.soldDate  || '',
+        dom:       data.dom   || 0,
+        sheetUrl:  sheetUrl,
+        address:   data.address,
+        community: data.community || '',
+        beds:      data.beds  || 0,
+        baths:     data.baths || 0,
+        sqft:      data.sqft  || 0,
+        year:      data.year  || 0,
+        lotSize:   data.lotSize || 0,
+        garage:    data.garage  || '',
+        notes:     data.notes ? data.notes.slice(0, 200) : '',
+        photoBytes: data.photoBytes
+      };
+
+      const d = diffAgainstExisting(existing, incoming);
+      const patch = {};
+      d.changes.forEach(c => {
+        if (c.field !== 'photoUrl') patch[c.field] = c.to;
+      });
+
+      // Only upload when the photo will actually be kept.
+      if (d.changes.some(c => c.field === 'photoUrl')) {
+        patch.photoUrl = await uploadCompPhoto(data);
+        if (!patch.photoUrl) delete patch.photoUrl;
+      }
+
+      // Refresh the imported-value baseline for everything written, so a
+      // later hand edit is measured against what the import actually put
+      // there rather than against a stale snapshot.
+      const snap = Object.assign({}, existing.importedValues || {});
+      Object.keys(patch).forEach(f => {
+        if (EDITABLE_FIELDS.indexOf(f) >= 0) snap[f] = patch[f];
+      });
+      patch.importedValues = snap;
+      patch.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        await colRef.doc(existing.id).update(patch);
+        Object.keys(patch).forEach(f => {
+          if (f !== 'updatedAt') existing[f] = patch[f];
+        });
+        updated++;
+        if (d.skipped.length) skippedTotal += d.skipped.length;
+      } catch (err) {
+        console.error('Error updating comp:', data.address, err);
+        failed++;
+      }
+      continue;
+    }
+
+    // ── NEW COMP ──
     const sheetUrl = await uploadSheetPDF(data);
 
     const comp = {
@@ -3622,10 +3836,14 @@ async function addSelectedComps() {
       photoUrl:   await uploadCompPhoto(data),
       sheetUrl:   sheetUrl,
       notes:      data.notes ? data.notes.slice(0, 200) : '',
+      // Nothing has been hand-edited yet, and the baseline is what this
+      // import wrote.
+      manualFields: [],
       // Required: loadSubComps() queries with orderBy('createdAt'), and
       // Firestore omits any document that lacks the field entirely.
       createdAt:  firebase.firestore.FieldValue.serverTimestamp()
     };
+    comp.importedValues = snapshotImported(comp);
 
     try {
       const docRef = await colRef.add(comp);
@@ -3648,8 +3866,13 @@ async function addSelectedComps() {
   btn.textContent = origText;
   btn.disabled = false;
 
-  if (failed) showToast(saved + ' added, ' + failed + ' failed — see console', 'error');
-  else        showToast(saved + ' comparable' + (saved !== 1 ? 's' : '') + ' added');
+  const parts = [];
+  if (saved)   parts.push(saved + ' added');
+  if (updated) parts.push(updated + ' updated');
+  if (skippedTotal) parts.push(skippedTotal + ' hand-edited field' +
+                               (skippedTotal === 1 ? '' : 's') + ' kept');
+  if (failed)  parts.push(failed + ' failed — see console');
+  showToast(parts.join(' · ') || 'Nothing to do', failed ? 'error' : undefined);
 }
 // ── END MATRIX PARSER ────────────────────────────────────
 
