@@ -195,6 +195,15 @@ details.override>summary:hover{color:var(--obs)}
 }
 .ovr-clear:hover{border-color:var(--ox);color:var(--ox)}
 
+.pub-market{
+  border:0.5px solid var(--champ);border-left:2px solid var(--champ);
+  background:#FDFBF6;border-radius:2px;
+  padding:13px 16px;margin-bottom:16px;
+  font-size:12px;color:var(--stone);line-height:1.6;
+}
+.pub-market strong{color:var(--obs);font-weight:500}
+.pub-market.ok{border-color:var(--sage);border-left-color:var(--sage);background:#F6F8F6}
+
 .comp-load-error{
   border:0.5px solid var(--ox);border-left:2px solid var(--ox);
   background:#FBF6F7;border-radius:2px;
@@ -1082,6 +1091,11 @@ details.override>summary:hover{color:var(--obs)}
             <div class="pub-label"><strong id="pub-status-text">Not published</strong><span id="pub-status-sub">Publish to make the client page live</span></div>
           </div>
         </div>
+        <!-- What market data did or did not travel onto the published
+             document. Publishing is never blocked by this — it is one
+             section of nine — but silence would mean finding out by
+             opening the client link. -->
+        <div id="pubMarket" class="pub-market" style="display:none"></div>
         <div class="card">
           <div class="card-title">Client link</div>
           <div class="url-row">
@@ -1517,6 +1531,113 @@ details.override>summary:hover{color:var(--obs)}
     }
 
     // ── PUBLISH CMA ──
+    // ── BENCHMARK DENORMALISATION ──
+    // The client page is unauthenticated. Verified against the live rules:
+    // users/{uid}/communities/** returns PERMISSION_DENIED to an anonymous
+    // reader, so the figures cannot be fetched there and must be copied onto
+    // public_cmas at publish time.
+    //
+    // Copying rather than reading also makes a published CMA a snapshot. A
+    // seller reopening the link in three months sees the benchmark as it was
+    // presented, not silently updated by a later import.
+    //
+    // The thin-data rule is applied HERE, not on the client page. A value
+    // suppressed at publish never reaches a publicly readable document, so no
+    // rendering bug can leak it, and the client page stays dumb — it checks
+    // whether a field exists rather than reimplementing a threshold.
+    function buildBenchmark(communityId, marketType) {
+        const out = { fields: null, note: null, ok: false };
+
+        if (!communityId) {
+            out.note = 'No CREB community is set for this CMA, so no benchmark ' +
+                       'figures were published. Section 01 falls back to the manual ' +
+                       'market fields.';
+            return Promise.resolve(out);
+        }
+
+        const type = marketType || MARKET_TYPE_DEFAULT;
+        const base = db.collection('users').doc(currentUser.uid)
+                       .collection('communities').doc(communityId);
+
+        return Promise.all([base.get(), base.collection('types').doc(type).get()])
+            .then(([parentSnap, typeSnap]) => {
+                if (!parentSnap.exists) {
+                    out.note = 'Community "' + communityId + '" is selected on this CMA ' +
+                               'but is not imported. Nothing was published for section 01. ' +
+                               'Import it, or clear the community in section 02.';
+                    return out;
+                }
+                if (!typeSnap.exists) {
+                    out.note = 'The "' + type + '" cut has no data in the ' +
+                               (parentSnap.data().name || communityId) + ' import, so no ' +
+                               'benchmark figures were published.';
+                    return out;
+                }
+
+                const parent = parentSnap.data();
+                const t = typeSnap.data();
+                // lastMonth over the parent's reportMonth: reportMonth comes
+                // from the HPI Summary label and the two can diverge.
+                const month = t.lastMonth;
+                const rec = month && t.months ? t.months[month] : null;
+                if (!rec) {
+                    out.note = 'The ' + (parent.name || communityId) + ' / ' + type +
+                               ' import has no monthly rows, so no benchmark figures ' +
+                               'were published.';
+                    return out;
+                }
+
+                const dc = parent.display || {};
+                const thinMax = dc.thinMaxSales != null ? dc.thinMaxSales : 5;
+                const thin = rec.sales != null && rec.sales <= thinMax;
+
+                out.fields = {
+                    // benchmarkPrice and benchmarkSales are written in the same
+                    // statement and read from the same document. There is no
+                    // code path that produces one without the other.
+                    benchmarkPrice:     rec.benchmarkPrice != null ? rec.benchmarkPrice : null,
+                    benchmarkSales:     rec.sales != null ? rec.sales : null,
+                    benchmarkYoY:       rec.benchmarkPriceYoY != null ? rec.benchmarkPriceYoY : null,
+                    benchmarkIndex:     rec.hpiIndex != null ? rec.hpiIndex : null,
+                    benchmarkMonth:     month,
+                    benchmarkType:      type,
+                    benchmarkCommunity: parent.name || communityId,
+                    // Suppressed at publish when thin. Absent from the public
+                    // document entirely, not merely hidden.
+                    benchmarkMedian:    thin ? null : (rec.medianPrice != null ? rec.medianPrice : null),
+                    benchmarkDom:       thin ? null : (rec.dom != null ? rec.dom : null)
+                };
+                out.ok = true;
+                out.thin = thin;
+                out.note = (parent.name || communityId) + ' · ' + type + ' · ' + month +
+                    ' — benchmark $' + Math.round(rec.benchmarkPrice || 0).toLocaleString() +
+                    ' on ' + rec.sales + ' sale' + (rec.sales === 1 ? '' : 's') +
+                    (thin
+                        ? '. Thin month: median and days on market were suppressed and are ' +
+                          'absent from the published document.'
+                        : '. Median and days on market also published.');
+                return out;
+            })
+            .catch(err => {
+                console.error('Benchmark read failed:', err);
+                out.note = 'Could not read the community data — no benchmark figures were ' +
+                           'published. ' + (err.code ? err.code + ' — ' : '') +
+                           (err.message || String(err));
+                return out;
+            });
+    }
+
+    function showPublishMarket(result) {
+        const box = document.getElementById('pubMarket');
+        if (!box) return;
+        if (!result || !result.note) { box.style.display = 'none'; return; }
+        box.className = 'pub-market' + (result.ok ? ' ok' : '');
+        box.innerHTML =
+            '<strong>' + (result.ok ? 'Market data published' : 'No market data published') +
+            '</strong><br>' + escHtml(result.note);
+        box.style.display = 'block';
+    }
+
     function publishCMA() {
         if (!currentUser || !cmaId) return;
 
@@ -1528,10 +1649,14 @@ details.override>summary:hover{color:var(--obs)}
         data.publishedAt = firebase.firestore.FieldValue.serverTimestamp();
         data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
+        let benchmark = null;
+
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .update(data)
-            .then(() => {
+            .then(() => buildBenchmark(data.communityId, data.marketType))
+            .then(result => {
+                benchmark = result;
                 // Also write to public_cmas for client access.
                 // Sanitise: never let a FieldValue sentinel reach an array.
                 const publicComps = comps.map(c => {
@@ -1542,6 +1667,7 @@ details.override>summary:hover{color:var(--obs)}
                 });
                 return db.collection('public_cmas').doc(slug).set({
                     ...data,
+                    ...(benchmark && benchmark.fields ? benchmark.fields : {}),
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
@@ -1550,9 +1676,12 @@ details.override>summary:hover{color:var(--obs)}
             })
             .then(() => {
                 cmaData = { ...cmaData, ...data };
-                showToast('CMA published — client link is ready');
+                showToast(benchmark && benchmark.ok
+                    ? 'CMA published — client link is ready'
+                    : 'CMA published — no market data, see section 08');
                 updatePublishPanel();
                 updateClientUrl();
+                showPublishMarket(benchmark);
             })
             .catch(err => {
                 console.error(err);
