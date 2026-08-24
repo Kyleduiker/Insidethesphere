@@ -195,6 +195,17 @@ details.override>summary:hover{color:var(--obs)}
 }
 .ovr-clear:hover{border-color:var(--ox);color:var(--ox)}
 
+.comp-load-error{
+  border:0.5px solid var(--ox);border-left:2px solid var(--ox);
+  background:#FBF6F7;border-radius:2px;
+  padding:14px 18px;margin-bottom:18px;
+  font-size:12.5px;color:var(--esp);line-height:1.65;
+}
+.comp-load-error-code{
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:11px;color:var(--ox);margin-top:8px;word-break:break-word;
+}
+
 .fhint{font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:5px}
 .fhint a{color:var(--copper);text-decoration:none;border-bottom:0.5px solid var(--copper)}
 .fhint.warn{color:var(--ox)}
@@ -840,6 +851,9 @@ details.override>summary:hover{color:var(--obs)}
           <div class="panel-title">The evidence</div>
           <div class="panel-sub">Similar properties recently sold, active, or expired in this neighbourhood</div>
         </div>
+        <!-- Persistent, because a toast disappears and the consequence of
+             missing this does not: editing or publishing a stale comp list. -->
+        <div class="comp-load-error" id="compLoadError" style="display:none"></div>
         <div class="comp-stats-row">
           <div class="comp-stat">
             <div class="comp-stat-label">Avg sold price</div>
@@ -1347,8 +1361,21 @@ details.override>summary:hover{color:var(--obs)}
             });
     }
 
-    // Load comps from subcollection
+    // Load comps from subcollection.
+    //
+    // The old .catch(() => {}) was justified as "subcollection may not exist
+    // yet", but Firestore does not error on a missing collection — it returns
+    // an empty snapshot, which the `if (!snapshot.empty)` guard already
+    // handles. So the catch never swallowed anything harmless. What it did
+    // swallow was permission-denied, network failure and a missing index,
+    // any of which leave the editor showing the legacy cmaData.comps array
+    // with no sign that the real list failed to load. Editing from there
+    // writes against stale data, and publishing from there sends a stale
+    // comp list to a seller.
     function loadSubComps() {
+        const box = document.getElementById('compLoadError');
+        if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .collection('comps')
@@ -1364,7 +1391,27 @@ details.override>summary:hover{color:var(--obs)}
                     recalcCompStats();
                 }
             })
-            .catch(() => {}); // subcollection may not exist yet
+            .catch(err => {
+                console.error('Comp subcollection read failed:', err);
+                showToast('Could not load comparables — see section 04', 'error');
+                if (!box) return;
+                const legacy = Array.isArray(cmaData.comps) ? cmaData.comps.length : 0;
+                box.innerHTML =
+                    '<strong>Comparables failed to load.</strong> ' +
+                    (legacy
+                        ? 'The ' + legacy + ' comp' + (legacy === 1 ? '' : 's') +
+                          ' shown below came from an older copy stored on the CMA itself, ' +
+                          'not from the live list. They may be out of date.'
+                        : 'Nothing is shown below, but that does not mean this CMA has no ' +
+                          'comparables.') +
+                    ' <strong>Do not publish until this is resolved.</strong>' +
+                    '<div class="comp-load-error-code">' +
+                    (err && err.code ? err.code + ' — ' : '') +
+                    escHtml(err && err.message ? err.message : String(err)) + '</div>' +
+                    '<button type="button" class="ovr-clear" style="margin-top:10px" ' +
+                    'onclick="loadSubComps()">Retry</button>';
+                box.style.display = 'block';
+            });
     }
 
     // ── POPULATE FORM ──
