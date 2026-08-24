@@ -421,6 +421,36 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   border:1px solid var(--border);
   margin-bottom:32px;
 }
+
+/* CREB benchmark. The price and the number of sales behind it are one
+   unit — the count sits directly beneath the figure, in the same block,
+   never in a tooltip or a footnote. */
+.bench-hero{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-bottom:none;
+  padding:38px 32px 32px;
+  text-align:center;
+}
+.bench-label{
+  font-size:9px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px;
+}
+.bench-price{
+  font-family:var(--serif);
+  font-size:clamp(2.6rem,6vw,3.6rem);font-weight:300;
+  color:var(--dark);line-height:1;
+}
+.bench-basis{
+  font-size:12.5px;color:var(--muted);
+  margin-top:12px;letter-spacing:.02em;
+}
+.bench-basis strong{color:var(--text);font-weight:500}
+.stat-value.thin{
+  font-family:var(--sans);
+  font-size:1.05rem;color:var(--muted);font-style:italic;
+}
 .stat-block{
   background:var(--white);
   padding:32px 28px;
@@ -1139,9 +1169,22 @@ input[type=range]::-moz-range-thumb{
   <section class="section section-alt">
     <div class="section-inner">
       <div class="eyebrow">01 · Market overview</div>
-      <div class="section-title">SE Calgary <em>lake communities</em></div>
+      <div class="section-title" id="market-title">SE Calgary <em>lake communities</em></div>
       <div class="title-line"></div>
-      <div class="stats-row">
+
+      <!-- CREB benchmark, when it travelled onto this published document.
+           The sale count is part of the price, not a footnote to it. -->
+      <div id="bench-block" style="display:none">
+        <div class="bench-hero">
+          <div class="bench-label">Benchmark price</div>
+          <div class="bench-price" id="bench-price">—</div>
+          <div class="bench-basis" id="bench-basis"></div>
+        </div>
+        <div class="stats-row" id="bench-stats"></div>
+      </div>
+
+      <!-- Fallback for CMAs with no benchmark: the manual market fields. -->
+      <div class="stats-row" id="legacy-stats">
         <div class="stat-block">
           <div class="stat-label">Sales to new listings</div>
           <div class="stat-value" id="stat-absorption">—</div>
@@ -1522,9 +1565,7 @@ function populateReport() {
   buildJourney(d.journeySteps || defaultJourney(d));
 
   // MARKET
-  if (d.absorption) document.getElementById('stat-absorption').textContent = d.absorption + '%';
-  if (d.domAvg) document.getElementById('stat-dom').textContent = d.domAvg;
-  if (d.listToSale) document.getElementById('stat-lsr').textContent = d.listToSale + '%';
+  buildMarket(d);
   if (d.marketNarrative) document.getElementById('market-narrative').textContent = d.marketNarrative;
   else document.getElementById('market-narrative').style.display = 'none';
 
@@ -1768,6 +1809,117 @@ function subjectCard(d) {
           : ''}
       </div>
     </div>`;
+}
+
+// ── MARKET OVERVIEW ──────────────────────────────
+// Two shapes. When the CREB benchmark travelled onto this published
+// document, section 01 renders it. When it did not — no community set on
+// the CMA, or the CMA was published before any of this existed — it falls
+// back to the three manual fields, exactly as before.
+//
+// The thin-data rule was applied at publish: benchmarkMedian and
+// benchmarkDom are absent from the document when the month had too few
+// sales. This page never suppresses anything itself; it renders what it
+// was given, and says plainly when a figure is not there.
+
+const BENCH_TYPE = {
+  res:  'all property types',
+  det:  'detached homes',
+  semi: 'semi-detached homes',
+  row:  'row homes',
+  apt:  'apartments'
+};
+
+// CREB sheets name communities in caps — "CRANSTON". Normalise for display
+// only; the stored value stays exactly as imported.
+//
+// Only a fully uppercase name is touched. Anything containing lower case was
+// typed or corrected by hand in the import modal, so "McKenzie Towne" is left
+// alone rather than flattened to "Mckenzie Towne".
+function benchCommunityName(s) {
+  const v = String(s == null ? '' : s).trim();
+  if (!v || v !== v.toUpperCase()) return v;
+  return v.toLowerCase().replace(/(^|[\s\-'])([a-z])/g,
+    (m, sep, ch) => sep + ch.toUpperCase());
+}
+
+const MONTH_NAME = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+
+function benchMonthLabel(key) {
+  if (!key) return '';
+  const parts = String(key).split('-');
+  const m = parseInt(parts[1], 10);
+  if (!parts[0] || !m || m < 1 || m > 12) return String(key);
+  return MONTH_NAME[m - 1] + ' ' + parts[0];
+}
+
+function buildMarket(d) {
+  const legacy = document.getElementById('legacy-stats');
+  const bench  = document.getElementById('bench-block');
+  const title  = document.getElementById('market-title');
+
+  const price = parseFloat(d.benchmarkPrice);
+  if (!Number.isFinite(price) || price <= 0) {
+    // No benchmark on this document. Unchanged behaviour.
+    if (d.absorption) document.getElementById('stat-absorption').textContent = d.absorption + '%';
+    if (d.domAvg)     document.getElementById('stat-dom').textContent = d.domAvg;
+    if (d.listToSale) document.getElementById('stat-lsr').textContent = d.listToSale + '%';
+    return;
+  }
+
+  legacy.style.display = 'none';
+  bench.style.display = '';
+
+  // Name what is actually on screen. "SE Calgary lake communities" was a
+  // standing claim that did not match a Cranston detached benchmark.
+  const community = benchCommunityName(d.benchmarkCommunity || d.community || '');
+  const typeLabel = BENCH_TYPE[d.benchmarkType] || 'residential';
+  if (community) {
+    title.innerHTML = escHtml(community) + ' <em>' + escHtml(typeLabel) + '</em>';
+  }
+
+  document.getElementById('bench-price').textContent =
+    '$' + Math.round(price).toLocaleString();
+
+  // The display contract: the count travels with the price and renders
+  // beside it. There is no branch here that prints one without the other.
+  const sales = parseInt(d.benchmarkSales, 10);
+  const month = benchMonthLabel(d.benchmarkMonth);
+  const basis = Number.isFinite(sales)
+    ? 'Based on <strong>' + sales + ' sale' + (sales === 1 ? '' : 's') + '</strong>' +
+      (month ? ' in ' + escHtml(month) : '') +
+      ' · CREB benchmark for ' + escHtml(typeLabel) + ' in ' + escHtml(community || 'this community')
+    : (month ? escHtml(month) + ' · CREB benchmark' : 'CREB benchmark');
+  document.getElementById('bench-basis').innerHTML = basis;
+
+  const cell = (label, value, context, thin) =>
+    '<div class="stat-block">' +
+      '<div class="stat-label">' + label + '</div>' +
+      '<div class="stat-value' + (thin ? ' thin' : '') + '">' + value + '</div>' +
+      '<div class="stat-context">' + context + '</div>' +
+    '</div>';
+
+  const yoy = parseFloat(d.benchmarkYoY);
+  const yoyCell = Number.isFinite(yoy)
+    ? cell('Year over year',
+           (yoy >= 0 ? '+' : '−') + Math.abs(yoy * 100).toFixed(1) + '%',
+           yoy >= 0 ? 'Up on the same month last year' : 'Down on the same month last year')
+    : cell('Year over year', '—', 'Not published');
+
+  const median = parseFloat(d.benchmarkMedian);
+  const medianCell = Number.isFinite(median) && median > 0
+    ? cell('Median sale price', '$' + Math.round(median).toLocaleString(), month || 'Most recent full month')
+    : cell('Median sale price', 'Not enough sales',
+           'Too few transactions this month for this figure to mean anything', true);
+
+  const dom = parseFloat(d.benchmarkDom);
+  const domCell = Number.isFinite(dom) && dom > 0
+    ? cell('Days on market', Math.round(dom), month || 'Most recent full month')
+    : cell('Days on market', 'Not enough sales',
+           'Too few transactions this month for this figure to mean anything', true);
+
+  document.getElementById('bench-stats').innerHTML = yoyCell + medianCell + domCell;
 }
 
 // ── MARKETING PLAN ───────────────────────────────
