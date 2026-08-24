@@ -920,9 +920,28 @@ input[type=range]::-moz-range-thumb{
   gap:60px;align-items:center;
 }
 .shelter-logo-area{text-align:center}
+/* Drawn rather than an emoji house, following the .comp-sheet-icon idiom
+   on this page: thin geometry in currentColor, no glyph that renders
+   differently on every platform. */
 .shelter-icon{
-  font-size:3.5rem;
-  display:block;margin-bottom:8px;
+  display:block;position:relative;
+  width:48px;height:44px;margin:0 auto 14px;
+  color:rgba(255,255,255,.5);
+}
+.shelter-icon:before{           /* roof */
+  content:'';position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  width:0;height:0;
+  border-left:24px solid transparent;
+  border-right:24px solid transparent;
+  border-bottom:17px solid currentColor;
+}
+.shelter-icon:after{            /* walls */
+  content:'';position:absolute;bottom:0;left:50%;
+  transform:translateX(-50%);
+  width:32px;height:26px;
+  border:1.5px solid currentColor;
+  border-top:none;
 }
 .shelter-org{
   font-size:9px;font-weight:600;
@@ -1249,9 +1268,9 @@ input[type=range]::-moz-range-thumb{
             <div><div class="about-stat-val">2010</div><div class="about-stat-label">Licensed since</div></div>
           </div>
           <div class="about-contact">
-            <a href="tel:4032525900" class="about-link about-link-primary" id="about-phone-link">📞 Call</a>
-            <a href="mailto:kyleduiker@royallepage.ca" class="about-link about-link-secondary" id="about-email-link">✉ Email</a>
-            <a href="https://calendly.com/kyleduiker" target="_blank" class="about-link about-link-secondary" id="about-calendly-link">📅 Book a meeting</a>
+            <a href="tel:4032525900" class="about-link about-link-primary" id="about-phone-link">Call</a>
+            <a href="mailto:kyleduiker@royallepage.ca" class="about-link about-link-secondary" id="about-email-link">Email</a>
+            <a href="https://calendly.com/kyleduiker" target="_blank" class="about-link about-link-secondary" id="about-calendly-link">Book a meeting</a>
           </div>
         </div>
       </div>
@@ -1272,7 +1291,7 @@ input[type=range]::-moz-range-thumb{
   <div class="shelter">
     <div class="shelter-inner">
       <div class="shelter-logo-area">
-        <span class="shelter-icon">🏠</span>
+        <span class="shelter-icon" aria-hidden="true"></span>
         <div class="shelter-org">Royal LePage<br>Shelter Foundation</div>
       </div>
       <div>
@@ -1290,8 +1309,8 @@ input[type=range]::-moz-range-thumb{
         <div class="cta-sub" id="cta-sub">Kyle Duiker · 403-252-5900 · kyleduiker@royallepage.ca</div>
       </div>
       <div class="cta-btns">
-        <a href="tel:4032525900" class="cta-btn cta-btn-primary" id="cta-call">📞 Call Kyle</a>
-        <a href="https://calendly.com/kyleduiker" target="_blank" class="cta-btn cta-btn-ghost" id="cta-book">📅 Book a meeting</a>
+        <a href="tel:4032525900" class="cta-btn cta-btn-primary" id="cta-call">Call Kyle</a>
+        <a href="https://calendly.com/kyleduiker" target="_blank" class="cta-btn cta-btn-ghost" id="cta-book">Book a meeting</a>
         <button class="cta-btn cta-btn-ghost" onclick="window.print()">↓ Download PDF</button>
       </div>
     </div>
@@ -1494,7 +1513,7 @@ function populateReport() {
   document.getElementById('cta-sub').textContent = `${fullName} · ${phone} · ${email}`;
   document.getElementById('cta-call').href = 'tel:' + phone.replace(/\D/g, '');
   document.getElementById('cta-book').href = calendly;
-  document.getElementById('cta-book').textContent = '📅 Book a meeting';
+  document.getElementById('cta-book').textContent = 'Book a meeting';
 
   // Sticky bar contact button
   document.querySelector('.sticky-btn').textContent = `Contact ${firstName}`;
