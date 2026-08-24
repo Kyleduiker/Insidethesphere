@@ -1339,14 +1339,21 @@ if (!slug) {
         gateImg.src = cmaData.propPhotoUrl;
       }
 
-      // Load agent profile for the report
-      if (cmaData.agentId) {
-        return db.collection('users').doc(cmaData.agentId).get();
-      }
-    })
-    .then(agentDoc => {
-      if (agentDoc?.exists) {
-        agentProfile = agentDoc.data().agentProfile || {};
+      // The agent profile travels on the published document. This page used
+      // to fetch users/{agentId} directly, but that read is denied to an
+      // unauthenticated reader, so it failed on every published CMA and left
+      // agentProfile null — every field silently falling back to a hardcoded
+      // default. The headshot showed as initials, the bio was generic, the
+      // Shelter text was the default, and the reviews section hid itself.
+      agentProfile = cmaData.agent || null;
+
+      if (!agentProfile) {
+        // Published before the snapshot existed. Nothing is broken that was
+        // not already broken — the hardcoded fallbacks render as before — but
+        // this is the state that republishing fixes.
+        console.warn('This CMA was published without an agent profile snapshot. ' +
+                     'Republish it from the CMA editor to show the real agent ' +
+                     'details, bio and reviews.');
       }
     })
     .catch(err => {

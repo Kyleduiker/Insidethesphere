@@ -1627,6 +1627,54 @@ details.override>summary:hover{color:var(--obs)}
             });
     }
 
+    // ── AGENT SNAPSHOT ──
+    // The client page used to fetch users/{agentId} itself. That read is
+    // denied to an unauthenticated reader — verified against the live rules —
+    // so it failed on every published CMA and agentProfile stayed null. Every
+    // field then fell back to a hardcoded default that happens to be Kyle's
+    // own details, which is why the failure was invisible: the headshot
+    // showed as "KD" initials, the bio was generic, the Shelter text was the
+    // default, and the reviews section hid itself entirely.
+    //
+    // The profile is copied onto the published document instead, the same way
+    // the benchmark figures are. Only the fields the client page actually
+    // renders travel — plan, email and account state stay private on
+    // users/{uid}, which no rule change touches.
+    //
+    // Trade-off: a profile edit does not reach an already-published CMA until
+    // it is republished.
+    function buildAgentSnapshot() {
+        return db.collection('users').doc(currentUser.uid).get()
+            .then(doc => {
+                if (!doc.exists) return null;
+                const p = doc.data().agentProfile || {};
+                return {
+                    firstName:       p.firstName || '',
+                    lastName:        p.lastName || '',
+                    title:           p.title || '',
+                    brokerage:       p.brokerage || '',
+                    phone:           p.phone || '',
+                    email:           p.email || '',
+                    calendlyUrl:     p.calendlyUrl || '',
+                    // Only the headshot renders client-side; logo and team
+                    // photos are not copied.
+                    photoUrls:       { headshot: (p.photoUrls && p.photoUrls.headshot) || '' },
+                    fullBio:         p.fullBio || '',
+                    shortBio:        p.shortBio || '',
+                    homesSold:       p.homesSold || '',
+                    listToSaleRatio: p.listToSaleRatio || '',
+                    licensedSince:   p.licensedSince || '',
+                    brokerYear:      p.brokerYear || '',
+                    reviews:         Array.isArray(p.reviews) ? p.reviews : [],
+                    shelterText:     p.shelterText || ''
+                };
+            })
+            .catch(err => {
+                console.error('Agent profile read failed:', err);
+                return null;
+            });
+    }
+
     function showPublishMarket(result) {
         const box = document.getElementById('pubMarket');
         if (!box) return;
@@ -1650,13 +1698,18 @@ details.override>summary:hover{color:var(--obs)}
         data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
         let benchmark = null;
+        let agent = null;
 
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .update(data)
-            .then(() => buildBenchmark(data.communityId, data.marketType))
-            .then(result => {
+            .then(() => Promise.all([
+                buildBenchmark(data.communityId, data.marketType),
+                buildAgentSnapshot()
+            ]))
+            .then(([result, agentSnap]) => {
                 benchmark = result;
+                agent = agentSnap;
                 // Also write to public_cmas for client access.
                 // Sanitise: never let a FieldValue sentinel reach an array.
                 const publicComps = comps.map(c => {
@@ -1668,6 +1721,9 @@ details.override>summary:hover{color:var(--obs)}
                 return db.collection('public_cmas').doc(slug).set({
                     ...data,
                     ...(benchmark && benchmark.fields ? benchmark.fields : {}),
+                    // The client page cannot read users/{uid}; this is the
+                    // only profile data it will have.
+                    ...(agent ? { agent: agent } : {}),
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
