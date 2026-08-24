@@ -443,37 +443,106 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
   shrinks the viewport below `header.js`'s 900px breakpoint and makes a working
   sidebar look broken.
 
+### Done — Aug 24, 2026
+
+- **Comp re-import matches on MLS and updates in place** (`3bd5ca3`).
+  `addSelectedComps()` called `colRef.add()` unconditionally, so re-importing a
+  sheet produced a second comp sharing the same MLS. It now finds the existing
+  comp and updates it, which is what the common case wants — a listing goes
+  Active to Sold and the sale price lands on the comp already in the CMA.
+
+  Matching is on `mls` and nothing else. No MLS means new comp; an address
+  fallback would silently merge two different listings at the same address.
+  Updating in place keeps the document id and `createdAt`, so the editor's
+  `orderBy('createdAt')` does not scramble.
+
+  `manualFields` on the comp doc records fields changed by hand, measured
+  against `importedValues` — a snapshot of what the last import wrote. Import
+  refreshes everything except those, so a correction made once stays made. The
+  review shows "Updates existing comp — status active → sold · price …" against
+  "New comp" before anything is written, names any hand-edited field it will
+  skip, and flags a sold → active regression loudly: legitimate when a deal
+  collapses, and also exactly what a mis-parse looks like.
+
+- **Agent profile denormalised onto `public_cmas`** (`62d1db7`). This fixed a
+  **live bug on every published CMA**. `cma/client/index.html` fetched
+  `users/{agentId}` to load the profile, and that read is denied to an
+  unauthenticated reader, so it failed every time. `agentProfile` stayed null and
+  every field fell through to a hardcoded default — no headshot (rendered as "KD"
+  initials), generic bio, default Shelter text, and the **entire Client reviews
+  section hidden**, because it hides when the reviews array is empty.
+
+  It was invisible because the fallbacks are Kyle's own real details. Sixteen
+  profile fields now travel on the published document; `plan`, `planStarted`,
+  `profileComplete` and the account email stay private.
+
+  Chosen over moving `agentProfile` to a world-readable subcollection, which
+  looked like four files and turned out to be eight readers and nine write sites
+  across five files including `signup.html` and `login.html`.
+
+- **CREB benchmark renders on the client page** (`69481a0`, `34f3682`). Nine
+  fields denormalised at publish. **Thin-data suppression is applied at publish**,
+  so a withheld median or DOM never reaches a publicly readable document — the
+  client page renders what it was given and never suppresses anything itself.
+  The sale count sits inside the same bordered block as the price, so no code
+  path can render one without the other. Section 01 falls back to the three
+  manual fields when no benchmark travelled, and the title names what is on
+  screen — "Cranston · detached homes" rather than "SE Calgary lake communities".
+
+- **Emoji removed from `cma/client/index.html`** (`31cd996`). Six button labels
+  became plain text; the Shelter Foundation house is now drawn in CSS, following
+  the `.comp-sheet-icon` idiom. Left in place: the check marks in journey
+  milestones and the stars in review cards — typographic dingbats used as UI
+  furniture, not emoji in copy.
+
+- **`cma/profile.html` deleted** (`15c4f07`). Orphaned: every profile link in the
+  codebase points at the root `profile.html`. It predated the `header.js`
+  migration and wrote `agentProfile` through a path that no longer matches how
+  the profile is edited or read.
+
+### Key learnings — Aug 24, 2026
+
+- **`users/{uid}` is DENIED to unauthenticated readers**, subcollections
+  included. Verified against the live rules: every `users/**` path returns
+  `PERMISSION_DENIED` while `public_cmas` returns `NOT_FOUND`. **Anything the
+  client page needs must be denormalised onto `public_cmas` at publish.**
+- **A hardcoded fallback that matches real data hides the failure completely.**
+  The client page fell back to Kyle's own name, title, brokerage and phone, so a
+  read that never once succeeded looked correct for months. Prefer rendering
+  nothing, or a visible gap, over a plausible default.
+- **Moving a field means finding every reader AND writer first.** The
+  `agentProfile` move was scoped at four files from a partial grep; it was
+  actually eight readers and nine write sites across five files, two of them
+  auth paths. Count both sides before proposing the change, not after.
+- **`cta-book`'s `textContent` is overwritten from JS** at what is now
+  `cma/client/index.html:1497`. A markup-only edit to that button does nothing —
+  it looks fixed in the source and still renders the old text to a seller.
+
 ### Next
 
-1. **CREB client-side.** A benchmark block on the client page, and publish
-   denormalisation into `public_cmas`. The client page is **unauthenticated and
-   cannot read `users/{uid}`**, so `benchmarkPrice` and its sales count must be
-   copied onto the published document at publish time. The display contract
-   requires the count to render beside the price, so the two have to travel
-   together in the same document.
-2. **Editor status colours.** `#2563eb` is generic SaaS blue in a design system
+1. **Editor status colours.** `#2563eb` is generic SaaS blue in a design system
    that rejects bright blues — see `.b-active` in `cma/edit.html`. Move active and
    pending onto the palette. `sold` (`--sage`) and `expired` (`--copper`) are
    already correct.
-3. **Section toggles** — per-CMA, stored on the CMA doc as `sections:{}`. Plus
+2. **Section toggles** — per-CMA, stored on the CMA doc as `sections:{}`. Plus
    "About Me" and "About My Brokerage" rendering from the profile.
-4. **Comp map.** Designed, **blocked on reading Mapbox terms** on storing and
+3. **Comp map.** Designed, **blocked on reading Mapbox terms** on storing and
    redistributing static images. Manual pin placement, no geocoding — Tillotson is
    a 2026 build and Chestermere has no quadrant, both of which geocoders get
    wrong. Static image generated at publish, so the client page works offline.
-5. **PDF export from the client page.** No `@media print` rules exist, and the
+4. **PDF export from the client page.** No `@media print` rules exist, and the
    "Download PDF" button already calls `window.print()` — it produces a poor
    artifact today.
-6. **Offline demo path** — a pre-parsed CMA with cached images that renders with no
+5. **Offline demo path** — a pre-parsed CMA with cached images that renders with no
    network call, as insurance against conference wifi. Every image the client page
    shows now lives in Firebase Storage, so this needs a general solution (service
    worker or a pre-load pass), not a per-feature one.
-7. **sqft / year-built parser collision.** Year and RMS SQFT can land on the same
+6. **sqft / year-built parser collision.** Year and RMS SQFT can land on the same
    clustered row, and the parser reads the year as the square footage. Not yet
    reproduced — six listings across three PDFs on Aug 20 all parsed sqft correctly
    (including 4,513.15 on a sheet where `Year Built: 1986` and `RMS SQFT: 4,513.15`
    share a row). **Find a PDF that actually triggers it before attempting a fix.**
-8. **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
+7. **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
    image inputs to Imgur with a hardcoded client ID. Imgur URLs are reachable by
    anyone with the link, with no auth and no expiry. `agentPhoto`, `agentLogo` and
    `brokerageLogo` are Kyle's own branding and fine; `eventImage` and `customBanner`
@@ -497,12 +566,18 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
 - **Audit for orphaned accounts.** Any Google sign-up before Aug 20 may have an Auth
   user with no Firestore profile. Check Firebase Console → Authentication → Users
   against the `users` collection.
-- **Comp re-import creates a duplicate, it does not update.** `mergeListings()`
-  dedupes only within one import batch and never queries Firestore;
-  `addSelectedComps()` calls `colRef.add()` unconditionally. So re-importing an
-  MLS number yields two comps sharing it. Photo overwriting is already resolved
-  (`49ad185` — manual wins), but whether import should match and update existing
-  comps by MLS is still open.
+- **Kyle's profile is incomplete, and the client page now shows that.** Missing:
+  `homesSold`, `listToSaleRatio`, `reviews`, the specialisation tagline, and the
+  Calendly link. Until `62d1db7` the page rendered hardcoded fallbacks that
+  happened to look right, so nothing was obviously absent. It renders the truth
+  now, which means the agent section is under-selling until these are filled in
+  at `profile.html`. **Fill these before the Oct 25 demo.**
+- **`manualFields` currently wins over the always-refresh set** on comp
+  re-import, so a hand-edited price is not replaced by a later sheet. Every
+  skipped field is named in the review and counted in the result toast, so a kept
+  edit is visible rather than silent. The alternative reading — that volatile
+  fields always win because the MLS is authoritative — is defensible. Revisit
+  after more real use; the switch is one `indexOf()`.
 - **`profile.html` still carries stale topbar offset math.** The page predates the
   `header.js` pilot, when a 60px horizontal topbar sat above a 53px subheader.
   `header.js` replaced that with a left rail, but the arithmetic survived:
