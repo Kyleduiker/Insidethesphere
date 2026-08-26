@@ -280,6 +280,221 @@ Stored as `commissionType: tiered`, `commTier1: 7`, `commTier2: 3`, `commCap: 10
 
 ---
 
+## CMA presentation architecture
+
+Design spec from a planning session, Aug 24 2026. **Nothing here is built unless
+marked BUILT.** This is the target shape of the client-facing CMA, not a
+description of the current page.
+
+### Section order — client page, in scroll order
+
+```
+Gate · Cover · Roadmap · Market Overview · Comparable Sales · Reasoning ·
+Pricing Strategy · Net Sheet · What Happens Next · Your Agent ·
+About My Brokerage · Client Reviews · CTA Footer · Preferred Suppliers (Nov)
+```
+
+### Gate
+
+Property photo behind, dimmed. Address. "Private market evaluation". Prepared
+exclusively for [name]. Password field. One line on confidentiality. Agent name
+and brokerage small at the bottom. Friendly wrong-password message.
+
+The gate is part of the impression, not friction — **a locked document reads as a
+document worth reading.**
+
+### Cover
+
+Property photo full bleed. Address large. Community. Specs strip
+(beds · baths · sqft · built). Prepared for [name]. Prepared [month year]. Agent
+name / title / brokerage on one small line. Scroll cue. Download PDF.
+
+**No price on the cover.** The sticky bar must stay empty until the seller has
+scrolled past pricing.
+
+Deferred: photo crossfade, a "how to read this" line, a personal note per CMA.
+
+### Roadmap — section 01
+
+Nine steps, from profile defaults. Agent-editable but **not per-CMA**.
+
+```
+1 Decide to sell          6 Market and showings
+2 Meet with [agent]       7 Receive and negotiate offers
+3 Market analysis,        8 Conditions to closing
+  pricing and strategy    9 Possession
+  (current)
+4 Listing paperwork
+5 Prepare your home
+```
+
+Step 3 marked strongly as current; steps 1–2 read as complete. Horizontal on
+desktop, vertical on iPad portrait and mobile. Orientation only — no explanatory
+text.
+
+### Market Overview
+
+**Hero — BUILT.** Benchmark price with its sales count attached, Y/Y, median,
+DOM, thin-data suppression applied at publish.
+
+**Comparison table — new.** Rows for detached / semi / row / apartment / all
+types; columns for community · South East district · Calgary. **Y/Y is the
+primary figure**, benchmark price small beneath it. The subject's property type
+row is highlighted. Thin cells are marked with their sales count.
+
+No auto-generated "strongest type" claim — show the table, let Kyle make the
+point out loud.
+
+**Manual override reshaped** to mirror the community fields exactly: benchmark
+price, sales count (required), Y/Y, median, DOM, community name, property type.
+Same rendering, same thin-data rule. Replaces the current six fields.
+`marketSource` is visible in the editor only.
+
+Requires the Calgary city import to be wired up — the ingest is built, nothing
+reads it.
+
+### Comparable Sales
+
+Existing and working: photos, subject card, status grouping, MLS sheets, $/sqft.
+
+**Fix:** sold cards must read **SOLD AT**, not "Listed at". When sale price
+equals list price, drop the redundant strikethrough.
+
+**New — adjustment tool.** Values set at **agent level, not per-CMA**: bedrooms,
+bathrooms (full and half separately), finished basement, garage by type,
+per-sqft, lot size, age.
+
+Adjustments are computed from the comp-vs-subject difference with the **sign
+handled automatically** — if the comp has more, subtract from the comp.
+Overridable per comp with a reason field.
+
+The sold price stays the headline. Adjustments live in an expandable "how this
+was adjusted". **The adjusted price is evidence, not an input to the
+recommendation.**
+
+### Reasoning — new section, between Comparables and Pricing
+
+Summary table by status: Sold, Pending, Active, Expired, Terminated, Withdrawn.
+Per status: count, median sqft, median $/sqft, median price, median DOM. Empty
+statuses do not render.
+
+**$/sqft means different things per status** — SP/SF for sold and pending, LP/SF
+for the rest. These must be distinguished, never silently mixed.
+
+The subject sits **beneath** the table as the conclusion, not as a row in it:
+"Your home, 1,650 sq.ft. → indicated range at the sold median."
+
+**Expired and Terminated median DOM against Sold median DOM is the real
+overpricing evidence** — make it prominent.
+
+Per-status note field so Kyle can explain what he is discounting. Then his
+commentary, then the range.
+
+### Pricing Strategy
+
+Computed: sold median $/sqft × subject sqft = indicated value; the 25th–75th
+percentile spread = suggested range, rounded. Shown as a **suggestion in the
+editor** — Kyle confirms or overrides. He always presents a range, never a single
+number.
+
+**Pyramid graphic.** Three tiers — Maximum / Recommended / Conservative — with
+Recommended as the visual hero.
+
+**No percentages.** The buyer-pool percentages on the standard industry pyramid
+are invented and indefensible. Arrows and block width imply the pool instead.
+
+Colours inherit from profile branding (`--sphere-accent`, `--sphere-gold`),
+defaulting to the platform palette. **Do not default to Royal LePage red** — the
+palette is too thin for three tiers, and red carries meaning on a pricing
+graphic.
+
+Open: whether the pyramid replaces the current three-column layout.
+
+### Net Sheet
+
+Existing and working. Add a collapsible commission breakdown.
+
+```
+collapsed   Commission + GST — $34,094
+expanded    7% on first $100,000
+            3% on balance
+            subtotal · GST · total
+            listing side · buyer's agent side
+```
+
+**Office split is not shown** — that is between Kyle and the brokerage.
+
+Must render from whatever commission structure is configured. Do not assume
+tiered, and do not assume a 50/50 co-op split.
+
+Open: whether the breakdown recalculates live with the slider.
+
+### What Happens Next
+
+Roadmap steps 4–9, with the marketing content **woven into the relevant steps
+rather than standing alone**. This **replaces** the current six-item marketing
+plan section.
+
+- **Listing paperwork** — describe the shape, not a list. Contents differ for
+  condo, house and farm. "The agreement, disclosures and consents needed to
+  market your home — I'll walk you through each one."
+- **Prepare your home** — staging, what to fix, pre-list walkthrough
+- **Market and showings** — photography, Matterport, digital advertising, sphere
+  outreach, RLP network. **This is where marketing lives.**
+- **Receive and negotiate offers** — the `offerStrategy` field
+- **Conditions to closing** — financing, inspection, condo documents explained
+- **Possession**
+
+Default text is agent-editable in the profile, with per-CMA fields where it
+varies (`shotList` and `offerStrategy` already exist). Depth of explanation still
+undecided.
+
+### Your Agent
+
+Built and working. **Needs content, not code** — `homesSold`, `listToSaleRatio`,
+the tagline and Calendly are all empty in Kyle's profile.
+
+### About My Brokerage — new
+
+A new profile section feeding a new client-page section. Fields: brokerage name,
+logo, office address, phone, website, short blurb, network credentials (years
+established, agent count, offices, reach), and an **optional charitable
+affiliation** (name, logo, description) which absorbs the current Shelter
+Foundation block.
+
+**Nothing hardcoded to Royal LePage** — the platform is sold to agents at other
+brokerages.
+
+Open: whether the charitable content keeps its current dark full-width treatment
+inside the brokerage section.
+
+### Client Reviews
+
+Built. **All reviews visible — no auto-rotating carousel.** People do not finish
+reading before it advances, and on an iPad mid-presentation that undermines the
+impression.
+
+The `result` field ("102% · 8 days") is the differentiator; most testimonials are
+vague warmth.
+
+Needs reviews saved in the profile — nothing renders today.
+
+Open: whether two or three reviews sit inside the agent section instead.
+
+### Cross-cutting principles
+
+- **Agent-level settings, not per-CMA**, for anything that is the same every
+  time: roadmap steps, adjustment values, brokerage details, marketing defaults.
+  **This is what makes the product licensable.**
+- **Anything the client page needs must be denormalised onto `public_cmas` at
+  publish.** It cannot read `users/{uid}`.
+- **Suppress at publish, never at render.** A value that never reaches the public
+  document cannot leak.
+- **No invented numbers anywhere.** This is why the pyramid percentages are out
+  and why "554 contacts" was removed.
+
+---
+
 ## Current priorities (Oct 25, 2026 conference deadline)
 
 ### Done — Aug 20, 2026
