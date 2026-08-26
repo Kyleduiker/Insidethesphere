@@ -899,6 +899,48 @@ details.override>summary:hover{color:var(--obs)}
           </div>
         </div>
         <button class="add-comp-btn" onclick="openCompModal()">+ Add comparable</button>
+
+        <!-- Reasoning. The medians are computed from the comps above and
+             need no input; what needs writing is what to make of them. -->
+        <div class="card">
+          <div class="card-title">
+            Reasoning
+            <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--border)">— shown to client, verbatim</span>
+          </div>
+          <div class="fhint" style="margin:0 0 16px">
+            The summary table on the client page is calculated from the comparables
+            above. These notes explain what you are discounting and why — one per
+            status, and anything left blank simply does not render.
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>Sold <span>— the evidence</span></label>
+              <textarea class="fta" id="reasonNoteSold" rows="2" placeholder="Three of the five back onto the lake; yours does not." oninput="markDirty()"></textarea>
+            </div>
+            <div class="fg">
+              <label>Pending</label>
+              <textarea class="fta" id="reasonNotePending" rows="2" placeholder="Under contract, prices not yet public." oninput="markDirty()"></textarea>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>Active <span>— your competition</span></label>
+              <textarea class="fta" id="reasonNoteActive" rows="2" placeholder="What a buyer can choose instead of your home today." oninput="markDirty()"></textarea>
+            </div>
+            <div class="fg">
+              <label>Expired</label>
+              <textarea class="fta" id="reasonNoteExpired" rows="2" placeholder="Both were priced above $700,000 and sat." oninput="markDirty()"></textarea>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Terminated</label>
+            <textarea class="fta" id="reasonNoteTerminated" rows="2" placeholder="Withdrawn before selling — treated the same as expired here." oninput="markDirty()"></textarea>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Your conclusion <span>— closes the section, above the pricing range</span></label>
+            <textarea class="fta" id="reasoningCommentary" rows="3" placeholder="The sold evidence supports a price in the high $600,000s. The two expired listings sat for over ninety days each, both asking above $700,000..." oninput="markDirty()"></textarea>
+          </div>
+        </div>
       </div>
 
       <!-- 05 PRICING -->
@@ -1437,6 +1479,8 @@ details.override>summary:hover{color:var(--obs)}
             'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
+            'reasonNoteSold','reasonNotePending','reasonNoteActive',
+            'reasonNoteExpired','reasonNoteTerminated','reasoningCommentary',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
             'gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',
@@ -1472,6 +1516,8 @@ details.override>summary:hover{color:var(--obs)}
             'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
             'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
+            'reasonNoteSold','reasonNotePending','reasonNoteActive',
+            'reasonNoteExpired','reasonNoteTerminated','reasoningCommentary',
             'priceLow','priceRec','priceHigh','priceRationale',
             'netPrice','commissionType','commTier1','commTier2','commCap','commission','commFlatFee',
             'gst','legalFees','mortgageBalance','mortgagePenalty','taxAdj','otherCosts',

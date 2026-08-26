@@ -459,6 +459,75 @@ body{counter-reset:section}
   margin-top:12px;letter-spacing:.02em;
 }
 .bench-basis strong{color:var(--text);font-weight:500}
+/* ── REASONING ── */
+.reason-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.reason-table{
+  width:100%;border-collapse:collapse;
+  background:var(--white);border:1px solid var(--border);
+  min-width:600px;
+}
+.reason-table th{
+  text-align:right;font-family:var(--sans);
+  font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);padding:14px 16px;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.reason-table th:first-child,.reason-table td:first-child{text-align:left}
+.reason-table td{
+  text-align:right;padding:15px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:14px;color:var(--text);white-space:nowrap;
+}
+.reason-table tr:last-child td{border-bottom:none}
+.reason-table tr.is-sold td{background:#FCFBF9;font-weight:500}
+.reason-status{
+  font-family:var(--sans);font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+}
+.reason-count{font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
+.reason-basis{font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.6}
+.reason-note{
+  border-left:2px solid var(--border);
+  padding:2px 0 2px 16px;margin-top:20px;
+}
+.reason-note-label{
+  font-family:var(--sans);font-size:9px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;
+}
+.reason-note-text{font-size:14px;color:var(--text);line-height:1.7}
+
+/* The overpricing argument. Given its own weight because it is the one
+   comparison a seller is most likely to argue with. */
+.reason-dom{
+  background:var(--white);border:1px solid var(--border);
+  border-left:2px solid var(--accent);
+  padding:26px 28px;margin-top:28px;
+}
+.reason-dom-lead{
+  font-family:var(--serif);font-size:1.35rem;font-weight:400;
+  color:var(--dark);line-height:1.4;
+}
+.reason-dom-sub{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.65}
+
+/* The subject is the conclusion drawn from the table, not a row in it. */
+.reason-subject{
+  background:var(--navy);color:#fff;
+  padding:30px 32px;margin-top:28px;
+}
+.reason-subject-label{
+  font-family:var(--sans);font-size:9px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-bottom:10px;
+}
+.reason-subject-line{
+  font-family:var(--serif);font-size:clamp(1.4rem,3vw,1.9rem);
+  font-weight:300;line-height:1.35;
+}
+.reason-subject-line strong{font-weight:400;color:var(--gold)}
+.reason-subject-sub{font-size:12.5px;color:rgba(255,255,255,.55);margin-top:12px;line-height:1.6}
+#reason-commentary{margin-top:28px}
+
 .stat-value.thin{
   font-family:var(--sans);
   font-size:1.05rem;color:var(--muted);font-style:italic;
@@ -1229,8 +1298,25 @@ input[type=range]::-moz-range-thumb{
     </div>
   </section>
 
+  <!-- REASONING -->
+  <section class="section section-alt" id="reasoning-section" style="display:none">
+    <div class="section-inner">
+      <div class="eyebrow" data-section>Reasoning</div>
+      <div class="section-title">What the evidence <em>shows</em></div>
+      <div class="title-line"></div>
+      <div class="reason-scroll">
+        <table class="reason-table" id="reason-table"></table>
+      </div>
+      <div class="reason-basis" id="reason-basis"></div>
+      <div id="reason-dom"></div>
+      <div id="reason-notes"></div>
+      <div id="reason-subject"></div>
+      <div class="narrative" id="reason-commentary"></div>
+    </div>
+  </section>
+
   <!-- PRICING -->
-  <section class="section section-alt">
+  <section class="section">
     <div class="section-inner">
       <div class="eyebrow" data-section>Pricing strategy</div>
       <div class="section-title">Your home's <em>estimated value</em></div>
@@ -1257,7 +1343,7 @@ input[type=range]::-moz-range-thumb{
   </section>
 
   <!-- NET SHEET -->
-  <section class="section">
+  <section class="section section-alt">
     <div class="section-inner">
       <div class="eyebrow" data-section>Seller net sheet</div>
       <div class="section-title">What you <em>walk away with</em></div>
@@ -1294,7 +1380,7 @@ input[type=range]::-moz-range-thumb{
   </section>
 
   <!-- MARKETING -->
-  <section class="section section-alt">
+  <section class="section">
     <div class="section-inner">
       <div class="eyebrow" data-section>Marketing plan</div>
       <div class="section-title">How we sell <em>your home</em></div>
@@ -1304,7 +1390,7 @@ input[type=range]::-moz-range-thumb{
   </section>
 
   <!-- ABOUT -->
-  <section class="section">
+  <section class="section section-alt">
     <div class="section-inner">
       <div class="eyebrow" data-section>Your agent</div>
       <div class="section-title">Meet <em id="about-name-title">Kyle Duiker</em></div>
@@ -1333,7 +1419,7 @@ input[type=range]::-moz-range-thumb{
   </section>
 
   <!-- REVIEWS -->
-  <section class="section section-alt">
+  <section class="section">
     <div class="section-inner">
       <div class="eyebrow" data-section>Client reviews</div>
       <div class="section-title">What clients <em>say</em></div>
@@ -1584,6 +1670,9 @@ function populateReport() {
   // COMPS — the subject property heads the grid as the reference point
   buildComps(d.comps || [], d);
 
+  // REASONING — computed from those same comps
+  buildReasoning(d);
+
   // PRICING
   document.getElementById('price-low').textContent = fmt(parseFloat(d.priceLow));
   document.getElementById('price-rec').textContent = fmt(parseFloat(d.priceRec));
@@ -1621,6 +1710,9 @@ function populateReport() {
 
   // MARKETING — tier 1 from editor section 07, tier 2 standing
   buildMarketing(d);
+
+  // After every section has decided whether it renders.
+  restripeSections();
 
   // REVIEWS from agent profile
   buildReviews(p.reviews || defaultReviews());
@@ -1821,6 +1913,199 @@ function subjectCard(d) {
           : ''}
       </div>
     </div>`;
+}
+
+// ── REASONING ────────────────────────────────────
+// Everything here is computed from the comps already on the document. No
+// new data travels for the table itself — only the agent's notes.
+//
+// $/sqft is NOT one measure. Sold and pending report what a buyer paid,
+// so the basis is the sale price; everything else reports what a seller
+// is asking. Mixing them into one column would compare achieved dollars
+// against hoped-for dollars and call the result a median, so the two are
+// computed separately and the table names which is which.
+//
+// A comp that cannot produce a figure is excluded from that median rather
+// than counted as zero — and the exclusion is stated. Quietly narrowing
+// the basis from five comps to three is the same defect as quoting a
+// benchmark drawn from two sales.
+
+const REASON_ORDER = ['sold', 'pending', 'active', 'expired', 'terminated'];
+const REASON_LABEL = {
+  sold: 'Sold', pending: 'Pending', active: 'Active',
+  expired: 'Expired', terminated: 'Terminated'
+};
+// Sold and pending price on what was achieved; the rest on what is asked.
+const ACHIEVED = { sold: 1, pending: 1 };
+
+function rNum(v) {
+  const n = parseFloat(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function median(list) {
+  if (!list.length) return null;
+  const s = list.slice().sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function reasonPrice(c, status) {
+  return ACHIEVED[status]
+    ? (rNum(c.soldPrice) || rNum(c.price))
+    : (rNum(c.listPrice) || rNum(c.price));
+}
+
+function buildReasoning(d) {
+  const section = document.getElementById('reasoning-section');
+  const comps = Array.isArray(d.comps) ? d.comps : [];
+  if (!comps.length) { section.style.display = 'none'; return; }
+
+  const groups = {};
+  comps.forEach(c => {
+    const st = String(c.status || 'sold').toLowerCase().trim();
+    (groups[st] = groups[st] || []).push(c);
+  });
+
+  const stats = {};
+  REASON_ORDER.forEach(st => {
+    const rows = groups[st];
+    if (!rows || !rows.length) return;
+    const prices = [], sqfts = [], psfs = [], doms = [];
+    rows.forEach(c => {
+      const p = reasonPrice(c, st), sq = rNum(c.sqft), dm = rNum(c.dom);
+      if (p) prices.push(p);
+      if (sq) sqfts.push(sq);
+      if (p && sq) psfs.push(p / sq);
+      if (dm) doms.push(dm);
+    });
+    stats[st] = {
+      count: rows.length,
+      medianPrice: median(prices),
+      medianSqft: median(sqfts),
+      medianPsf: median(psfs),
+      medianDom: median(doms),
+      psfBasis: psfs.length,
+      measure: ACHIEVED[st] ? 'SP/SF' : 'LP/SF'
+    };
+  });
+
+  const present = REASON_ORDER.filter(st => stats[st]);
+  if (!present.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  const money = v => v == null ? '—' : '$' + Math.round(v).toLocaleString();
+  const dash  = v => v == null ? '—' : String(Math.round(v));
+
+  document.getElementById('reason-table').innerHTML =
+    '<tr><th>Status</th><th>Median size</th><th>Median $/sq.ft.</th>' +
+    '<th>Median price</th><th>Median days on market</th></tr>' +
+    present.map(st => {
+      const s = stats[st];
+      return '<tr' + (st === 'sold' ? ' class="is-sold"' : '') + '>' +
+        '<td><div class="reason-status">' + REASON_LABEL[st] + '</div>' +
+          '<div class="reason-count">' + s.count +
+          (s.count === 1 ? ' property' : ' properties') + '</div></td>' +
+        '<td>' + (s.medianSqft ? Math.round(s.medianSqft).toLocaleString() + ' sq.ft.' : '—') + '</td>' +
+        '<td>' + (s.medianPsf ? money(s.medianPsf) : '—') +
+          '<div class="reason-count">' + s.measure + '</div></td>' +
+        '<td>' + money(s.medianPrice) + '</td>' +
+        '<td>' + dash(s.medianDom) + '</td></tr>';
+    }).join('');
+
+  // Name the basis wherever a median rests on fewer comps than the group
+  // holds, and say what the two $/sqft measures mean.
+  const narrowed = present
+    .filter(st => stats[st].psfBasis < stats[st].count)
+    .map(st => REASON_LABEL[st].toLowerCase() + ': median $/sq.ft. from ' +
+               stats[st].psfBasis + ' of ' + stats[st].count +
+               ' with square footage recorded');
+  document.getElementById('reason-basis').innerHTML =
+    'SP/SF is the sale price per square foot — what a buyer actually paid. ' +
+    'LP/SF is the asking price per square foot. They are not the same measure ' +
+    'and are never combined.' +
+    (narrowed.length ? '<br>' + escHtml(narrowed.join(' · ')) : '');
+
+  // Expired and terminated days on market against sold. This is the
+  // overpricing argument, so it gets its own weight.
+  const soldDom = stats.sold && stats.sold.medianDom;
+  const stale = ['expired', 'terminated'].filter(st => stats[st] && stats[st].medianDom);
+  const domBox = document.getElementById('reason-dom');
+  if (soldDom && stale.length) {
+    const worst = stale.reduce((a, b) =>
+      stats[b].medianDom > stats[a].medianDom ? b : a);
+    const staleDom = stats[worst].medianDom;
+    domBox.innerHTML = staleDom > soldDom
+      ? '<div class="reason-dom"><div class="reason-dom-lead">' +
+          'Homes that sold took <strong>' + Math.round(soldDom) + ' days</strong>. ' +
+          'Homes that did not sell sat for <strong>' + Math.round(staleDom) + '</strong>.' +
+        '</div><div class="reason-dom-sub">' +
+          REASON_LABEL[worst] + ' listings are the ones that were priced ahead of ' +
+          'the market. Time on market is what overpricing looks like before a ' +
+          'price reduction makes it obvious.' +
+        '</div></div>'
+      : '';
+  } else {
+    domBox.innerHTML = '';
+  }
+
+  // Per-status notes, in table order, empty ones omitted.
+  const noteField = {
+    sold: 'reasonNoteSold', pending: 'reasonNotePending', active: 'reasonNoteActive',
+    expired: 'reasonNoteExpired', terminated: 'reasonNoteTerminated'
+  };
+  document.getElementById('reason-notes').innerHTML = present.map(st => {
+    const t = (d[noteField[st]] || '').trim();
+    if (!t) return '';
+    return '<div class="reason-note"><div class="reason-note-label">' +
+      REASON_LABEL[st] + '</div><div class="reason-note-text">' +
+      prose(t) + '</div></div>';
+  }).join('');
+
+  // The subject sits beneath the table as its conclusion, not inside it.
+  const subjSqft = rNum(d.sqft);
+  const soldPsf = stats.sold && stats.sold.medianPsf;
+  const subjBox = document.getElementById('reason-subject');
+  if (subjSqft && soldPsf) {
+    // Rounded to the nearest thousand. The arithmetic gives $680,888, and a
+    // figure that precise claims a confidence the method does not have —
+    // it is a median times a square footage, not an appraisal.
+    const indicated = Math.round(subjSqft * soldPsf / 1000) * 1000;
+    subjBox.innerHTML =
+      '<div class="reason-subject"><div class="reason-subject-label">Your home</div>' +
+      '<div class="reason-subject-line">' +
+        escHtml(subjSqft.toLocaleString()) + ' sq.ft. at the sold median of ' +
+        money(soldPsf) + ' per square foot indicates <strong>' +
+        money(indicated) + '</strong>' +
+      '</div><div class="reason-subject-sub">' +
+        'A starting point drawn from the sold evidence above, before any ' +
+        'adjustment for condition, finish or position. The recommended range ' +
+        'follows in the next section.' +
+      '</div></div>';
+  } else if (subjSqft) {
+    subjBox.innerHTML =
+      '<div class="reason-subject"><div class="reason-subject-label">Your home</div>' +
+      '<div class="reason-subject-line">' + escHtml(subjSqft.toLocaleString()) + ' sq.ft.</div>' +
+      '<div class="reason-subject-sub">No sold comparable carries both a price and a ' +
+      'square footage, so no per-foot indication is drawn here.</div></div>';
+  } else {
+    subjBox.innerHTML = '';
+  }
+
+  const commentary = (d.reasoningCommentary || '').trim();
+  const cEl = document.getElementById('reason-commentary');
+  if (commentary) { cEl.innerHTML = prose(commentary); cEl.style.display = ''; }
+  else cEl.style.display = 'none';
+}
+
+// Backgrounds alternate by position, so a hidden section would otherwise
+// leave two of the same colour touching. Recomputed from what is actually
+// visible rather than baked into the markup.
+function restripeSections() {
+  const secs = Array.prototype.slice.call(
+    document.querySelectorAll('#report > section.section'))
+    .filter(s => s.style.display !== 'none');
+  secs.forEach((s, i) => s.classList.toggle('section-alt', i % 2 === 1));
 }
 
 // ── MARKET OVERVIEW ──────────────────────────────
