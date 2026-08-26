@@ -715,6 +715,40 @@ Open: whether two or three reviews sit inside the agent section instead.
   migration and wrote `agentProfile` through a path that no longer matches how
   the profile is edited or read.
 
+- **Reasoning section — weeks 1–2 of the build order, complete**
+  (`753452b`, `e926a6b`, `ab97407`). Summary table by status, subject as the
+  conclusion beneath it, per-status notes, agent commentary. Every figure is
+  computed from comps already on the published document; only the notes travel.
+
+  **$/sqft is two measures, never one.** Sold and pending are priced on what was
+  achieved, so the basis is the sale price; active, expired and terminated on
+  what is asked. Each row carries SP/SF or LP/SF beneath the figure and the
+  section states the difference in words.
+
+  A comp that cannot produce a figure is excluded from that median rather than
+  counted as zero, and the exclusion is named — "sold: median $/sq.ft. from 2 of
+  3 with square footage recorded". Narrowing the basis silently would be the same
+  defect as quoting a benchmark drawn from two sales.
+
+  Five statuses, not six. Withdrawn is mapped to `terminated` by the Matrix
+  parser and the comp form offers no such option, so no comp can carry it.
+
+  Editor gained six fields in section 04 beside the comps they describe:
+  `reasonNoteSold` / `Pending` / `Active` / `Expired` / `Terminated`, and
+  `reasoningCommentary`. `priceRationale` stays in Pricing Strategy — they are
+  different arguments.
+
+- **Client page section numbers come from a CSS counter** (`753452b`) on
+  `.eyebrow[data-section]`, not from the markup. **Inserting a section renumbers
+  everything below it automatically — no manual edits.** A counter rather than a
+  script: nothing to fail, and the numbers are right before any JS runs on a page
+  that renders behind a password gate. An eyebrow without `data-section` — the
+  journey strip — neither counts nor is counted.
+
+  Section backgrounds alternate the same way, recomputed by `restripeSections()`
+  from what is actually visible, since a hidden section would otherwise leave two
+  of the same colour touching.
+
 ### Key learnings — Aug 24, 2026
 
 - **`users/{uid}` is DENIED to unauthenticated readers**, subcollections
@@ -732,19 +766,35 @@ Open: whether two or three reviews sit inside the agent section instead.
 - **`cta-book`'s `textContent` is overwritten from JS** at what is now
   `cma/client/index.html:1497`. A markup-only edit to that button does nothing —
   it looks fixed in the source and still renders the old text to a seller.
+- **A computed section can state a fact and still assert a cause the data
+  disproves.** The Reasoning section paired a true days-on-market comparison with
+  the claim that expired listings "were priced ahead of the market", both gated on
+  one condition. On real Cranston data the sold and expired median $/sqft were
+  both $384 — the page asserted overpricing directly above a table showing the
+  asking price matched what sold, and the seller can read both.
+
+  The two are now gated **independently**: the DOM comparison renders whenever the
+  stale figure is higher; the price explanation only when the asking $/sqft is
+  genuinely above the sold median, with at least a dollar of separation. When the
+  medians are level the sentence is **dropped, not softened** — a listing that sat
+  at a competitive price did so for reasons that are not in the data (condition,
+  photography, access, timing), and that is what the per-status note is for.
+
+  **State what the numbers say; never infer a cause they do not support.** This
+  generalises to every computed claim on the client page, and it is the same test
+  that removed "554 contacts" and the pyramid percentages.
 
 ### Build order — nine weeks to Oct 25
 
 Set Aug 24, 2026. Reconciles the presentation spec above with what was already
 queued. See **CMA presentation architecture** for the design of each section.
 
-**Weeks 1–2 · Reasoning section**
-Highest value-to-effort on the list. Every field it needs already exists on the
-comps — no new data. Status summary table, subject as the conclusion beneath it,
-per-status note fields, Kyle's commentary, then the range. Expired and Terminated
-median DOM against Sold median DOM is the argument.
+**Weeks 1–2 · Reasoning section — COMPLETE**
+Shipped Aug 24 (`753452b`, `e926a6b`, `ab97407`). See Done — Aug 24 above. The
+range itself stays in Pricing Strategy; Reasoning ends with the agent's
+conclusion.
 
-**Weeks 3–5 · Adjustment tool**
+**Weeks 3–5 · Adjustment tool — NEXT**
 The largest build. Agent-level settings for adjustment values, computed
 adjustments with automatic sign handling, per-comp override with a reason field,
 expandable breakdown on the card. Also fixes SOLD AT versus LISTED AT and the
