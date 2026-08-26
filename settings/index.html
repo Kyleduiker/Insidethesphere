@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>window.sphereActivePage = 'settings';</script>
+<script src="../js/header.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --obs:#0F0F0F;--esp:#2C2420;--stone:#8C8479;
+  --parch:#EDE8E0;--ivory:#F7F4EF;--border:#D9D3CB;
+  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;--ox:#6B2737;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height:100vh;display:flex}
+
+/* Sidebar styles now live in js/header.js */
+
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+  background:#fff;border-bottom:0.5px solid var(--border);
+  padding:0 36px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:13px;font-weight:500}
+.save-pill{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);padding:4px 10px;border:0.5px solid var(--border);border-radius:2px;
+}
+.save-pill.saving{border-color:var(--champ);color:#8a7340}
+.save-pill.saved{border-color:var(--sage);color:var(--sage)}
+.save-pill.err{border-color:var(--ox);color:var(--ox)}
+
+.page{padding:36px;flex:1;max-width:1020px}
+.eyebrow{
+  font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--copper);display:block;margin-bottom:7px;
+}
+.accent{width:40px;height:1px;background:var(--copper);margin-bottom:14px}
+h1{font-family:var(--serif);font-size:2rem;font-weight:300;letter-spacing:.01em;line-height:1.15}
+h2{font-family:var(--serif);font-size:1.25rem;font-weight:400}
+.lede{font-size:13px;color:var(--stone);line-height:1.7;margin-top:10px;max-width:74ch}
+section{margin-top:36px}
+
+.card{background:#fff;border:0.5px solid var(--border);border-radius:2px;padding:24px 26px;margin-bottom:16px}
+.card-title{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--obs);margin-bottom:6px;
+}
+.card-sub{font-size:12px;color:var(--stone);line-height:1.65;margin-bottom:20px;max-width:70ch}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.fg label{
+  display:block;font-size:9px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--stone);margin-bottom:6px;
+}
+.fg label span{font-weight:400;letter-spacing:0;text-transform:none;font-size:10px;color:var(--border)}
+.money{position:relative}
+.money:before{
+  content:'$';position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  font-size:13px;color:var(--stone);pointer-events:none;
+}
+.money input{padding-left:24px !important}
+.fg input{
+  width:100%;padding:9px 11px;border:0.5px solid var(--border);border-radius:2px;
+  font-family:var(--sans);font-size:13px;color:var(--obs);background:#fff;
+}
+.fg input:focus{outline:none;border-color:var(--copper)}
+.fhint{font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:5px}
+
+.note{
+  border-left:2px solid var(--champ);background:#FDFBF6;
+  padding:14px 18px;font-size:12px;color:var(--stone);line-height:1.7;
+  border-radius:2px;margin-top:18px;
+}
+.note strong{color:var(--obs);font-weight:500}
+.note code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--parch);padding:1px 4px;border-radius:2px;color:var(--esp)}
+
+.err{
+  border:0.5px solid var(--ox);background:#FBF6F7;border-radius:2px;
+  padding:14px 18px;margin-top:18px;font-size:12px;color:var(--esp);
+  line-height:1.6;white-space:pre-wrap;
+}
+.actions{display:flex;align-items:center;gap:14px;margin-top:24px;padding-top:20px;border-top:0.5px solid var(--border)}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 22px;border:none;border-radius:2px;
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;cursor:pointer;
+  background:var(--obs);color:#fff;transition:background .12s;
+}
+.btn:hover{background:var(--esp)}
+.btn:disabled{background:var(--parch);color:var(--stone);cursor:not-allowed}
+.actions-n{font-size:11.5px;color:var(--stone);line-height:1.6;max-width:56ch}
+.path{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;
+  color:var(--esp);background:var(--parch);border-radius:2px;
+  padding:9px 12px;margin-top:16px;display:inline-block;
+}
+.loading{margin-left:220px;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:14px}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--copper);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){
+  .main,.loading{margin-left:0}
+  .grid,.grid2{grid-template-columns:1fr}
+  .page{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR — injected by js/header.js -->
+<div id="sphere-header"></div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--stone)">Loading settings…</p>
+</div>
+
+<div class="main" id="app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-title">Settings · Comparable adjustments</div>
+    <span class="save-pill" id="savePill">Loaded</span>
+  </div>
+
+  <div class="page">
+    <span class="eyebrow">Agent settings</span>
+    <div class="accent"></div>
+    <h1>Comparable adjustments</h1>
+    <p class="lede">
+      What each difference between a comparable and the subject property is worth.
+      These are set once and apply to every CMA — they are your valuation method,
+      not something re-decided per listing. <strong>They never reach the client
+      page.</strong> A seller sees the adjusted price and the reason for it, never
+      the rate that produced it.
+    </p>
+
+    <div class="note">
+      <strong>The sign is handled for you.</strong> An adjustment always moves the
+      <em>comparable</em> toward the subject. If the comp has three bedrooms above
+      grade and yours has two, the comp is adjusted <code>down</code> by one
+      bedroom. If yours has more, the comp is adjusted <code>up</code>. You never
+      enter a negative number here — enter what the feature is worth, and leave
+      the direction to the arithmetic.
+    </div>
+
+    <section>
+      <div class="card">
+        <div class="card-title">Per-unit rates</div>
+        <div class="card-sub">
+          Multiplied by the difference between the comparable and the subject.
+          Leave a rate at zero to switch that adjustment off entirely — it will
+          not be applied and will not appear in the breakdown.
+        </div>
+        <div class="grid">
+          <div class="fg">
+            <label>Bedroom <span>— above grade</span></label>
+            <div class="money"><input type="number" id="r-bedroomAbove" min="0" step="500" placeholder="15000"></div>
+            <div class="fhint">Per bedroom. Above-grade only; basement bedrooms are not counted.</div>
+          </div>
+          <div class="fg">
+            <label>Full bathroom</label>
+            <div class="money"><input type="number" id="r-bathFull" min="0" step="500" placeholder="12000"></div>
+            <div class="fhint">Per full bath.</div>
+          </div>
+          <div class="fg">
+            <label>Half bathroom</label>
+            <div class="money"><input type="number" id="r-bathHalf" min="0" step="500" placeholder="6000"></div>
+            <div class="fhint">Set independently — not assumed to be half a full bath.</div>
+          </div>
+        </div>
+        <div class="grid" style="margin-top:20px">
+          <div class="fg">
+            <label>Per square foot <span>— living area</span></label>
+            <div class="money"><input type="number" id="r-perSqft" min="0" step="5" placeholder="95"></div>
+            <div class="fhint">Applied to the difference in above-grade square footage.</div>
+          </div>
+          <div class="fg">
+            <label>Per square foot <span>— lot</span></label>
+            <div class="money"><input type="number" id="r-perLotSqft" min="0" step="1" placeholder="12"></div>
+            <div class="fhint">Applied to the difference in lot size.</div>
+          </div>
+          <div class="fg">
+            <label>Per year of age</label>
+            <div class="money"><input type="number" id="r-perYear" min="0" step="100" placeholder="800"></div>
+            <div class="fhint">A newer comparable is adjusted down toward an older subject.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <div class="card-title">Basement</div>
+        <div class="card-sub">
+          What each state is worth, not a single "finished basement" figure. The
+          adjustment is the difference between the two values, so a partially
+          finished comparable against a fully finished subject adjusts by the gap
+          rather than by all or nothing.
+        </div>
+        <div class="grid2" id="basementGrid"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <div class="card-title">Garage</div>
+        <div class="card-sub">
+          Valued the same way — a figure per type rather than a rate per bay, so a
+          detached double need not be worth what an attached double is. Options
+          match the garage list on the comparable and property forms exactly.
+        </div>
+        <div class="grid2" id="garageGrid"></div>
+      </div>
+    </section>
+
+    <div id="err" class="err" style="display:none"></div>
+
+    <div class="actions">
+      <button class="btn" id="saveBtn" onclick="saveSettings()">Save settings</button>
+      <div class="actions-n">
+        Applies to every CMA from the next time its comparables are viewed.
+        Existing adjusted prices are recomputed, never stored.
+      </div>
+    </div>
+
+    <div class="path" id="pathLine">users/…/settings/adjustments</div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   Agent-level comparable adjustment settings.
+
+   users/{uid}/settings/adjustments — deliberately a subcollection rather
+   than fields on users/{uid}. Three reasons:
+
+     - It must never reach the client page. users/{uid} is denied to
+       unauthenticated readers, but the agent profile is denormalised onto
+       public_cmas at publish; keeping the rates in a separate document
+       makes their exclusion structural rather than a filtering discipline.
+     - `settings` generalises. Roadmap steps, marketing defaults and
+       brokerage details are all agent-level in the presentation spec and
+       will want settings/roadmap, settings/marketing, settings/brokerage.
+     - Firestore rules enumerate subcollections explicitly, so a new path
+       needs a rule either way.
+
+   Two shapes of adjustment:
+
+     rates       multiplied by a numeric difference (bedrooms, baths,
+                 square feet, lot, years)
+     valueTables a figure per category, where the adjustment is the
+                 difference between the subject's value and the comp's
+                 (basement state, garage type)
+
+   The value-table form matters. "Finished basement: $25,000" cannot say
+   what a partially finished basement is worth against a fully finished
+   subject; a value per state can.
+   ───────────────────────────────────────────────────────────────────────── */
+
+var RATE_FIELDS = ['bedroomAbove', 'bathFull', 'bathHalf',
+                   'perSqft', 'perLotSqft', 'perYear'];
+
+/* Keys are stored; labels are shown. The keys match what the parser and the
+   comp form write, so a lookup never needs a string comparison on display
+   text. */
+var BASEMENT_TYPES = [
+  { key: 'finished',   label: 'Finished',           hint: 'Fully developed below grade.' },
+  { key: 'partial',    label: 'Partially finished', hint: 'Part developed, part not.' },
+  { key: 'unfinished', label: 'Unfinished',         hint: 'Present but undeveloped.' },
+  { key: 'none',       label: 'No basement',        hint: 'Usually zero — the baseline.' }
+];
+
+/* Labels are the exact option values on the garage selects in cma/edit.html.
+   If those change, these must change with them or a comp's garage will not
+   resolve to a value. */
+var GARAGE_TYPES = [
+  { key: 'none',      label: 'No garage',      hint: 'Usually zero — the baseline.' },
+  { key: 'att1',      label: '1 car attached', hint: '' },
+  { key: 'att2',      label: '2 car attached', hint: '' },
+  { key: 'det2',      label: '2 car detached', hint: 'Set independently of attached.' },
+  { key: 'att3',      label: '3 car attached', hint: '' }
+];
+
+var currentUser = null;
+var loaded = null;
+
+function pill(text, cls) {
+  var el = document.getElementById('savePill');
+  el.textContent = text;
+  el.className = 'save-pill' + (cls ? ' ' + cls : '');
+}
+
+function showError(msg) {
+  var el = document.getElementById('err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function buildValueGrids() {
+  document.getElementById('basementGrid').innerHTML = BASEMENT_TYPES.map(function (t) {
+    return '<div class="fg"><label>' + t.label + '</label>' +
+      '<div class="money"><input type="number" id="b-' + t.key +
+      '" min="0" step="500" placeholder="0"></div>' +
+      (t.hint ? '<div class="fhint">' + t.hint + '</div>' : '') + '</div>';
+  }).join('');
+
+  document.getElementById('garageGrid').innerHTML = GARAGE_TYPES.map(function (t) {
+    return '<div class="fg"><label>' + t.label + '</label>' +
+      '<div class="money"><input type="number" id="g-' + t.key +
+      '" min="0" step="500" placeholder="0"></div>' +
+      (t.hint ? '<div class="fhint">' + t.hint + '</div>' : '') + '</div>';
+  }).join('');
+}
+
+function settingsRef(uid) {
+  return db.collection('users').doc(uid)
+           .collection('settings').doc('adjustments');
+}
+
+function fill(data) {
+  var rates = (data && data.rates) || {};
+  var bsmt  = (data && data.basementValues) || {};
+  var gar   = (data && data.garageValues) || {};
+
+  RATE_FIELDS.forEach(function (k) {
+    var el = document.getElementById('r-' + k);
+    if (el) el.value = (rates[k] === undefined || rates[k] === null) ? '' : rates[k];
+  });
+  BASEMENT_TYPES.forEach(function (t) {
+    var el = document.getElementById('b-' + t.key);
+    if (el) el.value = (bsmt[t.key] === undefined || bsmt[t.key] === null) ? '' : bsmt[t.key];
+  });
+  GARAGE_TYPES.forEach(function (t) {
+    var el = document.getElementById('g-' + t.key);
+    if (el) el.value = (gar[t.key] === undefined || gar[t.key] === null) ? '' : gar[t.key];
+  });
+}
+
+/* Blank reads as zero, which switches an adjustment off rather than making
+   it unknown. A rate of zero is a deliberate "do not adjust on this". */
+function collect() {
+  var num = function (id) {
+    var el = document.getElementById(id);
+    var n = parseFloat(el ? el.value : '');
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+  var rates = {}, bsmt = {}, gar = {};
+  RATE_FIELDS.forEach(function (k) { rates[k] = num('r-' + k); });
+  BASEMENT_TYPES.forEach(function (t) { bsmt[t.key] = num('b-' + t.key); });
+  GARAGE_TYPES.forEach(function (t) { gar[t.key] = num('g-' + t.key); });
+  return {
+    rates: rates,
+    basementValues: bsmt,
+    garageValues: gar,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: currentUser.uid
+  };
+}
+
+function saveSettings() {
+  var btn = document.getElementById('saveBtn');
+  document.getElementById('err').style.display = 'none';
+  btn.disabled = true;
+  pill('Saving…', 'saving');
+
+  settingsRef(currentUser.uid).set(collect(), { merge: true })
+    .then(function () {
+      btn.disabled = false;
+      pill('Saved', 'saved');
+      setTimeout(function () { pill('Loaded'); }, 2500);
+    })
+    .catch(function (err) {
+      console.error('Settings save failed:', err);
+      btn.disabled = false;
+      pill('Not saved', 'err');
+      showError('Firestore rejected the write.\n\n' +
+        (err.code ? 'code: ' + err.code + '\n' : '') +
+        (err.message || String(err)) +
+        '\n\nIf this is permission-denied, the rules need a block for ' +
+        'users/{uid}/settings/{doc} — subcollections are enumerated ' +
+        'explicitly, so a path with no rule is denied by the catch-all.');
+    });
+}
+
+buildValueGrids();
+
+firebase.auth().onAuthStateChanged(function (user) {
+  if (!user) { window.location.href = '../login.html'; return; }
+  currentUser = user;
+  document.getElementById('pathLine').textContent =
+    'users/' + user.uid + '/settings/adjustments';
+
+  settingsRef(user.uid).get()
+    .then(function (doc) {
+      loaded = doc.exists ? doc.data() : null;
+      fill(loaded);
+      pill(loaded ? 'Loaded' : 'Not set yet');
+    })
+    .catch(function (err) {
+      /* Surfaced, not swallowed. An empty form that silently failed to load
+         looks identical to one never filled in, and saving over it would
+         wipe real values. */
+      console.error('Settings load failed:', err);
+      pill('Load failed', 'err');
+      showError('Could not load your saved settings.\n\n' +
+        (err.code ? 'code: ' + err.code + '\n' : '') +
+        (err.message || String(err)) +
+        '\n\nThe form below is EMPTY because the read failed, not because ' +
+        'nothing is saved. Do not save until this is resolved — it would ' +
+        'overwrite existing values with zeros.');
+      document.getElementById('saveBtn').disabled = true;
+    })
+    .then(function () {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    });
+});
+</script>
+</body>
+</html>
