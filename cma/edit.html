@@ -18,6 +18,9 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="../js/market-import.js"></script>
 <script src="../js/city-stats-import.js"></script>
+<!-- Shared with cma/client/index.html. The editor previews exactly what the
+     seller will see, from the same code, so an override is never set blind. -->
+<script src="../js/adjustments.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -430,6 +433,40 @@ details.override>summary:hover{color:var(--obs)}
 .modal-close:hover{color:var(--obs)}
 .modal-body{padding:22px;max-height:70vh;overflow-y:auto}
 .modal-footer{padding:14px 22px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── ADJUSTMENT PREVIEW ─────────────────────────────────────────────────
+   Renders from js/adjustments.js, the same module the client page uses, so
+   what is previewed here is what a seller sees. */
+.adjp{border-top:0.5px solid var(--border);margin-top:20px;padding-top:18px}
+.adjp-head{
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--copper);margin-bottom:3px;
+}
+.adjp-sub{font-size:11px;color:var(--stone);line-height:1.6;margin-bottom:14px}
+.adjp-rows{border:0.5px solid var(--border);border-radius:2px;margin-bottom:14px}
+.adjp-row{
+  display:grid;grid-template-columns:132px 1fr 96px;gap:12px;
+  padding:7px 12px;font-size:11.5px;align-items:baseline;
+  border-bottom:0.5px solid var(--border);
+}
+.adjp-row:last-child{border-bottom:none}
+.adjp-row b{font-weight:500;color:var(--obs)}
+.adjp-row i{font-style:normal;color:var(--stone)}
+.adjp-row em{font-style:normal;text-align:right;color:var(--obs);font-variant-numeric:tabular-nums}
+.adjp-row.even em{color:var(--stone)}
+/* Loud on purpose. A factor that did not run is the failure mode this
+   whole feature has to make impossible to miss. */
+.adjp-row.unavailable{background:#FBF6F7}
+.adjp-row.unavailable em{color:var(--ox);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.adjp-row.total{background:var(--parch)}
+.adjp-row.total em{font-weight:600}
+.adjp-warn{
+  border-left:2px solid var(--ox);background:#FBF6F7;border-radius:2px;
+  padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--esp);line-height:1.65;
+}
+.adjp-warn ul{margin:6px 0 0 16px;padding:0}
+.adjp-warn li{margin-top:3px}
+.adjp-none{font-size:11.5px;color:var(--stone);line-height:1.6}
 
 /* ── market data import modal ── */
 .mkt-drop{
@@ -1380,6 +1417,29 @@ details.override>summary:hover{color:var(--obs)}
         <label>Agent notes <span>— appears on client page comp card</span></label>
         <textarea class="fta" id="comp-notes" rows="2" placeholder="Backing greenspace, similar lot size, sold in 8 days at 101% of asking"></textarea>
       </div>
+
+      <div class="adjp">
+        <div class="adjp-head">Adjustments</div>
+        <div class="adjp-sub">
+          Computed from your saved values against this property's subject
+          details. Shown to the client, verbatim, inside an expandable
+          panel on the comp card. Adjusted figures are evidence only — they
+          do not feed the Reasoning medians.
+        </div>
+        <div id="adjPreview"></div>
+        <div class="frow">
+          <div class="fg">
+            <label>Override total <span>— optional, leave blank to use the computed figure</span></label>
+            <input class="fi" type="number" id="comp-adj-override" step="500"
+                   placeholder="e.g. -10000">
+          </div>
+          <div class="fg">
+            <label>Reason <span>— shown to client, verbatim</span></label>
+            <input class="fi" type="text" id="comp-adj-reason" maxlength="160"
+                   placeholder="Backs onto Deerfoot; the computed figure understates it">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeCompModal()">Cancel</button>
@@ -1411,12 +1471,51 @@ details.override>summary:hover{color:var(--obs)}
         if (user) {
             currentUser = user;
             loadCMA();
+            loadAdjustmentSettings();
         } else {
             window.location.href = '../login.html';
         }
     });
 
+    // ── ADJUSTMENT SETTINGS ──
+    // Agent-level, set once at /settings/ and the same on every CMA. Held
+    // in memory only for the modal preview; the copy the client page reads
+    // is denormalised onto public_cmas at publish, because an
+    // unauthenticated reader cannot see users/{uid} at all.
+    let adjSettings = null;
+    let adjSettingsError = '';
+
+    function loadAdjustmentSettings() {
+        return db.collection('users').doc(currentUser.uid)
+            .collection('settings').doc('adjustments').get()
+            .then(doc => {
+                adjSettings = doc.exists ? doc.data() : null;
+                adjSettingsError = '';
+            })
+            .catch(err => {
+                // Surfaced in the modal rather than swallowed: a failed read
+                // and an unconfigured method both produce an empty preview,
+                // and they need very different responses.
+                console.error('Adjustment settings read failed:', err);
+                adjSettings = null;
+                adjSettingsError = (err.code || 'error') + ' — ' + (err.message || String(err));
+            })
+            // Both paths: the modal may already be open, and its preview was
+            // rendered before this resolved.
+            .then(() => renderAdjPreview());
+    }
+
     /* Log out is handled by sphereLogout() in js/header.js */
+
+    /* Every field in the comp modal feeds the adjustment preview, so the
+       modal listens once rather than each input carrying its own handler.
+       The modal markup is above this script, so it is already in the DOM. */
+    (function () {
+        const m = document.getElementById('compModal');
+        if (!m) { console.error('compModal missing — adjustment preview will not update'); return; }
+        m.addEventListener('input',  renderAdjPreview);
+        m.addEventListener('change', renderAdjPreview);
+    })();
 
     // ── LOAD CMA ──
     function loadCMA() {
@@ -1765,6 +1864,30 @@ details.override>summary:hover{color:var(--obs)}
             });
     }
 
+    // The client page cannot read users/{uid}, so the adjustment values
+    // travel on the published document like the agent profile does.
+    //
+    // Only the three tables travel. updatedAt and updatedBy are account
+    // metadata and have no business on a publicly readable document —
+    // suppress at publish, never at render.
+    function buildAdjustmentSnapshot() {
+        return db.collection('users').doc(currentUser.uid)
+            .collection('settings').doc('adjustments').get()
+            .then(doc => {
+                if (!doc.exists) return null;
+                const d = doc.data() || {};
+                return {
+                    rates:          d.rates          || {},
+                    basementValues: d.basementValues || {},
+                    garageValues:   d.garageValues   || {}
+                };
+            })
+            .catch(err => {
+                console.error('Adjustment settings read failed:', err);
+                return null;
+            });
+    }
+
     function showPublishMarket(result) {
         const box = document.getElementById('pubMarket');
         if (!box) return;
@@ -1789,17 +1912,20 @@ details.override>summary:hover{color:var(--obs)}
 
         let benchmark = null;
         let agent = null;
+        let adjust = null;
 
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
             .update(data)
             .then(() => Promise.all([
                 buildBenchmark(data.communityId, data.marketType),
-                buildAgentSnapshot()
+                buildAgentSnapshot(),
+                buildAdjustmentSnapshot()
             ]))
-            .then(([result, agentSnap]) => {
+            .then(([result, agentSnap, adjSnap]) => {
                 benchmark = result;
                 agent = agentSnap;
+                adjust = adjSnap;
                 // Also write to public_cmas for client access.
                 // Sanitise: never let a FieldValue sentinel reach an array.
                 const publicComps = comps.map(c => {
@@ -1814,6 +1940,7 @@ details.override>summary:hover{color:var(--obs)}
                     // The client page cannot read users/{uid}; this is the
                     // only profile data it will have.
                     ...(agent ? { agent: agent } : {}),
+                    ...(adjust ? { adjustments: adjust } : {}),
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
@@ -1943,6 +2070,10 @@ details.override>summary:hover{color:var(--obs)}
         if (listpriceEl) listpriceEl.value = comp.listPrice || '';
         document.getElementById('comp-photo').value = comp.photoUrl || '';
         document.getElementById('comp-notes').value = comp.notes || '';
+        document.getElementById('comp-adj-override').value =
+            (comp.adjOverride === 0 || comp.adjOverride) ? comp.adjOverride : '';
+        document.getElementById('comp-adj-reason').value = comp.adjReason || '';
+        renderAdjPreview();
 
         // Editing one comp should not leave last upload's review list open.
         if (editingCompIndex !== null) {
@@ -1952,35 +2083,139 @@ details.override>summary:hover{color:var(--obs)}
         document.getElementById('compModal').classList.add('open');
     }
 
+    // ── ADJUSTMENT PREVIEW ──
+    // Same module, same subject, same comp as the client page will use, so
+    // an override is never set against a number the seller will not see.
+    function renderAdjPreview() {
+        const box = document.getElementById('adjPreview');
+        if (!box) return;
+
+        const note = (cls, html) => '<div class="' + cls + '">' + html + '</div>';
+
+        if (!window.SphereAdjustments) {
+            box.innerHTML = note('adjp-warn',
+                '<strong>js/adjustments.js did not load.</strong> No adjustments ' +
+                'will be computed here or on the client page.');
+            return;
+        }
+        if (adjSettingsError) {
+            box.innerHTML = note('adjp-warn',
+                '<strong>Could not read your adjustment values.</strong><br>' +
+                escHtml(adjSettingsError) +
+                '<br>This is a failed read, not an empty settings page.');
+            return;
+        }
+        if (!adjSettings) {
+            box.innerHTML = note('adjp-none',
+                'No adjustment values saved yet — set them at ' +
+                '<a href="../settings/" style="color:var(--copper)">Settings</a>. ' +
+                'Until then no breakdown renders on the client page.');
+            return;
+        }
+
+        const A = window.SphereAdjustments;
+        const r = A.compute(collectFormData(), collectCompForm(), adjSettings);
+
+        if (!r) {
+            box.innerHTML = note('adjp-none',
+                'Nothing to compute — either this comparable has no price yet, ' +
+                'or every adjustment value is zero.');
+            return;
+        }
+
+        const amt = l =>
+              l.status === 'unavailable' ? 'Not applied'
+            : l.status === 'even'        ? '—'
+            : A.signed(l.amount);
+
+        const rows = r.lines.map(l =>
+            '<div class="adjp-row ' + l.status + '">' +
+              '<b>' + escHtml(l.label) + '</b>' +
+              '<i>' + escHtml(l.detail) + '</i>' +
+              '<em>' + amt(l) + '</em>' +
+            '</div>').join('');
+
+        const totals =
+            '<div class="adjp-row total"><b>Computed total</b><i>' +
+              (r.override ? 'Replaced by your override below.' : '') +
+            '</i><em>' + A.signed(r.computedTotal) + '</em></div>' +
+            (r.override
+              ? '<div class="adjp-row total"><b>Your override</b><i>' +
+                  escHtml(r.override.reason || 'No reason set — save will be refused.') +
+                '</i><em>' + A.signed(r.override.amount) + '</em></div>'
+              : '') +
+            '<div class="adjp-row total"><b>' + escHtml(r.basisLabel) + '</b><i>from $' +
+              r.basisPrice.toLocaleString() + '</i><em>$' +
+              r.adjustedPrice.toLocaleString() + '</em></div>';
+
+        // The client page tells the seller a factor could not be applied.
+        // This tells Kyle which field to go and fix.
+        const warn = r.unavailable.length
+            ? note('adjp-warn',
+                '<strong>' + escHtml(A.unavailableSummary(r)) + '.</strong> ' +
+                'The adjusted price above is missing them. The client page says ' +
+                'so too, on the card, without the panel being opened.' +
+                // The two bath lines fail together and share one cause, so
+                // listing the same sentence twice just makes it look noisier
+                // than it is.
+                '<ul>' + Array.from(new Set(r.unavailable.map(l => l.diag))).map(d =>
+                    '<li>' + escHtml(d) + '</li>').join('') + '</ul>')
+            : '';
+
+        box.innerHTML = warn + '<div class="adjp-rows">' + rows + totals + '</div>';
+    }
+
     function closeCompModal() {
         document.getElementById('compModal').classList.remove('open');
         editingCompIndex = null;
     }
 
-    function saveComp() {
-        const address = document.getElementById('comp-address').value.trim();
-        if (!address) { showToast('Please enter an address', 'error'); return; }
-
-        const comp = {
-            address,
-            community: (document.getElementById('comp-community') || {}).value || '',
-            status: document.getElementById('comp-status').value,
-            price: parseFloat(document.getElementById('comp-price').value) || 0,
-            listPrice: parseFloat(document.getElementById('comp-listprice').value) || 0,
-            beds: parseFloat(document.getElementById('comp-beds').value) || 0,
-            bedsAbove: parseFloat(document.getElementById('comp-beds-above').value) || 0,
-            bathsFull: parseFloat(document.getElementById('comp-baths-full').value) || 0,
-            bathsHalf: parseFloat(document.getElementById('comp-baths-half').value) || 0,
-            baths: (parseFloat(document.getElementById('comp-baths-full').value) || 0)
-                 + (parseFloat(document.getElementById('comp-baths-half').value) || 0) * 0.5,
-            basement: (document.getElementById('comp-basement') || {}).value || '',
-            sqft: parseFloat(document.getElementById('comp-sqft').value) || 0,
-            dom: parseInt(document.getElementById('comp-dom').value) || 0,
-            year: parseInt(document.getElementById('comp-year').value) || 0,
-            garage: (document.getElementById('comp-garage') || {}).value || '',
-            photoUrl: (document.getElementById('comp-photo') || {}).value || '',
-            notes: document.getElementById('comp-notes').value
+    // One reader for the comp modal, used by both saveComp() and the
+    // adjustment preview. Two readers would let the preview and the saved
+    // record disagree about the same form.
+    function collectCompForm() {
+        const v  = id => (document.getElementById(id) || {}).value || '';
+        const nf = id => parseFloat(v(id)) || 0;
+        const ov = v('comp-adj-override').trim();
+        return {
+            address: v('comp-address').trim(),
+            community: v('comp-community'),
+            status: v('comp-status'),
+            price: nf('comp-price'),
+            listPrice: nf('comp-listprice'),
+            beds: nf('comp-beds'),
+            bedsAbove: nf('comp-beds-above'),
+            bathsFull: nf('comp-baths-full'),
+            bathsHalf: nf('comp-baths-half'),
+            baths: nf('comp-baths-full') + nf('comp-baths-half') * 0.5,
+            basement: v('comp-basement'),
+            sqft: nf('comp-sqft'),
+            dom: parseInt(v('comp-dom')) || 0,
+            year: parseInt(v('comp-year')) || 0,
+            garage: v('comp-garage'),
+            photoUrl: v('comp-photo'),
+            notes: v('comp-notes'),
+            // Stored as '' rather than omitted when blank, so clearing an
+            // override in the form actually clears it in Firestore — an
+            // absent key in an update() leaves the old value in place.
+            adjOverride: ov === '' ? '' : (parseFloat(ov) || 0),
+            adjReason: v('comp-adj-reason').trim()
         };
+    }
+
+    function saveComp() {
+        const comp = collectCompForm();
+        if (!comp.address) { showToast('Please enter an address', 'error'); return; }
+
+        // An unexplained override is a number on a client page with nothing
+        // behind it. The reason renders to the seller verbatim, so it is
+        // the thing that makes the override defensible.
+        if (comp.adjOverride !== '' && !comp.adjReason) {
+            showToast('An adjustment override needs a reason — the client sees it', 'error');
+            const r = document.getElementById('comp-adj-reason');
+            if (r) r.focus();
+            return;
+        }
 
         // Record which fields have been changed by hand, measured against
         // what the last import put there. A re-import refreshes everything
@@ -3732,6 +3967,10 @@ function fillCompForm(d) {
     el.value = v;
   })(d.photoUrl);
   set('comp-notes',     d.notes ? d.notes.slice(0, 200) : '');
+
+  // The adjustment fields are agent judgement and are never written by a
+  // parse — but the preview below them is now stale, so recompute it.
+  renderAdjPreview();
 }
 
 function showSkippedLines(skipped) {
