@@ -309,6 +309,18 @@ body{font-family:var(--sans);color:var(--text);background:var(--white);line-heig
   letter-spacing:.22em;text-transform:uppercase;
   color:var(--accent);margin-bottom:10px;
 }
+/* Section numbers come from document order, not from the markup. Inserting
+   a section renumbers everything below it automatically, which matters
+   because the presentation spec adds two more later — Reasoning between
+   Comparables and Pricing, and About My Brokerage after Your Agent.
+   A CSS counter rather than JS: nothing to fail, and the numbers are
+   correct before any script runs. An eyebrow without data-section — the
+   journey strip — neither counts nor is counted. */
+body{counter-reset:section}
+.eyebrow[data-section]{counter-increment:section}
+.eyebrow[data-section]::before{
+  content:counter(section,decimal-leading-zero) " · ";
+}
 .section-title{
   font-family:var(--serif);
   font-size:clamp(2rem,4vw,2.8rem);
@@ -1168,7 +1180,7 @@ input[type=range]::-moz-range-thumb{
   <!-- MARKET OVERVIEW -->
   <section class="section section-alt">
     <div class="section-inner">
-      <div class="eyebrow">01 · Market overview</div>
+      <div class="eyebrow" data-section>Market overview</div>
       <div class="section-title" id="market-title">SE Calgary <em>lake communities</em></div>
       <div class="title-line"></div>
 
@@ -1208,7 +1220,7 @@ input[type=range]::-moz-range-thumb{
   <!-- COMPARABLES -->
   <section class="section">
     <div class="section-inner">
-      <div class="eyebrow">02 · Comparable sales</div>
+      <div class="eyebrow" data-section>Comparable sales</div>
       <div class="section-title">The <em>evidence</em></div>
       <div class="title-line"></div>
     </div>
@@ -1220,7 +1232,7 @@ input[type=range]::-moz-range-thumb{
   <!-- PRICING -->
   <section class="section section-alt">
     <div class="section-inner">
-      <div class="eyebrow">03 · Pricing strategy</div>
+      <div class="eyebrow" data-section>Pricing strategy</div>
       <div class="section-title">Your home's <em>estimated value</em></div>
       <div class="title-line"></div>
       <div class="value-cols">
@@ -1247,7 +1259,7 @@ input[type=range]::-moz-range-thumb{
   <!-- NET SHEET -->
   <section class="section">
     <div class="section-inner">
-      <div class="eyebrow">04 · Seller net sheet</div>
+      <div class="eyebrow" data-section>Seller net sheet</div>
       <div class="section-title">What you <em>walk away with</em></div>
       <div class="title-line"></div>
     </div>
@@ -1284,7 +1296,7 @@ input[type=range]::-moz-range-thumb{
   <!-- MARKETING -->
   <section class="section section-alt">
     <div class="section-inner">
-      <div class="eyebrow">05 · Marketing plan</div>
+      <div class="eyebrow" data-section>Marketing plan</div>
       <div class="section-title">How we sell <em>your home</em></div>
       <div class="title-line"></div>
       <div class="marketing-items" id="marketing-items"></div>
@@ -1294,7 +1306,7 @@ input[type=range]::-moz-range-thumb{
   <!-- ABOUT -->
   <section class="section">
     <div class="section-inner">
-      <div class="eyebrow">06 · Your agent</div>
+      <div class="eyebrow" data-section>Your agent</div>
       <div class="section-title">Meet <em id="about-name-title">Kyle Duiker</em></div>
       <div class="title-line"></div>
       <div class="about-grid">
@@ -1323,7 +1335,7 @@ input[type=range]::-moz-range-thumb{
   <!-- REVIEWS -->
   <section class="section section-alt">
     <div class="section-inner">
-      <div class="eyebrow">07 · Client reviews</div>
+      <div class="eyebrow" data-section>Client reviews</div>
       <div class="section-title">What clients <em>say</em></div>
       <div class="title-line"></div>
       <div class="reviews-grid" id="reviews-grid"></div>
