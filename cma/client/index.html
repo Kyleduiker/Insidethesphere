@@ -2026,27 +2026,57 @@ function buildReasoning(d) {
     'and are never combined.' +
     (narrowed.length ? '<br>' + escHtml(narrowed.join(' · ')) : '');
 
-  // Expired and terminated days on market against sold. This is the
-  // overpricing argument, so it gets its own weight.
+  // Expired and terminated days on market against sold.
+  //
+  // The days-on-market comparison is a fact and renders whenever the stale
+  // figure is higher. The PRICE explanation is a separate claim and is
+  // gated separately: it renders only when the asking $/sqft was actually
+  // above the sold median. On real Cranston data both medians came out at
+  // $384, and the page asserted these listings "were priced ahead of the
+  // market" directly above a table showing they were not.
+  //
+  // When the medians are level the sentence is dropped rather than
+  // reworded. A listing that sat at a competitive price did so for some
+  // other reason — condition, photography, access, timing — and none of
+  // those are in the data. That is what the per-status note is for.
   const soldDom = stats.sold && stats.sold.medianDom;
+  const soldPsf = stats.sold && stats.sold.medianPsf;
   const stale = ['expired', 'terminated'].filter(st => stats[st] && stats[st].medianDom);
   const domBox = document.getElementById('reason-dom');
+  domBox.innerHTML = '';
+
   if (soldDom && stale.length) {
     const worst = stale.reduce((a, b) =>
       stats[b].medianDom > stats[a].medianDom ? b : a);
     const staleDom = stats[worst].medianDom;
-    domBox.innerHTML = staleDom > soldDom
-      ? '<div class="reason-dom"><div class="reason-dom-lead">' +
+
+    if (staleDom > soldDom) {
+      const stalePsf = stats[worst].medianPsf;
+      let sub = '';
+
+      if (soldPsf && stalePsf) {
+        // A dollar of separation is noise at this precision, not evidence.
+        const higher = Math.round(stalePsf) - Math.round(soldPsf) >= 1;
+        sub = higher
+          ? REASON_LABEL[worst] + ' listings were asking ' + money(stalePsf) +
+            ' per square foot against a sold median of ' + money(soldPsf) +
+            '. Time on market is what pricing ahead of the market looks like ' +
+            'before a reduction makes it obvious.'
+          : REASON_LABEL[worst] + ' listings were asking ' + money(stalePsf) +
+            ' per square foot — ' +
+            (Math.round(stalePsf) === Math.round(soldPsf)
+              ? 'the same as' : 'no more than') +
+            ' the sold median of ' + money(soldPsf) + '.';
+      }
+
+      domBox.innerHTML =
+        '<div class="reason-dom"><div class="reason-dom-lead">' +
           'Homes that sold took <strong>' + Math.round(soldDom) + ' days</strong>. ' +
           'Homes that did not sell sat for <strong>' + Math.round(staleDom) + '</strong>.' +
-        '</div><div class="reason-dom-sub">' +
-          REASON_LABEL[worst] + ' listings are the ones that were priced ahead of ' +
-          'the market. Time on market is what overpricing looks like before a ' +
-          'price reduction makes it obvious.' +
-        '</div></div>'
-      : '';
-  } else {
-    domBox.innerHTML = '';
+        '</div>' +
+        (sub ? '<div class="reason-dom-sub">' + sub + '</div>' : '') +
+        '</div>';
+    }
   }
 
   // Per-status notes, in table order, empty ones omitted.
@@ -2064,7 +2094,6 @@ function buildReasoning(d) {
 
   // The subject sits beneath the table as its conclusion, not inside it.
   const subjSqft = rNum(d.sqft);
-  const soldPsf = stats.sold && stats.sold.medianPsf;
   const subjBox = document.getElementById('reason-subject');
   if (subjSqft && soldPsf) {
     // Rounded to the nearest thousand. The arithmetic gives $680,888, and a
