@@ -732,16 +732,36 @@ details.override>summary:hover{color:var(--obs)}
           <div class="card-title">Property specs</div>
           <div class="frow3">
             <div class="fg">
-              <label>Bedrooms</label>
+              <label>Bedrooms total</label>
               <input class="fi" id="beds" type="number" placeholder="4" oninput="markDirty()">
             </div>
             <div class="fg">
-              <label>Bathrooms</label>
-              <input class="fi" id="baths" type="number" step="0.5" placeholder="3" oninput="markDirty()">
+              <label>Bedrooms above grade <span>— adjusted on</span></label>
+              <input class="fi" id="bedsAbove" type="number" placeholder="3" oninput="markDirty()">
             </div>
             <div class="fg">
               <label>Sq. ft.</label>
               <input class="fi" id="sqft" type="number" placeholder="2,100" oninput="markDirty()">
+            </div>
+          </div>
+          <div class="frow3">
+            <div class="fg">
+              <label>Full bathrooms</label>
+              <input class="fi" id="bathsFull" type="number" placeholder="3" oninput="markDirty()">
+            </div>
+            <div class="fg">
+              <label>Half bathrooms</label>
+              <input class="fi" id="bathsHalf" type="number" placeholder="1" oninput="markDirty()">
+            </div>
+            <div class="fg">
+              <label>Basement</label>
+              <select class="fsel" id="basement" onchange="markDirty()">
+                <option value="">Select</option>
+                <option value="finished">Finished</option>
+                <option value="partial">Partially finished</option>
+                <option value="unfinished">Unfinished</option>
+                <option value="none">No basement</option>
+              </select>
             </div>
           </div>
           <div class="frow3">
@@ -1305,16 +1325,36 @@ details.override>summary:hover{color:var(--obs)}
       </div>
       <div class="frow3">
         <div class="fg">
-          <label>Beds</label>
+          <label>Beds total</label>
           <input class="fi" type="number" id="comp-beds" placeholder="4">
         </div>
         <div class="fg">
-          <label>Baths</label>
-          <input class="fi" type="number" step="0.5" id="comp-baths" placeholder="3">
+          <label>Beds above grade <span>— adjusted on</span></label>
+          <input class="fi" type="number" id="comp-beds-above" placeholder="3">
         </div>
         <div class="fg">
           <label>Sq.ft.</label>
           <input class="fi" type="number" id="comp-sqft" placeholder="2050">
+        </div>
+      </div>
+      <div class="frow3">
+        <div class="fg">
+          <label>Full baths</label>
+          <input class="fi" type="number" id="comp-baths-full" placeholder="3">
+        </div>
+        <div class="fg">
+          <label>Half baths</label>
+          <input class="fi" type="number" id="comp-baths-half" placeholder="1">
+        </div>
+        <div class="fg">
+          <label>Basement</label>
+          <select class="fsel" id="comp-basement">
+            <option value="">Select</option>
+            <option value="finished">Finished</option>
+            <option value="partial">Partially finished</option>
+            <option value="unfinished">Unfinished</option>
+            <option value="none">No basement</option>
+          </select>
         </div>
       </div>
       <div class="frow">
@@ -1476,7 +1516,9 @@ details.override>summary:hover{color:var(--obs)}
             'clientName','clientEmail','appointmentDate','clientPassword',
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
-            'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'address','community','propPhotoUrl','propPhotoPath',
+            'beds','bedsAbove','bathsFull','bathsHalf','sqft','yearBuilt',
+            'garage','lotSize','basement','features',
             'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'reasonNoteSold','reasonNotePending','reasonNoteActive',
@@ -1513,7 +1555,9 @@ details.override>summary:hover{color:var(--obs)}
             'clientName','clientEmail','appointmentDate','clientPassword',
             'presentationType','customPresentationType',
             'sellerMotivation','sellerTimeline','sellerNotes',
-            'address','community','propPhotoUrl','propPhotoPath','beds','baths','sqft','yearBuilt','garage','lotSize','features',
+            'address','community','propPhotoUrl','propPhotoPath',
+            'beds','bedsAbove','bathsFull','bathsHalf','sqft','yearBuilt',
+            'garage','lotSize','basement','features',
             'communityId','marketType',
             'absorption','domAvg','listToSale','activeListings','soldLast30','medianSoldPrice','marketNarrative',
             'reasonNoteSold','reasonNotePending','reasonNoteActive',
@@ -1881,7 +1925,10 @@ details.override>summary:hover{color:var(--obs)}
         document.getElementById('comp-status').value = comp.status || 'sold';
         document.getElementById('comp-price').value = comp.price || '';
         document.getElementById('comp-beds').value = comp.beds || '';
-        document.getElementById('comp-baths').value = comp.baths || '';
+        document.getElementById('comp-beds-above').value = comp.bedsAbove || '';
+        document.getElementById('comp-baths-full').value = comp.bathsFull || '';
+        document.getElementById('comp-baths-half').value = comp.bathsHalf || '';
+        document.getElementById('comp-basement').value = comp.basement || '';
         document.getElementById('comp-sqft').value = comp.sqft || '';
         document.getElementById('comp-dom').value = comp.dom || '';
         document.getElementById('comp-year').value = comp.year || '';
@@ -1921,7 +1968,12 @@ details.override>summary:hover{color:var(--obs)}
             price: parseFloat(document.getElementById('comp-price').value) || 0,
             listPrice: parseFloat(document.getElementById('comp-listprice').value) || 0,
             beds: parseFloat(document.getElementById('comp-beds').value) || 0,
-            baths: parseFloat(document.getElementById('comp-baths').value) || 0,
+            bedsAbove: parseFloat(document.getElementById('comp-beds-above').value) || 0,
+            bathsFull: parseFloat(document.getElementById('comp-baths-full').value) || 0,
+            bathsHalf: parseFloat(document.getElementById('comp-baths-half').value) || 0,
+            baths: (parseFloat(document.getElementById('comp-baths-full').value) || 0)
+                 + (parseFloat(document.getElementById('comp-baths-half').value) || 0) * 0.5,
+            basement: (document.getElementById('comp-basement') || {}).value || '',
             sqft: parseFloat(document.getElementById('comp-sqft').value) || 0,
             dom: parseInt(document.getElementById('comp-dom').value) || 0,
             year: parseInt(document.getElementById('comp-year').value) || 0,
@@ -3455,8 +3507,33 @@ function extractMatrixFields(chunk) {
   const bedsRaw = g(/Ttl Beds:[ \t]*(\d+)/);
   if (bedsRaw == null) flags.push('beds unread');
 
+  // Above-grade bedrooms are a separate figure on the sheet and are what
+  // adjustments run on — a basement bedroom is not worth what a main-floor
+  // one is. Total is still stored, and is what the comp card shows.
+  const bedsAbvRaw = g(/Bed Abv:[ \t]*(\d+)/);
+
+  // F/H Bth is already a full/half split. It used to be collapsed to a
+  // single 3.5 on the way in, which cannot be taken apart again — 3 full
+  // plus 1 half and 2 full plus 3 halves both read as 3.5. The two are now
+  // kept, and `baths` stays as their sum for display.
   const bth = text.match(/F\/H Bth:[ \t]*(\d+)[ \t]*\/[ \t]*(\d+)/);
   if (!bth) flags.push('baths unread');
+  const bathsFull = bth ? parseInt(bth[1], 10) : null;
+  const bathsHalf = bth ? parseInt(bth[2], 10) : null;
+
+  // "Basement Dev: Partially Finished  Basement Ft: None". The text layer
+  // kerns words apart — "P artially" — so whitespace is stripped before
+  // matching rather than trusting the spacing. Order matters: "Partially
+  // Finished" and "Unfinished" both contain "finish".
+  const bsmtRaw = g(/Basement Dev:[ \t]*(.*?)(?:[ \t]*Basement Ft:|[ \t]*$)/m);
+  const bsmtKey = bsmtRaw ? bsmtRaw.replace(/\s+/g, '').toLowerCase() : '';
+  const basement =
+      !bsmtKey                      ? ''
+    : /partial/.test(bsmtKey)       ? 'partial'
+    : /unfinish/.test(bsmtKey)      ? 'unfinished'
+    : /nobasement|^none$/.test(bsmtKey) ? 'none'
+    : /finish/.test(bsmtKey)        ? 'finished'
+    : '';
 
   const yearRaw = g(/Year Built:[ \t]*(\d{4})/);
   if (yearRaw == null) flags.push('year unread');
@@ -3473,7 +3550,12 @@ function extractMatrixFields(chunk) {
     listPrice: listPrice, originalPrice: origPrice,
     soldPrice: soldPrice, soldDate: soldDate,
     beds:  bedsRaw != null ? parseInt(bedsRaw, 10) : null,
-    baths: bth ? parseInt(bth[1], 10) + parseInt(bth[2], 10) * 0.5 : null,
+    bedsAbove: bedsAbvRaw != null ? parseInt(bedsAbvRaw, 10) : null,
+    bathsFull: bathsFull,
+    bathsHalf: bathsHalf,
+    // Derived, for display. bathsFull and bathsHalf are the data.
+    baths: bth ? bathsFull + bathsHalf * 0.5 : null,
+    basement: basement,
     sqft:  sqft != null ? Math.round(sqft) : null,
     sqftRms: rms, sqftTotalAG: ag,
     year: yearRaw != null ? parseInt(yearRaw, 10) : null,
@@ -3629,7 +3711,10 @@ function fillCompForm(d) {
   set('comp-price',     d.price);
   set('comp-listprice', d.listPrice);
   set('comp-beds',      d.beds);
-  set('comp-baths',     d.baths);
+  set('comp-beds-above', d.bedsAbove);
+  set('comp-baths-full', d.bathsFull);
+  set('comp-baths-half', d.bathsHalf);
+  set('comp-basement',  d.basement);
   set('comp-sqft',      d.sqft);
   set('comp-dom',       d.dom);
   set('comp-year',      d.year);
@@ -3945,12 +4030,14 @@ const REFRESH_FIELDS = ['status', 'price', 'listPrice', 'soldPrice',
 // Fields the comp form can edit, and therefore the ones manualFields can
 // protect. Must stay in step with saveComp().
 const EDITABLE_FIELDS = ['address', 'community', 'status', 'price', 'listPrice',
-                         'beds', 'baths', 'sqft', 'dom', 'year', 'garage',
+                         'beds', 'bedsAbove', 'bathsFull', 'bathsHalf', 'baths',
+                         'sqft', 'dom', 'year', 'garage', 'basement',
                          'photoUrl', 'notes'];
 
 // Everything else an import writes, refreshed only when untouched by hand.
-const IMPORT_FIELDS = ['address', 'community', 'beds', 'baths', 'sqft',
-                       'year', 'lotSize', 'garage', 'notes'];
+const IMPORT_FIELDS = ['address', 'community', 'beds', 'bedsAbove',
+                       'bathsFull', 'bathsHalf', 'baths', 'sqft',
+                       'year', 'lotSize', 'garage', 'basement', 'notes'];
 
 function sameValue(a, b) {
   if (a == null && b == null) return true;
@@ -4047,7 +4134,11 @@ async function addSelectedComps() {
         address:   data.address,
         community: data.community || '',
         beds:      data.beds  || 0,
+        bedsAbove: data.bedsAbove || 0,
+        bathsFull: data.bathsFull || 0,
+        bathsHalf: data.bathsHalf || 0,
         baths:     data.baths || 0,
+        basement:  data.basement || '',
         sqft:      data.sqft  || 0,
         year:      data.year  || 0,
         lotSize:   data.lotSize || 0,
@@ -4105,7 +4196,11 @@ async function addSelectedComps() {
       soldPrice:  data.soldPrice || 0,
       soldDate:   data.soldDate  || '',
       beds:       data.beds  || 0,
+      bedsAbove:  data.bedsAbove || 0,
+      bathsFull:  data.bathsFull || 0,
+      bathsHalf:  data.bathsHalf || 0,
       baths:      data.baths || 0,
+      basement:   data.basement || '',
       sqft:       data.sqft  || 0,
       dom:        data.dom   || 0,
       year:       data.year  || 0,
