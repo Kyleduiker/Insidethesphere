@@ -733,39 +733,82 @@ Open: whether two or three reviews sit inside the agent section instead.
   `cma/client/index.html:1497`. A markup-only edit to that button does nothing —
   it looks fixed in the source and still renders the old text to a seller.
 
-### Next
+### Build order — nine weeks to Oct 25
 
-1. **Editor status colours.** `#2563eb` is generic SaaS blue in a design system
-   that rejects bright blues — see `.b-active` in `cma/edit.html`. Move active and
-   pending onto the palette. `sold` (`--sage`) and `expired` (`--copper`) are
-   already correct.
-2. **Section toggles** — per-CMA, stored on the CMA doc as `sections:{}`. Plus
-   "About Me" and "About My Brokerage" rendering from the profile.
-3. **Comp map.** Designed, **blocked on reading Mapbox terms** on storing and
-   redistributing static images. Manual pin placement, no geocoding — Tillotson is
-   a 2026 build and Chestermere has no quadrant, both of which geocoders get
-   wrong. Static image generated at publish, so the client page works offline.
-4. **PDF export from the client page.** No `@media print` rules exist, and the
-   "Download PDF" button already calls `window.print()` — it produces a poor
-   artifact today.
-5. **Offline demo path** — a pre-parsed CMA with cached images that renders with no
-   network call, as insurance against conference wifi. Every image the client page
-   shows now lives in Firebase Storage, so this needs a general solution (service
-   worker or a pre-load pass), not a per-feature one.
-6. **sqft / year-built parser collision.** Year and RMS SQFT can land on the same
-   clustered row, and the parser reads the year as the square footage. Not yet
-   reproduced — six listings across three PDFs on Aug 20 all parsed sqft correctly
-   (including 4,513.15 on a sheet where `Year Built: 1986` and `RMS SQFT: 4,513.15`
-   share a row). **Find a PDF that actually triggers it before attempting a fix.**
-7. **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
-   image inputs to Imgur with a hardcoded client ID. Imgur URLs are reachable by
-   anyone with the link, with no auth and no expiry. `agentPhoto`, `agentLogo` and
-   `brokerageLogo` are Kyle's own branding and fine; `eventImage` and `customBanner`
-   could carry client or property content. Property photos from Matrix are Pillar 9
-   licensed content, and a public third-party host is the wrong place for them —
-   both on compliance and on positioning, given the luxury-presentation-layer pitch.
-   Firebase Storage is already on Blaze and working elsewhere in the platform. Move
-   these to Storage.
+Set Aug 24, 2026. Reconciles the presentation spec above with what was already
+queued. See **CMA presentation architecture** for the design of each section.
+
+**Weeks 1–2 · Reasoning section**
+Highest value-to-effort on the list. Every field it needs already exists on the
+comps — no new data. Status summary table, subject as the conclusion beneath it,
+per-status note fields, Kyle's commentary, then the range. Expired and Terminated
+median DOM against Sold median DOM is the argument.
+
+**Weeks 3–5 · Adjustment tool**
+The largest build. Agent-level settings for adjustment values, computed
+adjustments with automatic sign handling, per-comp override with a reason field,
+expandable breakdown on the card. Also fixes SOLD AT versus LISTED AT and the
+redundant strikethrough when sale price equals list price.
+
+**Week 6 · Pricing strategy**
+Computed range suggestion from the 25th–75th percentile of sold $/sqft. Pyramid
+graphic, no percentages, colours from profile branding. Depends on weeks 1–5.
+
+**Week 7 · What Happens Next + About My Brokerage**
+Both content-shaped, both use the profile-defaults pattern, so they are cheaper
+built together than separately. What Happens Next replaces the current marketing
+plan section.
+
+**Week 8 · Market Overview comparison table**
+Community versus South East district versus Calgary, Y/Y primary. The Calgary
+ingest is built and unread. **First to cut if anything slips** — the Reasoning
+section already makes the pricing argument with data already in hand.
+
+**Week 9 · Conference readiness — reserved, not overflow**
+- **`public_cmas` write rules. Not optional.** Any authenticated user can
+  currently overwrite any published CMA. Harmless while Kyle is the only account;
+  live the moment someone signs up after the demo.
+- PDF export from the client page. No `@media print` rules exist and the
+  "Download PDF" button already calls `window.print()`, so it produces a poor
+  artifact today.
+- Offline demo path. Every image the client page shows lives in Firebase Storage,
+  so this needs a general solution — service worker or a pre-load pass — not a
+  per-feature one.
+- Section toggles, if there is room.
+
+**The assumption this order depends on:** week 9 is rehearsal, not overflow. It
+will not be if weeks 1–8 slip, and they will. **Cut week 8 first.**
+
+### Deferred past October
+
+- **Comp map.** Designed, blocked on reading Mapbox terms covering storing and
+  redistributing static images. Manual pin placement, no geocoding — Tillotson is
+  a 2026 build and Chestermere has no quadrant, both of which geocoders get wrong.
+- **Preferred Suppliers tool.**
+- **Editor status colours.** `#2563eb` is generic SaaS blue in a design system
+  that rejects bright blues — `.b-active` in `cma/edit.html`. `sold` (`--sage`)
+  and `expired` (`--copper`) are already correct.
+- **sqft / year-built parser collision.** Year and RMS SQFT can land on the same
+  clustered row and the parser reads the year as the square footage. Still
+  unreproduced — six listings across three PDFs on Aug 20 all parsed correctly,
+  including 4,513.15 on a sheet where `Year Built: 1986` and `RMS SQFT: 4,513.15`
+  share a row. **Find a PDF that actually triggers it before attempting a fix.**
+- **Newsletter images go to Imgur, publicly.** `newsletter/index.html` POSTs five
+  image inputs with a hardcoded client ID; those URLs are reachable by anyone with
+  the link, with no auth and no expiry. `eventImage` and `customBanner` could carry
+  client or property content, and Matrix property photos are Pillar 9 licensed —
+  a public third-party host is the wrong place for them, on compliance and on
+  positioning. Move to Firebase Storage.
+- Stripe paywall · Social Studio expansion (8-post sequences, carousel export) ·
+  Buyer Checklist · Monthly Market Reports · CMA palette selector · journey step
+  editing.
+
+### Required before the demo — not a build item
+
+Kyle's profile is missing `homesSold`, `listToSaleRatio`, `reviews`, the
+specialisation tagline and the Calendly link. The client page renders truth now,
+so the agent section under-sells until these are filled in. **This is data entry,
+not development.** Do it before the demo.
 
 ### Loose ends
 
@@ -820,9 +863,8 @@ Open: whether two or three reviews sit inside the agent section instead.
   Firebase Storage** — verified Aug 20. The console note is noise, not a bug. Either
   silence it or ignore it; there is nothing to repair.
 
-**Deferred, do not build:** Stripe paywall, Social Studio expansion (8-post
-sequences, carousel export), Buyer Checklist, Monthly Market Reports, CMA palette
-selector, journey steps.
+Everything not in the build order above is deferred past October — see
+**Deferred past October** for the full list and why each is parked.
 
 ### Contact
 
