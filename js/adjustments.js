@@ -268,12 +268,31 @@ function categoryLine(def, subject, comp, table) {
   };
 }
 
-function anyValue(table) {
-  if (!table) return false;
+/* ── SET, OFF, OR NEVER FILLED IN ─────────────────────────────────────────
+   Zero used to mean both "the agent switched this factor off" and "the
+   agent never touched this field", which is how a settings document of
+   nothing but zeros came to look identical to a configured method. Blank
+   is now stored as null, so the three states are distinguishable:
+
+     null   never filled in — an omission, worth telling the agent about
+     0      deliberately off — a decision, and silent
+     > 0    in use
+
+   Neither of the first two produces a line. The difference is reported to
+   the caller so the editor can nudge and the client page can stay quiet:
+   a seller has no use for the fact that their agent does not price
+   basements. */
+function tableState(table) {
+  if (!table) return 'unset';
+  var anySet = false, anyNonZero = false;
   for (var k in table) {
-    if (Object.prototype.hasOwnProperty.call(table, k) && num(table[k])) return true;
+    if (!Object.prototype.hasOwnProperty.call(table, k)) continue;
+    var n = num(table[k]);
+    if (n === null) continue;
+    anySet = true;
+    if (n > 0) anyNonZero = true;
   }
-  return false;
+  return !anySet ? 'unset' : anyNonZero ? 'set' : 'off';
 }
 
 /* ── PRICE BASIS ──────────────────────────────────────────────────────────
@@ -295,35 +314,57 @@ function basisOf(comp) {
 /**
  * compute(subject, comp, settings)
  *
- * Returns null when there is no configured method to apply — no settings
- * document, every rate at zero, or no price to adjust. The caller renders
- * nothing in that case; a breakdown of an unconfigured method is worse than
- * no breakdown.
+ * ALWAYS returns an object. Check `ok` before using anything else.
+ *
+ * On failure it carries `reason`, because "nothing rendered" was
+ * indistinguishable from "nothing configured" and cost an afternoon:
+ *
+ *   no-subject / no-comp   caller passed nothing
+ *   no-settings            no settings document at all
+ *   no-values              a settings document exists but not one factor
+ *                          is in use — see notConfigured / switchedOff to
+ *                          say which of the two it is
+ *   no-price               this comparable has no price to adjust
+ *
+ * `notConfigured` and `switchedOff` are also present on success, so a
+ * caller can report what is not running even when something is.
  */
 function compute(subject, comp, settings) {
-  if (!subject || !comp || !settings) return null;
+  var notConfigured = [], switchedOff = [];
+  var fail = function (reason) {
+    return { ok: false, reason: reason,
+             notConfigured: notConfigured, switchedOff: switchedOff };
+  };
+
+  if (!subject) return fail('no-subject');
+  if (!comp)    return fail('no-comp');
+  if (!settings) return fail('no-settings');
 
   var rates = settings.rates || {};
-  var basis = basisOf(comp);
-  if (!basis.price) return null;
-
   var lines = [];
 
   NUMERIC_LINES.forEach(function (def) {
     var rate = num(rates[def.key]);
-    /* Zero is "switched off", deliberately, and is not the same thing as
-       a factor that could not be computed. It contributes no line. */
-    if (!rate || rate <= 0) return;
+    if (rate === null)  { notConfigured.push(def.label); return; }
+    if (rate <= 0)      { switchedOff.push(def.label);   return; }
     lines.push(numericLine(def, subject, comp, rate));
   });
 
   CATEGORY_LINES.forEach(function (def) {
     var table = settings[def.table];
-    if (!anyValue(table)) return;
+    var state = tableState(table);
+    if (state === 'unset') { notConfigured.push(def.label); return; }
+    if (state === 'off')   { switchedOff.push(def.label);   return; }
     lines.push(categoryLine(def, subject, comp, table));
   });
 
-  if (!lines.length) return null;
+  /* Settings are checked before price on purpose. When no factor is in use
+     no comparable can compute, so "this one has no price" would be a true
+     statement that sends the reader to the wrong place. */
+  if (!lines.length) return fail('no-values');
+
+  var basis = basisOf(comp);
+  if (!basis.price) return fail('no-price');
 
   var computedTotal = 0;
   var unavailable = [];
@@ -344,12 +385,15 @@ function compute(subject, comp, settings) {
   var appliedTotal = override ? override.amount : computedTotal;
 
   return {
+    ok: true,
     basis: basis.kind,
     basisPrice: Math.round(basis.price),
     basisLabel: basis.label,
     lines: lines,
     computedTotal: Math.round(computedTotal),
     unavailable: unavailable,
+    notConfigured: notConfigured,
+    switchedOff: switchedOff,
     override: override,
     appliedTotal: appliedTotal,
     adjustedPrice: Math.round(basis.price + appliedTotal)
@@ -359,7 +403,7 @@ function compute(subject, comp, settings) {
 /* A single sentence naming what did not run, for the collapsed summary and
    for the editor. Returns '' when everything applied. */
 function unavailableSummary(result) {
-  if (!result || !result.unavailable.length) return '';
+  if (!result || !result.ok || !result.unavailable.length) return '';
   var n = result.unavailable.length;
   return n + ' factor' + (n === 1 ? '' : 's') + ' could not be applied';
 }

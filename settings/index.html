@@ -160,40 +160,42 @@ section{margin-top:36px}
         <div class="card-title">Per-unit rates</div>
         <div class="card-sub">
           Multiplied by the difference between the comparable and the subject.
-          Leave a rate at zero to switch that adjustment off entirely — it will
-          not be applied and will not appear in the breakdown.
+          <strong>Blank and zero are not the same thing.</strong> Blank means
+          you have not decided yet, and this page will tell you so. Zero means
+          you have decided not to adjust on it — that factor is skipped
+          silently and never appears in a breakdown.
         </div>
         <div class="grid">
           <div class="fg">
             <label>Bedroom <span>— above grade</span></label>
-            <div class="money"><input type="number" id="r-bedroomAbove" min="0" step="500" placeholder="15000"></div>
+            <div class="money"><input type="number" id="r-bedroomAbove" min="0" step="500" placeholder="Not set"></div>
             <div class="fhint">Per bedroom. Above-grade only; basement bedrooms are not counted.</div>
           </div>
           <div class="fg">
             <label>Full bathroom</label>
-            <div class="money"><input type="number" id="r-bathFull" min="0" step="500" placeholder="12000"></div>
+            <div class="money"><input type="number" id="r-bathFull" min="0" step="500" placeholder="Not set"></div>
             <div class="fhint">Per full bath.</div>
           </div>
           <div class="fg">
             <label>Half bathroom</label>
-            <div class="money"><input type="number" id="r-bathHalf" min="0" step="500" placeholder="6000"></div>
+            <div class="money"><input type="number" id="r-bathHalf" min="0" step="500" placeholder="Not set"></div>
             <div class="fhint">Set independently — not assumed to be half a full bath.</div>
           </div>
         </div>
         <div class="grid" style="margin-top:20px">
           <div class="fg">
             <label>Per square foot <span>— living area</span></label>
-            <div class="money"><input type="number" id="r-perSqft" min="0" step="5" placeholder="95"></div>
+            <div class="money"><input type="number" id="r-perSqft" min="0" step="5" placeholder="Not set"></div>
             <div class="fhint">Applied to the difference in above-grade square footage.</div>
           </div>
           <div class="fg">
             <label>Per square foot <span>— lot</span></label>
-            <div class="money"><input type="number" id="r-perLotSqft" min="0" step="1" placeholder="12"></div>
+            <div class="money"><input type="number" id="r-perLotSqft" min="0" step="1" placeholder="Not set"></div>
             <div class="fhint">Applied to the difference in lot size.</div>
           </div>
           <div class="fg">
             <label>Per year of age</label>
-            <div class="money"><input type="number" id="r-perYear" min="0" step="100" placeholder="800"></div>
+            <div class="money"><input type="number" id="r-perYear" min="0" step="100" placeholder="Not set"></div>
             <div class="fhint">A newer comparable is adjusted down toward an older subject.</div>
           </div>
         </div>
@@ -312,14 +314,14 @@ function buildValueGrids() {
   document.getElementById('basementGrid').innerHTML = BASEMENT_TYPES.map(function (t) {
     return '<div class="fg"><label>' + t.label + '</label>' +
       '<div class="money"><input type="number" id="b-' + t.key +
-      '" min="0" step="500" placeholder="0"></div>' +
+      '" min="0" step="500" placeholder="Not set"></div>' +
       (t.hint ? '<div class="fhint">' + t.hint + '</div>' : '') + '</div>';
   }).join('');
 
   document.getElementById('garageGrid').innerHTML = GARAGE_TYPES.map(function (t) {
     return '<div class="fg"><label>' + t.label + '</label>' +
       '<div class="money"><input type="number" id="g-' + t.key +
-      '" min="0" step="500" placeholder="0"></div>' +
+      '" min="0" step="500" placeholder="Not set"></div>' +
       (t.hint ? '<div class="fhint">' + t.hint + '</div>' : '') + '</div>';
   }).join('');
 }
@@ -348,13 +350,23 @@ function fill(data) {
   });
 }
 
-/* Blank reads as zero, which switches an adjustment off rather than making
-   it unknown. A rate of zero is a deliberate "do not adjust on this". */
+/* Blank is stored as NULL, not as zero.
+
+   It used to coerce to zero, and that is how a settings document of nothing
+   but zeros came to be indistinguishable from a configured method: an
+   untouched form saved a complete-looking record, reloaded showing "0" in
+   every field, and every CMA silently computed no adjustments at all.
+
+   A genuine zero is a decision — "do not adjust on bedrooms". Null is an
+   omission. Everything downstream has to be able to tell them apart, so the
+   difference is preserved at the point it is written. */
 function collect() {
   var num = function (id) {
     var el = document.getElementById(id);
-    var n = parseFloat(el ? el.value : '');
-    return Number.isFinite(n) && n >= 0 ? n : 0;
+    var raw = el ? String(el.value).trim() : '';
+    if (raw === '') return null;
+    var n = parseFloat(raw);
+    return Number.isFinite(n) && n >= 0 ? n : null;
   };
   var rates = {}, bsmt = {}, gar = {};
   RATE_FIELDS.forEach(function (k) { rates[k] = num('r-' + k); });
@@ -369,21 +381,73 @@ function collect() {
   };
 }
 
+/* How many factors this document actually puts to work. Counts a value
+   only when it is a number greater than zero — a null was never filled in
+   and a zero was switched off, and neither one adjusts anything. */
+function activeFactorCount(data) {
+  if (!data) return 0;
+  var n = 0;
+  var live = function (v) { var x = parseFloat(v); return Number.isFinite(x) && x > 0; };
+  RATE_FIELDS.forEach(function (k) { if (live((data.rates || {})[k])) n++; });
+  if (BASEMENT_TYPES.some(function (t) { return live((data.basementValues || {})[t.key]); })) n++;
+  if (GARAGE_TYPES.some(function (t) { return live((data.garageValues || {})[t.key]); })) n++;
+  return n;
+}
+
+/* The pill states what the saved document actually does, so "Loaded" can
+   never again sit above a form that adjusts nothing. */
+function loadedPill(data) {
+  var n = activeFactorCount(data);
+  return n ? n + ' of ' + (RATE_FIELDS.length + 2) + ' in use' : 'No values set';
+}
+
+/* Two-step rather than a confirm() dialog. A dialog is dismissed reflexively;
+   a button that changes its own label under a warning has to be read. */
+var emptySavePending = false;
+
+function resetEmptyGuard() {
+  if (!emptySavePending) return;
+  emptySavePending = false;
+  document.getElementById('saveBtn').textContent = 'Save settings';
+}
+
 function saveSettings() {
   var btn = document.getElementById('saveBtn');
+  var data = collect();
+
+  /* Saving a form where nothing is in use produces a document that looks
+     configured and computes nothing — exactly the state that made every
+     comparable read "nothing to compute". It is a legitimate thing to want
+     (switch the whole method off), so it is refused once, not forbidden. */
+  if (!activeFactorCount(data) && !emptySavePending) {
+    emptySavePending = true;
+    btn.textContent = 'Save with no values anyway';
+    pill('Nothing set', 'err');
+    showError('Not saved yet — no factor is in use.\n\n' +
+      'Every field is either blank or zero, so this would save a settings ' +
+      'document that adjusts nothing. Every comparable on every CMA would ' +
+      'show no breakdown.\n\n' +
+      'Fill in the values you use and save again, or press the button once ' +
+      'more to save as-is.');
+    return;
+  }
+
   document.getElementById('err').style.display = 'none';
   btn.disabled = true;
   pill('Saving…', 'saving');
 
-  settingsRef(currentUser.uid).set(collect(), { merge: true })
+  settingsRef(currentUser.uid).set(data, { merge: true })
     .then(function () {
       btn.disabled = false;
+      resetEmptyGuard();
+      loaded = data;
       pill('Saved', 'saved');
-      setTimeout(function () { pill('Loaded'); }, 2500);
+      setTimeout(function () { pill(loadedPill(data)); }, 2500);
     })
     .catch(function (err) {
       console.error('Settings save failed:', err);
       btn.disabled = false;
+      resetEmptyGuard();
       pill('Not saved', 'err');
       showError('Firestore rejected the write.\n\n' +
         (err.code ? 'code: ' + err.code + '\n' : '') +
@@ -396,6 +460,12 @@ function saveSettings() {
 
 buildValueGrids();
 
+/* Editing anything re-arms the empty-form guard, so a value typed after the
+   first refusal is checked again rather than waved through. */
+document.addEventListener('input', function (e) {
+  if (e.target && /^[rbg]-/.test(e.target.id || '')) resetEmptyGuard();
+});
+
 firebase.auth().onAuthStateChanged(function (user) {
   if (!user) { window.location.href = '../login.html'; return; }
   currentUser = user;
@@ -406,7 +476,8 @@ firebase.auth().onAuthStateChanged(function (user) {
     .then(function (doc) {
       loaded = doc.exists ? doc.data() : null;
       fill(loaded);
-      pill(loaded ? 'Loaded' : 'Not set yet');
+      pill(loaded ? loadedPill(loaded) : 'Not set yet',
+           loaded && !activeFactorCount(loaded) ? 'err' : '');
     })
     .catch(function (err) {
       /* Surfaced, not swallowed. An empty form that silently failed to load
@@ -419,7 +490,7 @@ firebase.auth().onAuthStateChanged(function (user) {
         (err.message || String(err)) +
         '\n\nThe form below is EMPTY because the read failed, not because ' +
         'nothing is saved. Do not save until this is resolved — it would ' +
-        'overwrite existing values with zeros.');
+        'blank out values that are already there.');
       document.getElementById('saveBtn').disabled = true;
     })
     .then(function () {

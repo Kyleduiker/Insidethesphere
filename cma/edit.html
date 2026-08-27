@@ -2115,11 +2115,39 @@ details.override>summary:hover{color:var(--obs)}
 
         const A = window.SphereAdjustments;
         const r = A.compute(collectFormData(), collectCompForm(), adjSettings);
+        const settingsLink = '<a href="../settings/" style="color:var(--copper)">Settings</a>';
 
-        if (!r) {
-            box.innerHTML = note('adjp-none',
-                'Nothing to compute — either this comparable has no price yet, ' +
-                'or every adjustment value is zero.');
+        // Each failure names its own cause. The old single message offered
+        // "no price yet" and "every value is zero" as alternatives, which
+        // sent the reader to the comparable when the fault was in Settings.
+        if (!r.ok) {
+            if (r.reason === 'no-price') {
+                box.innerHTML = note('adjp-none',
+                    'This comparable has no price yet, so there is nothing to adjust. ' +
+                    'Enter a sale or list price above.');
+                return;
+            }
+            if (r.reason === 'no-values') {
+                const nothingSet = !r.switchedOff.length;
+                box.innerHTML = note('adjp-warn',
+                    '<strong>' + (nothingSet
+                        ? 'Your adjustment values have never been filled in.'
+                        : 'Your adjustment values are all zero.') + '</strong> ' +
+                    'No factor is in use, so nothing computes here and no ' +
+                    'breakdown renders on any client page. Set them at ' +
+                    settingsLink + '.' +
+                    (r.switchedOff.length
+                        ? '<ul><li>Switched off (zero): ' +
+                          escHtml(r.switchedOff.join(', ')) + '</li>' +
+                          (r.notConfigured.length
+                            ? '<li>Never filled in: ' +
+                              escHtml(r.notConfigured.join(', ')) + '</li>' : '') +
+                          '</ul>'
+                        : ''));
+                return;
+            }
+            box.innerHTML = note('adjp-warn',
+                '<strong>Nothing to compute.</strong> ' + escHtml(r.reason));
             return;
         }
 
@@ -2162,7 +2190,22 @@ details.override>summary:hover{color:var(--obs)}
                     '<li>' + escHtml(d) + '</li>').join('') + '</ul>')
             : '';
 
-        box.innerHTML = warn + '<div class="adjp-rows">' + rows + totals + '</div>';
+        // Reported even when the computation succeeds. A factor that never
+        // got a value is an omission Kyle can act on; one set to zero is a
+        // decision he already made. Naming both, separately, is the whole
+        // point of storing blank as null.
+        const gaps = [];
+        if (r.notConfigured.length)
+            gaps.push('<strong>Never filled in:</strong> ' + escHtml(r.notConfigured.join(', ')) +
+                      ' — set at <a href="../settings/" style="color:var(--copper)">Settings</a> ' +
+                      'or leave blank if you do not adjust on them.');
+        if (r.switchedOff.length)
+            gaps.push('<strong>Switched off (zero):</strong> ' + escHtml(r.switchedOff.join(', ')) + '.');
+        const gapNote = gaps.length
+            ? note('adjp-none', gaps.join('<br>'))
+            : '';
+
+        box.innerHTML = warn + '<div class="adjp-rows">' + rows + totals + '</div>' + gapNote;
     }
 
     function closeCompModal() {

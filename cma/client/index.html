@@ -2441,7 +2441,10 @@ function adjustmentPanel(comp, subject) {
   }
   const A = window.SphereAdjustments;
   const r = A.compute(subject, comp, subject && subject.adjustments);
-  if (!r) return '';
+  // r.notConfigured and r.switchedOff are deliberately not rendered here.
+  // A seller has no use for the fact that their agent does not price
+  // basements; that gap belongs in the editor, where it can be acted on.
+  if (!r.ok) return '';
 
   const agent = (subject.agent && subject.agent.firstName) || '';
 
