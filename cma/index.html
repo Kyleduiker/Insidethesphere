@@ -13,6 +13,7 @@
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'cma';</script>
 <script src="../js/header.js"></script>
+<script src="../js/cma-cleanup.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -418,16 +419,42 @@ function createCMA() {
   });
 }
 
-function deleteCMA(id, e) {
+// Deleting a CMA used to delete only its document, leaving the client page
+// live at its link and every comp, photo and MLS sheet behind. It now runs the
+// full cascade in js/cma-cleanup.js — client page first, CMA document last —
+// so a failure part-way leaves the CMA in this list, ready to delete again.
+async function deleteCMA(id, e) {
   e.stopPropagation();
-  if (!confirm('Delete this CMA? This cannot be undone.')) return;
-  db.collection('users').doc(currentUser.uid).collection('cmas').doc(id).delete()
-    .then(() => {
-      cmas = cmas.filter(c => c.id !== id);
-      renderCMAs();
-      showToast('CMA deleted');
-    })
-    .catch(err => { console.error(err); showToast('Error deleting CMA'); });
+  const c = cmas.find(x => x.id === id) || {};
+  const live = c.status === 'published';
+  const msg = 'Delete this CMA?\n\n' +
+    (live
+      ? 'Its client page will be taken offline. The link you sent will stop working.'
+      : 'If it was ever published, its client page will be taken offline and that link will stop working.') +
+    '\n\nIts comparables, photos and MLS sheets are deleted too. This cannot be undone.';
+  if (!confirm(msg)) return;
+
+  const btn = e.currentTarget || e.target;
+  if (btn) btn.disabled = true;
+  showToast('Deleting…');
+
+  let report;
+  try {
+    report = await SphereCmaCleanup.deleteCma(currentUser.uid, id);
+  } catch (err) {
+    console.error('CMA delete stopped:', err.step, err.cause || err);
+    if (btn) btn.disabled = false;
+    showToast('Delete stopped while ' + (err.step || 'deleting') +
+              ' — the CMA was kept so you can try again');
+    return;
+  }
+
+  console.log('CMA deleted:', report);
+  cmas = cmas.filter(x => x.id !== id);
+  renderCMAs();
+  showToast(SphereCmaCleanup.sweepRefused(report)
+    ? 'CMA deleted — Storage rules blocked the folder sweep, so photos from comps deleted earlier may remain'
+    : 'CMA deleted');
 }
 
 function showToast(msg) {
