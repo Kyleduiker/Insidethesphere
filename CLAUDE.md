@@ -370,7 +370,9 @@ It replaces the per-line values and the whole-comp override.
 **Why sliders.** A single stored value cannot express that a comp's triple
 garage is standard while the subject's is oversized and heated. The count is
 the same; the quality isn't. Sliding the line is how that judgement gets made
-and recorded.
+and recorded. Because both states in that example match, it is recorded on the
+**"Other" line** — see Decided below. Where the states differ, the slider on
+the line itself carries the judgement.
 
 **Settings — agent level, not per-CMA.**
 - **Rates** — bedroom above grade, full bath, half bath, per sq.ft. living, per
@@ -385,11 +387,14 @@ and recorded.
 - **Table-derived lines** slide within **±50% of the computed gap**. Sliding the
   two state values that produce one gap is unintuitive — slide the wrong one and
   the adjustment moves the wrong way. **One control per adjustment.**
+- **No slider** on a same-state table line, an immaterial line, or an
+  unavailable line.
 - Untouched lines sit at their default; **moved lines are marked in the
   editor.**
 - **Optional note per line**, rendered beside that line on the client page.
 - **"Other" line** with its own reason, for what no field captures.
-- **Comp notes field**, agent-written, shown to the client.
+- **Comp notes — a new field**, agent-written, shown to the client. Not the
+  existing `notes`.
 
 **Unchanged:** the sign rule — if the comp has more, subtract from the comp. The
 sold price stays the card's headline, and adjustments live in the expandable
@@ -398,22 +403,20 @@ recommendation**, and does not feed the Reasoning medians. Min, max and default
 are methodology and never reach `public_cmas`: only each line's resulting
 amount, its note and the adjusted price are published, as today (`61d6e2f`).
 
-Open:
-- **A same-state table line has a gap of zero, so ±50% of it is no range at
-  all** — and that is the triple-garage case above. Both homes are "3 car
-  attached", and the slider the design exists to provide cannot move. It needs
-  a range that does not come from the gap (a share of the state's own value,
-  say), or that judgement goes on the "Other" line.
-- **Comp notes: a new field, not the existing `notes`.** The Matrix import fills
-  `notes` from the listing's **Public Remarks** — MLS listing copy, which the
-  positioning above says the platform does not redistribute. It was published
-  unseen until `94b92fd` and is now labelled "private, not shown to the
-  client", so anything typed under either label would go public if the field
-  were simply flipped. A new field starts empty.
-- **How sliders meet materiality and unavailable lines.** A line skipped as
-  immaterial, or unavailable because data is missing (the unread bath split, an
-  unmapped garage label), has no difference to slide. Whether those get a
-  slider, stay fixed, or push the judgement to "Other" is undecided.
+Decided — Sep 16, 2026:
+- **Same-state table lines get no slider.** When both homes are in the same
+  state — both "3 car attached" — the gap is zero and there is no garage
+  adjustment to make. A quality difference between two matching garages is a
+  quality judgement that happens to concern the garage, and it goes on the
+  **"Other" line** with its reason.
+- **Agent-written comp notes are a new field.** The existing `notes` holds the
+  listing's Matrix **Public Remarks** (filled by the importer) and **stays
+  private**: publishing it would be the redistribution of MLS data the
+  positioning above rules out. It was published unseen until `94b92fd`. The new
+  field starts empty, so nothing already typed can go public by accident.
+- **No slider on immaterial or unavailable lines.** They keep today's
+  treatment: immaterial differences gathered into the one "Not adjusted" line,
+  unavailable lines shown as not applied and counted on the collapsed card.
 
 ### Reasoning — new section, between Comparables and Pricing
 
