@@ -22,6 +22,7 @@
      exactly what gets baked onto the published CMA. The client page does NOT
      load it: it renders stored results and never sees the settings. -->
 <script src="../js/adjustments.js"></script>
+<script src="../js/cma-cleanup.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1215,6 +1216,12 @@ details.override>summary:hover{color:var(--obs)}
         <button class="btn-publish" id="publishBtn2" onclick="publishCMA()" style="width:100%;padding:14px;font-size:12px;margin-top:4px">
           Publish to client →
         </button>
+        <!-- Shown only while published. Deleting the whole CMA used to be the
+             only way to take a client page down. -->
+        <button class="btn-cancel" id="unpublishBtn" onclick="unpublishCMA()"
+                style="width:100%;padding:12px;margin-top:8px;display:none">
+          Unpublish — take the client page offline
+        </button>
       </div>
 
     </div><!-- /content -->
@@ -2187,6 +2194,60 @@ details.override>summary:hover{color:var(--obs)}
             b1.classList.toggle('published', live);
         }
         if (b2) b2.textContent = live ? 'Update client page →' : 'Publish to client →';
+        const b3 = document.getElementById('unpublishBtn');
+        if (b3) b3.style.display = live ? 'block' : 'none';
+    }
+
+    // Takes the client page down and marks the CMA as a draft. Nothing in the
+    // CMA itself is touched, and publishing again brings the page back at the
+    // same link. The page is removed FIRST: if the status update then fails,
+    // the leak is already closed and the toast says the status is stale.
+    async function unpublishCMA() {
+        if (!currentUser || !cmaId) return;
+        if (!confirm('Take the client page offline?\n\n' +
+                     'The link you sent will stop working until you publish again. ' +
+                     'Nothing in this CMA is deleted.')) return;
+
+        const btn = document.getElementById('unpublishBtn');
+        if (btn) btn.disabled = true;
+
+        let outcome;
+        try {
+            outcome = await SphereCmaCleanup.unpublish(currentUser.uid, cmaId, cmaData.slug);
+        } catch (err) {
+            console.error('Unpublish failed:', err);
+            if (btn) btn.disabled = false;
+            showToast('Could not take the client page offline — ' + (err.code || err.message), 'error');
+            return;
+        }
+
+        if (outcome.result === 'not-this-cma') {
+            // Something is published at this CMA's link, but it belongs to a
+            // different CMA or agent. Leave it alone and say so.
+            console.error('Unpublish: the page at slug', cmaData.slug, 'does not belong to this CMA');
+            if (btn) btn.disabled = false;
+            showToast('The page at this link belongs to a different CMA — nothing was taken down', 'error');
+            return;
+        }
+
+        try {
+            await db.collection('users').doc(currentUser.uid)
+                .collection('cmas').doc(cmaId)
+                .update({ status: 'draft', updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        } catch (err) {
+            console.error('Unpublish: page removed, status update failed:', err);
+            if (btn) btn.disabled = false;
+            showToast('Client page is offline, but this CMA still shows as Published — ' +
+                      (err.code || err.message), 'error');
+            return;
+        }
+
+        cmaData.status = 'draft';
+        if (btn) btn.disabled = false;
+        updatePublishPanel();
+        showToast(outcome.result === 'deleted'
+            ? 'Client page taken offline — the link no longer works'
+            : 'Marked as not published — there was no client page online');
     }
 
     // FIXED: #clientUrl is a <span> and #publishPassword is a <div> — neither
