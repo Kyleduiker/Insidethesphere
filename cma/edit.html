@@ -1981,6 +1981,7 @@ details.override>summary:hover{color:var(--obs)}
         'taxAdj', 'otherCosts',
         // Marketing plan
         'photographerName', 'shootDate', 'shotList', 'offerStrategy'
+        // plus `baths`, derived at publish — see subjectBaths()
     ];
 
     const NOT_PUBLISHED_CMA_FIELDS = [
@@ -2019,6 +2020,23 @@ details.override>summary:hover{color:var(--obs)}
         'bedsAbove', 'bathsFull', 'bathsHalf', 'basement', 'lotSize', 'garage',
         'adjOverride', 'adjReason'
     ];
+
+    // The cover strip and the "Your home" card read `baths`. The subject form
+    // has had no such field since the bath split (2dc869a) — it collects
+    // bathsFull and bathsHalf — so every CMA published since rendered with no
+    // bath count at all, and nothing said so.
+    //
+    // Derived exactly as comps derive it: full plus half a bath per half, so
+    // the subject card and the comp cards beside it count the same way. When
+    // the full count is missing it returns null and the key is omitted —
+    // the spec strip then leaves baths out rather than showing "0.5 baths"
+    // for a home whose full count was never entered.
+    function subjectBaths(data) {
+        const full = parseFloat(data && data.bathsFull);
+        if (!Number.isFinite(full) || full <= 0) return null;
+        const half = parseFloat(data.bathsHalf);
+        return full + (Number.isFinite(half) && half > 0 ? half * 0.5 : 0);
+    }
 
     // Copies named fields only. Never spreads.
     function pickFields(src, allow) {
@@ -2095,8 +2113,10 @@ details.override>summary:hover{color:var(--obs)}
                     if (pub) o.adjustment = pub;
                     return o;
                 });
+                const baths = subjectBaths(data);
                 return db.collection('public_cmas').doc(slug).set({
                     ...pickFields(data, PUBLISHED_CMA_FIELDS),
+                    ...(baths != null ? { baths: baths } : {}),
                     // Built field by field in buildBenchmark(), with thin-data
                     // suppression already applied.
                     ...(benchmark && benchmark.fields ? benchmark.fields : {}),
