@@ -12,6 +12,7 @@
 <script src="js/profile.js"></script>
 <script>window.sphereActivePage = 'profile';</script>
 <script src="js/header.js"></script>
+<script src="js/cma-cleanup.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F7F4EF;color:#0F0F0F;min-height:100vh}
@@ -792,19 +793,65 @@ function sendReset() {
     .catch(err => toast('Error: '+err.message,'err'));
 }
 
-function deleteAccount() {
-  if (!confirm('Delete your account permanently? All your CMAs and data will be lost. This cannot be undone.')) return;
-  if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
-  db.collection('users').doc(currentUser.uid).delete()
-    .then(() => currentUser.delete())
-    .then(() => { window.location.href = 'index.html'; })
-    .catch(err => {
-      if (err.code === 'auth/requires-recent-login') {
-        toast('Please log out and log back in to delete your account','err');
-      } else {
-        toast('Error: '+err.message,'err');
-      }
+// Firebase refuses to delete a login that has not signed in recently. This
+// used to be discovered only AFTER the profile document was deleted, leaving a
+// signed-in account with no profile. It is now checked before anything is
+// touched. Five minutes is conservative; Firebase does not publish the window.
+const RECENT_LOGIN_MS = 5 * 60 * 1000;
+
+function signedInRecently() {
+  const last = Date.parse(currentUser && currentUser.metadata && currentUser.metadata.lastSignInTime);
+  return Number.isFinite(last) && (Date.now() - last) < RECENT_LOGIN_MS;
+}
+
+// Deleting the account used to delete users/{uid} and the login, and leave
+// every CMA, comp, photo, MLS sheet and CLIENT PAGE behind — live at their
+// links, and once public_cmas writes are owner-only, deletable by nobody.
+// The cascade runs for every CMA first, while the user is still signed in,
+// because every step of it needs auth. The first failure stops everything
+// and the account is kept.
+async function deleteAccount() {
+  if (!signedInRecently()) {
+    toast('For safety, log out and log back in, then delete your account within 5 minutes', 'err');
+    return;
+  }
+  const typed = prompt(
+    'This permanently deletes your account and every CMA in it — comparables, ' +
+    'photos and MLS sheets included — and takes every client page offline. ' +
+    'Links you have sent to clients will stop working.\n\n' +
+    'Type DELETE to confirm.');
+  if (typed === null) return;
+  if (typed.trim() !== 'DELETE') { toast('Not deleted — type DELETE to confirm', 'err'); return; }
+
+  // Re-checked: the prompt may have sat open.
+  if (!signedInRecently()) {
+    toast('Too long since you signed in — log out, log back in, and try again', 'err');
+    return;
+  }
+
+  let result;
+  try {
+    result = await SphereCmaCleanup.deleteAllCmas(currentUser.uid, (i, n) => {
+      toast('Deleting CMA ' + i + ' of ' + n + '…', 'ok');
     });
+  } catch (err) {
+    console.error('Account deletion stopped:', err.step, err.cause || err);
+    toast('Stopped while ' + (err.step || 'deleting your CMAs') +
+          ' — your account was NOT deleted. ' + (err.code || err.message || ''), 'err');
+    return;
+  }
+  console.log('CMAs deleted before account removal:', result);
+
+  try {
+    await db.collection('users').doc(currentUser.uid).delete();
+    await currentUser.delete();
+    window.location.href = 'index.html';
+  } catch (err) {
+    console.error('Account deletion failed after CMAs were removed:', err);
+    toast(err.code === 'auth/requires-recent-login'
+      ? 'Your CMAs and client pages are deleted, but Firebase needs a fresh sign-in to remove the login — log out, log back in, and delete again'
+      : 'Your CMAs and client pages are deleted, but the account was not — ' + (err.code || err.message), 'err');
+  }
 }
 
 // NAVIGATION
