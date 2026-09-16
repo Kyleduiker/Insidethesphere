@@ -818,6 +818,41 @@ section already makes the pricing argument with data already in hand.
 - **`public_cmas` write rules. Not optional.** Any authenticated user can
   currently overwrite any published CMA. Harmless while Kyle is the only account;
   live the moment someone signs up after the demo.
+- **Password gate — option B, client-side encryption. Not optional; same
+  security pass as the write rules.** The gate compares the entered password
+  against `clientPassword` stored on the very document it protects
+  (`cma/client/index.html`, `unlock()`), so anyone who reads
+  `public_cmas/{slug}` has the password and everything behind it: client name,
+  address, recommended price and range, mortgage balance and penalty,
+  commission terms, reasoning notes.
+
+  The fix: at publish, encrypt the report with a key derived from the password
+  — WebCrypto, PBKDF2 into AES-GCM, no library. The published document holds
+  the gate fields in plain text plus ciphertext, salt and IV, and **no
+  password**. A wrong password fails to decrypt. No server, no build step, and
+  it still unlocks offline once loaded, which the offline demo needs. Chosen
+  over a password-derived document id (online guessing billed to Kyle, and it
+  depends on the rules being right) and over a Cloud Function (a deploy step
+  outside Pages, cold starts at the gate, no offline unlock).
+
+  **Required with it — without these, option B protects nothing:**
+  - **Generated passcodes, not typed ones.** Anyone can download the
+    ciphertext once and guess offline at the speed of their hardware, so the
+    password's strength is the entire protection. The editor's placeholder is
+    `Mahogany2026`; a password shaped like that falls immediately.
+  - **A long random slug from `crypto.getRandomValues`.** `generateSlug()` in
+    `cma/index.html` builds the link from the street address plus a five-digit
+    `Math.random()` number — **90,000 possibilities**. Anyone who knows an
+    address can find its document for a few cents of reads.
+
+  **The slug enumeration is the bigger hole than the password.** The password
+  only matters once someone has the document, and the slug hands the document
+  to anyone who knows the address — today with the password on it, and after
+  option B with the ciphertext to guess against at leisure.
+
+  Republish every CMA afterwards. The gate fields — address, client name,
+  property photo — stay readable by design, because they show before the
+  password is entered; showing less on the gate is the only way to hide them.
 - PDF export from the client page. No `@media print` rules exist and the
   "Download PDF" button already calls `window.print()`, so it produces a poor
   artifact today.
