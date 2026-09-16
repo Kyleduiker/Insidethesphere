@@ -1417,7 +1417,7 @@ details.override>summary:hover{color:var(--obs)}
         <input class="fi" type="url" id="comp-photo" placeholder="https://matrixmedia.pillarnine.com/..." style="font-size:11px">
       </div>
       <div class="fg">
-        <label>Agent notes <span>— appears on client page comp card</span></label>
+        <label>Agent notes <span>— private, not shown to the client</span></label>
         <textarea class="fta" id="comp-notes" rows="2" placeholder="Backing greenspace, similar lot size, sold in 8 days at 101% of asking"></textarea>
       </div>
 
@@ -1943,6 +1943,100 @@ details.override>summary:hover{color:var(--obs)}
         box.style.display = 'block';
     }
 
+    // ── WHAT A PUBLISHED CMA MAY CONTAIN ──
+    //
+    // public_cmas is readable by anyone holding a client link, and the
+    // password gate runs in the browser. publishCMA() used to spread the whole
+    // editor form and every whole comp onto it, which published the agent's
+    // private notes about the seller, the seller's email, and anything else
+    // that ever became a form field — silently, the moment it was added.
+    //
+    // Every field is now either PUBLISHED or NOT PUBLISHED, by name. A field in
+    // neither list is not published AND is reported at publish, loudly, so a
+    // new field forces a decision instead of defaulting to world-readable.
+    //
+    // A field belongs in the published list only if cma/client/index.html
+    // reads it. Checked field by field on Sep 16, 2026.
+
+    const PUBLISHED_CMA_FIELDS = [
+        // Gate and cover
+        'clientName', 'presentationType', 'customPresentationType',
+        'address', 'community', 'propPhotoUrl', 'appointmentDate',
+        // The gate compares against this IN THE BROWSER, so publishing it means
+        // anyone reading the document can pass the gate. It stays only because
+        // removing it breaks the gate outright. See the password-gate proposal.
+        'clientPassword',
+        // Subject specs — cover strip and "Your home" card
+        'beds', 'sqft', 'yearBuilt', 'garage', 'lotSize',
+        // Market overview fallback, when no CREB benchmark travelled
+        'absorption', 'domAvg', 'listToSale', 'marketNarrative',
+        // Reasoning — the agent's per-status notes and commentary, shown verbatim
+        'reasonNoteSold', 'reasonNotePending', 'reasonNoteActive',
+        'reasonNoteExpired', 'reasonNoteTerminated', 'reasoningCommentary',
+        // Pricing
+        'priceLow', 'priceRec', 'priceHigh', 'priceRationale',
+        // Net sheet
+        'commissionType', 'commTier1', 'commTier2', 'commCap', 'commission',
+        'commFlatFee', 'gst', 'legalFees', 'mortgageBalance', 'mortgagePenalty',
+        'taxAdj', 'otherCosts',
+        // Marketing plan
+        'photographerName', 'shootDate', 'shotList', 'offerStrategy'
+    ];
+
+    const NOT_PUBLISHED_CMA_FIELDS = [
+        // Private: about the client, never for a public document
+        'clientEmail', 'sellerMotivation', 'sellerTimeline', 'sellerNotes',
+        // Storage path, not a display value
+        'propPhotoPath',
+        // Inputs to adjustments, which are computed at publish and travel as
+        // results on each comp
+        'bedsAbove', 'bathsFull', 'bathsHalf', 'basement',
+        // Inputs to the CREB benchmark lookup, which travels as benchmark* fields
+        'communityId', 'marketType',
+        // Collected by the editor, rendered nowhere on the client page
+        'features', 'activeListings', 'soldLast30', 'medianSoldPrice', 'netPrice',
+        // Private-document bookkeeping set by publishCMA itself
+        'status', 'publishedAt', 'updatedAt'
+    ];
+
+    const PUBLISHED_COMP_FIELDS = [
+        'address', 'community', 'status', 'price', 'listPrice', 'soldPrice',
+        'beds', 'baths', 'sqft', 'dom', 'year', 'photoUrl', 'sheetUrl'
+        // plus `adjustment`, computed at publish — see publicAdjustment()
+    ];
+
+    const NOT_PUBLISHED_COMP_FIELDS = [
+        // Document identity and bookkeeping
+        'id', 'createdAt', 'updatedAt', 'manualFields', 'importedValues',
+        // The editor labelled this "appears on client page comp card", and the
+        // client page has never rendered it. Anything typed there believing a
+        // seller sees it was sitting unseen on a world-readable document.
+        'notes',
+        // Not rendered on the client page
+        'mls', 'soldDate',
+        // Adjustment inputs — the result travels as `adjustment`, and the
+        // override amount and reason travel inside it
+        'bedsAbove', 'bathsFull', 'bathsHalf', 'basement', 'lotSize', 'garage',
+        'adjOverride', 'adjReason'
+    ];
+
+    // Copies named fields only. Never spreads.
+    function pickFields(src, allow) {
+        const out = {};
+        allow.forEach(k => {
+            if (src && Object.prototype.hasOwnProperty.call(src, k) && src[k] !== undefined) {
+                out[k] = src[k];
+            }
+        });
+        return out;
+    }
+
+    // Keys in neither list. These are withheld, and named at publish.
+    function unclassifiedFields(src, published, notPublished) {
+        return Object.keys(src || {}).filter(k =>
+            published.indexOf(k) < 0 && notPublished.indexOf(k) < 0);
+    }
+
     function publishCMA() {
         if (!currentUser || !cmaId) return;
 
@@ -1957,6 +2051,13 @@ details.override>summary:hover{color:var(--obs)}
         let benchmark = null;
         let agent = null;
         let adjWarning = '';
+
+        // Checked before anything is written, against the exact objects that
+        // are about to be published.
+        const unclassified = new Set(
+            unclassifiedFields(data, PUBLISHED_CMA_FIELDS, NOT_PUBLISHED_CMA_FIELDS));
+        comps.forEach(c => unclassifiedFields(c, PUBLISHED_COMP_FIELDS, NOT_PUBLISHED_COMP_FIELDS)
+            .forEach(k => unclassified.add('comp.' + k)));
 
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
@@ -1983,13 +2084,11 @@ details.override>summary:hover{color:var(--obs)}
                 }
                 const subj = { ...data, valuationYear: valuationYearFor(data) };
 
-                // Also write to public_cmas for client access.
-                // Sanitise: never let a FieldValue sentinel reach an array.
+                // Named fields only. This also keeps createdAt — and with it
+                // any serverTimestamp sentinel, which Firestore rejects inside
+                // an array — off the public document entirely.
                 const publicComps = comps.map(c => {
-                    const o = { ...c };
-                    if (o.createdAt && typeof o.createdAt !== 'number'
-                        && typeof o.createdAt.toMillis !== 'function') delete o.createdAt;
-                    delete o.adjustment;
+                    const o = pickFields(c, PUBLISHED_COMP_FIELDS);
                     const pub = (settingsDoc && A)
                         ? publicAdjustment(A.compute(subj, c, settingsDoc))
                         : null;
@@ -1997,7 +2096,9 @@ details.override>summary:hover{color:var(--obs)}
                     return o;
                 });
                 return db.collection('public_cmas').doc(slug).set({
-                    ...data,
+                    ...pickFields(data, PUBLISHED_CMA_FIELDS),
+                    // Built field by field in buildBenchmark(), with thin-data
+                    // suppression already applied.
                     ...(benchmark && benchmark.fields ? benchmark.fields : {}),
                     // The client page cannot read users/{uid}; this is the
                     // only profile data it will have.
@@ -2005,7 +2106,8 @@ details.override>summary:hover{color:var(--obs)}
                     // No `adjustments` and no `valuationYear`: both were
                     // inputs, and only results are published. set() replaces
                     // the whole document, so republishing a CMA published
-                    // before this change also removes the old grid from it.
+                    // before this change also removes the old grid from it —
+                    // and every field no longer on the allow-list.
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
@@ -2014,7 +2116,18 @@ details.override>summary:hover{color:var(--obs)}
             })
             .then(() => {
                 cmaData = { ...cmaData, ...data };
-                if (adjWarning) {
+                if (unclassified.size) {
+                    // Withheld, which is the safe direction — but if the client
+                    // page needs one of these it is now silently missing, so
+                    // this must be loud either way.
+                    const list = Array.from(unclassified).join(', ');
+                    console.error('Published, but these fields are in neither allow-list in ' +
+                                  'publishCMA() and were NOT published: ' + list);
+                    if (adjWarning) console.error('Published without adjustments: ' + adjWarning);
+                    showToast('CMA published — unclassified fields withheld: ' + list +
+                              (adjWarning ? ' · and WITHOUT adjustment breakdowns — ' + adjWarning : ''),
+                              'error');
+                } else if (adjWarning) {
                     console.error('Published without adjustments: ' + adjWarning);
                     showToast('CMA published WITHOUT adjustment breakdowns — ' + adjWarning, 'error');
                 } else {
