@@ -8,10 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<!-- Comparable adjustment arithmetic, shared with cma/edit.html so the two
-     cannot drift. If it fails to load the comp cards render exactly as they
-     did before it existed — only the breakdown is absent. -->
-<script src="../../js/adjustments.js"></script>
 <script>
 if (!firebase.apps.length) {
   firebase.initializeApp({
@@ -2430,90 +2426,88 @@ function safePhotoUrl(v) {
 }
 
 // ── HOW THIS WAS ADJUSTED ────────────────────────────
-// The arithmetic lives in js/adjustments.js, shared with the editor. This
-// only renders what it returns.
+// Renders comp.adjustment, which publishCMA() computed and wrote. This page
+// computes nothing and never sees the agent's adjustment values — they are
+// the agent's methodology and are not on this document.
+//
+// Deliberately NO fallback to computing from a `subject.adjustments` grid.
+// A CMA published before results were baked still carries that grid until it
+// is republished; this page ignores it and renders no breakdown, rather than
+// trusting the render layer with data that should never have been there.
 //
 // The sold price stays the headline on the card. The adjusted figure sits
-// inside the panel and is described as evidence, because that is what it
-// is — it restates one comparable as if it were this home, and a stack of
-// those restatements is what the recommendation is argued from. It is not
-// itself the recommendation, and it does not feed the Reasoning medians.
+// inside the panel and is described as evidence, not as the recommendation,
+// and it does not feed the Reasoning medians.
+
+function signedMoney(n) {
+  const r = Math.round(Number(n) || 0);
+  if (r === 0) return '$0';
+  return (r > 0 ? '+ ' : '− ') + '$' + Math.abs(r).toLocaleString();
+}
 
 function adjustmentPanel(comp, subject) {
-  if (!window.SphereAdjustments) {
-    // Nothing visible to the seller: the card is complete without this.
-    console.error('js/adjustments.js did not load — comp breakdowns are absent.');
-    return '';
-  }
-  const A = window.SphereAdjustments;
-  const r = A.compute(subject, comp, subject && subject.adjustments);
-  // r.notConfigured and r.switchedOff are deliberately not rendered here.
-  // A seller has no use for the fact that their agent does not price
-  // basements; that gap belongs in the editor, where it can be acted on.
-  if (!r.ok) return '';
+  const a = comp && comp.adjustment;
+  if (!a || !Array.isArray(a.lines) || !Number.isFinite(Number(a.adjustedPrice))) return '';
 
-  const agent = (subject.agent && subject.agent.firstName) || '';
+  const agent = (subject && subject.agent && subject.agent.firstName) || '';
 
   const amountCell = l =>
       l.status === 'unavailable' ? 'Not applied'
     : l.status === 'even'        ? '—'
-    : A.signed(l.amount);
+    : signedMoney(l.amount);
 
-  // Skipped lines do not get a row each — a panel of "not adjusted" rows
-  // would be the fussiness the threshold exists to remove. They are gathered
-  // into one closing line below. `wouldBe` is never rendered here.
-  const rows = r.lines.filter(l => l.status !== 'immaterial').map(l => `
-    <div class="adj-row ${l.status}">
+  const rows = a.lines.map(l => `
+    <div class="adj-row ${escHtml(l.status)}">
       <div class="adj-label">${escHtml(l.label)}</div>
       <div class="adj-detail">${escHtml(l.detail)}</div>
       <div class="adj-amt">${amountCell(l)}</div>
     </div>`).join('');
 
-  const skipped = r.immaterial.length
-    ? (() => {
-        const text = r.immaterial.map(l => l.phrase).join('; ');
-        return `
+  // Everything below materiality, gathered into one line. The factor was
+  // checked, not forgotten.
+  const skipped = a.notAdjusted
+    ? `
     <div class="adj-row immaterial">
       <div class="adj-label">Not adjusted</div>
-      <div class="adj-detail">${escHtml(text.charAt(0).toUpperCase() + text.slice(1))}.</div>
+      <div class="adj-detail">${escHtml(a.notAdjusted)}</div>
       <div class="adj-amt">—</div>
-    </div>`;
-      })()
+    </div>`
     : '';
 
   // An override replaces the computed total, but the computed total still
   // renders above it. Showing only the override would hide the fact that a
   // judgement was made — the reason is the point, and it needs the number
   // it departs from to be legible.
-  const sums = r.override
+  const sums = a.override
     ? `<div class="adj-row sum">
          <div class="adj-label">Computed</div>
          <div class="adj-detail">From the values applied to every comparable.</div>
-         <div class="adj-amt">${A.signed(r.computedTotal)}</div>
+         <div class="adj-amt">${signedMoney(a.computedTotal)}</div>
        </div>
        <div class="adj-row sum">
          <div class="adj-label">Adjusted${agent ? ' by ' + escHtml(agent) : ' by hand'}</div>
-         <div class="adj-detail">${r.override.reason
-              ? `<span class="adj-note">“${escHtml(r.override.reason)}”</span>`
+         <div class="adj-detail">${a.override.reason
+              ? `<span class="adj-note">“${escHtml(a.override.reason)}”</span>`
               : ''}</div>
-         <div class="adj-amt">${A.signed(r.override.amount)}</div>
+         <div class="adj-amt">${signedMoney(a.override.amount)}</div>
        </div>`
     : `<div class="adj-row sum">
          <div class="adj-label">Total adjustment</div>
          <div class="adj-detail"></div>
-         <div class="adj-amt">${A.signed(r.computedTotal)}</div>
+         <div class="adj-amt">${signedMoney(a.computedTotal)}</div>
        </div>`;
 
-  const flag = A.unavailableSummary(r);
+  const n = Number(a.unavailableCount) || 0;
+  const flag = n ? n + ' factor' + (n === 1 ? '' : 's') + ' could not be applied' : '';
+  const price = Math.round(Number(a.adjustedPrice)).toLocaleString();
 
   // Named while the panel is still closed. A factor that did not run is
   // exactly the thing a seller should not have to open a panel to find.
   const foot = flag
     ? `This comparable restated against your home comes to
-       <strong>$${r.adjustedPrice.toLocaleString()}</strong> — but
-       ${escHtml(flag.toLowerCase())}, so treat it as approximate.
-       It is one piece of evidence toward the recommendation, not the
-       recommendation itself.`
+       <strong>$${price}</strong> — but ${escHtml(flag)}, so treat it as
+       approximate. It is one piece of evidence toward the recommendation,
+       not the recommendation itself.`
     : `This is what this comparable suggests your home is worth, on this
        comparable alone. It is one piece of evidence toward the
        recommendation, not the recommendation itself.`;
@@ -2528,9 +2522,9 @@ function adjustmentPanel(comp, subject) {
       ${skipped}
       ${sums}
       <div class="adj-row final">
-        <div class="adj-label">${escHtml(r.basisLabel)}</div>
+        <div class="adj-label">${escHtml(a.basisLabel)}</div>
         <div class="adj-detail"></div>
-        <div class="adj-amt">$${r.adjustedPrice.toLocaleString()}</div>
+        <div class="adj-amt">$${price}</div>
       </div>
       <div class="adj-foot">${foot}</div>
     </div>

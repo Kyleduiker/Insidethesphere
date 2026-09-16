@@ -5,11 +5,16 @@
  * network calls. Takes a subject, a comp and an agent's settings document
  * and returns the lines to render.
  *
- * Loaded by BOTH cma/edit.html and cma/client/index.html. One copy on
- * purpose: the client net sheet and the editor's recalcNet() were once two
- * implementations of the same arithmetic and they disagreed, in front of a
- * seller, in the direction that overstated their proceeds. Adjusted prices
- * are the same class of number.
+ * Loaded by cma/edit.html (preview AND publish) and settings/index.html (for
+ * the band list). One copy on purpose: the client net sheet and the editor's
+ * recalcNet() were once two implementations of the same arithmetic and they
+ * disagreed, in front of a seller. Adjusted prices are the same class of
+ * number.
+ *
+ * NOT loaded by the client page, and it must stay that way. Computing on the
+ * client would need the agent's settings on the public document, and those
+ * settings are the agent's methodology. publishCMA() runs compute() and
+ * writes only each comparable's result.
  *
  * ── The sign rule ─────────────────────────────────────────────────────────
  *
@@ -222,10 +227,11 @@ function bandOf(age) {
    cross a band boundary on New Year's Day and change the adjusted price on a
    CMA already sitting in a seller's inbox, with nobody touching it.
 
-   publishCMA() snapshots `valuationYear` onto the published document. For a
-   CMA published before that existed, the appointment date's year is used.
-   If neither is present the age line is UNAVAILABLE — this module never
-   reaches for the clock. */
+   The editor passes `valuationYear` in memory, for the preview and for the
+   computation at publish; the lines are baked there, so a published CMA
+   never recomputes. Without it the appointment date's year is used, and if
+   neither is present the age line is UNAVAILABLE — this module never reaches
+   for the clock. */
 function valuationYearOf(subject) {
   var v = parseInt(subject && subject.valuationYear, 10);
   if (v >= 1900 && v <= 2200) return v;

@@ -18,8 +18,9 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="../js/market-import.js"></script>
 <script src="../js/city-stats-import.js"></script>
-<!-- Shared with cma/client/index.html. The editor previews exactly what the
-     seller will see, from the same code, so an override is never set blind. -->
+<!-- The editor previews with this and publishes with this, so the preview is
+     exactly what gets baked onto the published CMA. The client page does NOT
+     load it: it renders stored results and never sees the settings. -->
 <script src="../js/adjustments.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1866,45 +1867,66 @@ details.override>summary:hover{color:var(--obs)}
             });
     }
 
-    // The client page cannot read users/{uid}, so the adjustment values
-    // travel on the published document like the agent profile does.
+    // Read privately, used in memory, never written anywhere public.
     //
-    // Only the three tables travel. updatedAt and updatedBy are account
-    // metadata and have no business on a publicly readable document —
-    // suppress at publish, never at render.
-    function buildAdjustmentSnapshot() {
+    // The settings document is the agent's valuation method — the whole grid.
+    // It used to be copied onto public_cmas so the client page could compute
+    // adjustments itself, which put every rate and every band value in a
+    // document anyone holding one client link can read. Adjustments are now
+    // computed at publish and only each comparable's RESULT is written.
+    // Suppress at the source, exactly as with thin market data.
+    //
+    // Returns { settings, error }. A failed read is surfaced at publish rather
+    // than returning a quiet null: a CMA that publishes with every breakdown
+    // missing because of a permissions error must say so.
+    function readAdjustmentSettings() {
         return db.collection('users').doc(currentUser.uid)
             .collection('settings').doc('adjustments').get()
-            .then(doc => {
-                if (!doc.exists) return null;
-                const d = doc.data() || {};
-                // Allow-list, not a copy. rates.perYear was retired when age
-                // moved to bands, and a document saved before that still
-                // carries it; copying `rates` whole would publish a figure
-                // nothing reads. Only keys the module actually uses travel.
-                const A = window.SphereAdjustments;
-                const rates = {};
-                (A ? A.NUMERIC_LINES : []).forEach(def => {
-                    const v = (d.rates || {})[def.key];
-                    rates[def.key] = (v === undefined) ? null : v;
-                });
-                return {
-                    rates:          rates,
-                    ageValues:      d.ageValues      || {},
-                    basementValues: d.basementValues || {},
-                    garageValues:   d.garageValues   || {}
-                };
-            })
+            .then(doc => ({ settings: doc.exists ? doc.data() : null, error: '' }))
             .catch(err => {
                 console.error('Adjustment settings read failed:', err);
-                return null;
+                return { settings: null,
+                         error: (err.code || 'error') + ' — ' + (err.message || String(err)) };
             });
+    }
+
+    // The ONLY adjustment data that reaches public_cmas, built field by field
+    // rather than by spreading the result. Nothing here is a rate, a band
+    // value, a table, a threshold, a "would have been" figure, a diagnostic,
+    // or a list of factors the agent has switched off or never filled in.
+    // Returns null when there is nothing to show, and the key is then omitted.
+    function publicAdjustment(r) {
+        if (!r || !r.ok) return null;
+        const phrases = r.immaterial.map(l => l.phrase);
+        const notAdjusted = phrases.length
+            ? phrases.join('; ').replace(/^./, ch => ch.toUpperCase()) + '.'
+            : '';
+        return {
+            basisLabel:       r.basisLabel,
+            adjustedPrice:    r.adjustedPrice,
+            computedTotal:    r.computedTotal,
+            unavailableCount: r.unavailable.length,
+            notAdjusted:      notAdjusted,
+            override: r.override
+                ? { amount: r.override.amount, reason: r.override.reason || '' }
+                : null,
+            lines: r.lines
+                .filter(l => l.status !== 'immaterial')
+                .map(l => ({
+                    label:  l.label,
+                    status: l.status,
+                    detail: l.detail,
+                    amount: l.status === 'applied' ? l.amount : 0
+                }))
+        };
     }
 
     // Age is measured against the CMA, never against the clock on the day
     // someone opens the link. The appointment date's year, falling back to
-    // the year it is published. Snapshotted at publish so a CMA already in a
-    // seller's inbox cannot change on New Year's Day.
+    // the year it is published. Used in memory by both the preview and the
+    // publish computation; the adjusted lines it produces are baked at
+    // publish, so a CMA already in a seller's inbox cannot change on New
+    // Year's Day.
     function valuationYearFor(data) {
         const m = String((data && data.appointmentDate) || '').match(/^(\d{4})/);
         return m ? parseInt(m[1], 10) : new Date().getFullYear();
@@ -1934,7 +1956,7 @@ details.override>summary:hover{color:var(--obs)}
 
         let benchmark = null;
         let agent = null;
-        let adjust = null;
+        let adjWarning = '';
 
         db.collection('users').doc(currentUser.uid)
             .collection('cmas').doc(cmaId)
@@ -1942,18 +1964,36 @@ details.override>summary:hover{color:var(--obs)}
             .then(() => Promise.all([
                 buildBenchmark(data.communityId, data.marketType),
                 buildAgentSnapshot(),
-                buildAdjustmentSnapshot()
+                readAdjustmentSettings()
             ]))
-            .then(([result, agentSnap, adjSnap]) => {
+            .then(([result, agentSnap, adjRead]) => {
                 benchmark = result;
                 agent = agentSnap;
-                adjust = adjSnap;
+
+                // Adjustments are computed here, against the private settings
+                // document, with the same module and the same valuation year
+                // as the editor preview. Only publicAdjustment()'s output is
+                // written. The settings object never leaves this function.
+                const A = window.SphereAdjustments;
+                const settingsDoc = adjRead.settings;
+                if (adjRead.error) {
+                    adjWarning = 'adjustment settings could not be read (' + adjRead.error + ')';
+                } else if (settingsDoc && !A) {
+                    adjWarning = 'js/adjustments.js did not load';
+                }
+                const subj = { ...data, valuationYear: valuationYearFor(data) };
+
                 // Also write to public_cmas for client access.
                 // Sanitise: never let a FieldValue sentinel reach an array.
                 const publicComps = comps.map(c => {
                     const o = { ...c };
                     if (o.createdAt && typeof o.createdAt !== 'number'
                         && typeof o.createdAt.toMillis !== 'function') delete o.createdAt;
+                    delete o.adjustment;
+                    const pub = (settingsDoc && A)
+                        ? publicAdjustment(A.compute(subj, c, settingsDoc))
+                        : null;
+                    if (pub) o.adjustment = pub;
                     return o;
                 });
                 return db.collection('public_cmas').doc(slug).set({
@@ -1962,8 +2002,10 @@ details.override>summary:hover{color:var(--obs)}
                     // The client page cannot read users/{uid}; this is the
                     // only profile data it will have.
                     ...(agent ? { agent: agent } : {}),
-                    ...(adjust ? { adjustments: adjust } : {}),
-                    valuationYear: valuationYearFor(data),
+                    // No `adjustments` and no `valuationYear`: both were
+                    // inputs, and only results are published. set() replaces
+                    // the whole document, so republishing a CMA published
+                    // before this change also removes the old grid from it.
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
@@ -1972,9 +2014,14 @@ details.override>summary:hover{color:var(--obs)}
             })
             .then(() => {
                 cmaData = { ...cmaData, ...data };
-                showToast(benchmark && benchmark.ok
-                    ? 'CMA published — client link is ready'
-                    : 'CMA published — no market data, see section 08');
+                if (adjWarning) {
+                    console.error('Published without adjustments: ' + adjWarning);
+                    showToast('CMA published WITHOUT adjustment breakdowns — ' + adjWarning, 'error');
+                } else {
+                    showToast(benchmark && benchmark.ok
+                        ? 'CMA published — client link is ready'
+                        : 'CMA published — no market data, see section 08');
+                }
                 updatePublishPanel();
                 updateClientUrl();
                 showPublishMarket(benchmark);
