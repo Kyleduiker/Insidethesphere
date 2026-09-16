@@ -357,20 +357,63 @@ reads it.
 
 Existing and working: photos, subject card, status grouping, MLS sheets, $/sqft.
 
-**Fix:** sold cards must read **SOLD AT**, not "Listed at". When sale price
-equals list price, drop the redundant strikethrough.
+**SOLD AT — BUILT** (`13fa4c5`). Sold cards read SOLD AT, not "Listed at", and
+the struck-through list price renders only when it differs from the sale price.
 
-**New — adjustment tool.** Values set at **agent level, not per-CMA**: bedrooms,
-bathrooms (full and half separately), finished basement, garage by type,
-per-sqft, lot size, age.
+**Adjustment tool — BUILT with single values; redesign around sliders, not
+built.** What exists (`13fa4c5` through `519cd37`): one stored value per rate
+and per table state at `/settings/`, computed per comp with the sign handled
+automatically, materiality thresholds, banded age, a whole-comp override with a
+reason, and results-only publishing. **Everything below is design, not built.**
+It replaces the per-line values and the whole-comp override.
 
-Adjustments are computed from the comp-vs-subject difference with the **sign
-handled automatically** — if the comp has more, subtract from the comp.
-Overridable per comp with a reason field.
+**Why sliders.** A single stored value cannot express that a comp's triple
+garage is standard while the subject's is oversized and heated. The count is
+the same; the quality isn't. Sliding the line is how that judgement gets made
+and recorded.
 
-The sold price stays the headline. Adjustments live in an expandable "how this
-was adjusted". **The adjusted price is evidence, not an input to the
-recommendation.**
+**Settings — agent level, not per-CMA.**
+- **Rates** — bedroom above grade, full bath, half bath, per sq.ft. living, per
+  sq.ft. lot — get a **min, max and default**, not a single value.
+- **Value tables** — basement, garage, age bands — keep **one value per state**.
+- **Slider step is derived from the range, never configured.**
+
+**Comp panel — a rebuild, not an addition.**
+- Side by side on each line: subject value · comp value · difference · dollar
+  amount · slider.
+- **Rate lines** slide between their configured min and max.
+- **Table-derived lines** slide within **±50% of the computed gap**. Sliding the
+  two state values that produce one gap is unintuitive — slide the wrong one and
+  the adjustment moves the wrong way. **One control per adjustment.**
+- Untouched lines sit at their default; **moved lines are marked in the
+  editor.**
+- **Optional note per line**, rendered beside that line on the client page.
+- **"Other" line** with its own reason, for what no field captures.
+- **Comp notes field**, agent-written, shown to the client.
+
+**Unchanged:** the sign rule — if the comp has more, subtract from the comp. The
+sold price stays the card's headline, and adjustments live in the expandable
+"how this was adjusted". **The adjusted price is evidence, not an input to the
+recommendation**, and does not feed the Reasoning medians. Min, max and default
+are methodology and never reach `public_cmas`: only each line's resulting
+amount, its note and the adjusted price are published, as today (`61d6e2f`).
+
+Open:
+- **A same-state table line has a gap of zero, so ±50% of it is no range at
+  all** — and that is the triple-garage case above. Both homes are "3 car
+  attached", and the slider the design exists to provide cannot move. It needs
+  a range that does not come from the gap (a share of the state's own value,
+  say), or that judgement goes on the "Other" line.
+- **Comp notes: a new field, not the existing `notes`.** The Matrix import fills
+  `notes` from the listing's **Public Remarks** — MLS listing copy, which the
+  positioning above says the platform does not redistribute. It was published
+  unseen until `94b92fd` and is now labelled "private, not shown to the
+  client", so anything typed under either label would go public if the field
+  were simply flipped. A new field starts empty.
+- **How sliders meet materiality and unavailable lines.** A line skipped as
+  immaterial, or unavailable because data is missing (the unread bath split, an
+  unmapped garage label), has no difference to slide. Whether those get a
+  slider, stay fixed, or push the judgement to "Other" is undecided.
 
 ### Reasoning — new section, between Comparables and Pricing
 
