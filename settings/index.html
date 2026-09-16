@@ -12,6 +12,9 @@
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'settings';</script>
 <script src="../js/header.js"></script>
+<!-- Read for AGE_BANDS only, so the bands on this page cannot disagree with
+     the bands the computation uses. -->
+<script src="../js/adjustments.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -193,12 +196,24 @@ section{margin-top:36px}
             <div class="money"><input type="number" id="r-perLotSqft" min="0" step="1" placeholder="Not set"></div>
             <div class="fhint">Applied to the difference in lot size.</div>
           </div>
-          <div class="fg">
-            <label>Per year of age</label>
-            <div class="money"><input type="number" id="r-perYear" min="0" step="100" placeholder="Not set"></div>
-            <div class="fhint">A newer comparable is adjusted down toward an older subject.</div>
-          </div>
         </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <div class="card-title">Age</div>
+        <div class="card-sub">
+          A value per age band rather than a rate per year, because a year of
+          age is not worth the same at every age. The adjustment is the gap
+          between the subject's band and the comparable's. Two homes in the
+          same band are not adjusted, and neither are two built less than
+          <span id="ageMinYears">5</span> years apart, even across a band
+          edge. Age is measured as of the CMA's appointment date, never today.
+          <strong>Renovation is not captured here</strong> — use the override
+          on the comparable, with a reason.
+        </div>
+        <div class="grid2" id="ageGrid"></div>
       </div>
     </section>
 
@@ -271,8 +286,15 @@ section{margin-top:36px}
    subject; a value per state can.
    ───────────────────────────────────────────────────────────────────────── */
 
+/* perYear is gone — age is banded now. A document saved before the change
+   still carries rates.perYear; collect() deletes it on the next save, and
+   the publish path never copies it regardless. */
 var RATE_FIELDS = ['bedroomAbove', 'bathFull', 'bathHalf',
-                   'perSqft', 'perLotSqft', 'perYear'];
+                   'perSqft', 'perLotSqft'];
+
+/* From the module, never a local copy. If it did not load, the age card
+   says so rather than rendering an empty grid that looks unconfigured. */
+var AGE_BANDS = (window.SphereAdjustments && window.SphereAdjustments.AGE_BANDS) || null;
 
 /* Keys are stored; labels are shown. The keys match what the parser and the
    comp form write, so a lookup never needs a string comparison on display
@@ -311,6 +333,29 @@ function showError(msg) {
 }
 
 function buildValueGrids() {
+  var ageGrid = document.getElementById('ageGrid');
+  if (!AGE_BANDS) {
+    console.error('js/adjustments.js did not load — age bands cannot render.');
+    ageGrid.outerHTML = '<div class="err">js/adjustments.js did not load, so ' +
+      'the age bands cannot be shown. Do not save — the age values would be ' +
+      'written as blank.</div>';
+    document.getElementById('saveBtn').disabled = true;
+  } else {
+    var S = window.SphereAdjustments;
+    document.getElementById('ageMinYears').textContent = S.MATERIALITY.ageYearsMin;
+    ageGrid.innerHTML = AGE_BANDS.map(function (b, i) {
+      var last = i === AGE_BANDS.length - 1;
+      return '<div class="fg"><label>' + b.label + ' <span>— ' + S.bandRange(b) +
+        '</span></label>' +
+        '<div class="money"><input type="number" id="a-' + b.key +
+        '" min="0" step="500" placeholder="Not set"></div>' +
+        (last ? '<div class="fhint">Usually zero — the baseline. Fill every band ' +
+                'you use: a blank band makes the age line unavailable on any ' +
+                'comparison that needs it.</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
   document.getElementById('basementGrid').innerHTML = BASEMENT_TYPES.map(function (t) {
     return '<div class="fg"><label>' + t.label + '</label>' +
       '<div class="money"><input type="number" id="b-' + t.key +
@@ -335,6 +380,12 @@ function fill(data) {
   var rates = (data && data.rates) || {};
   var bsmt  = (data && data.basementValues) || {};
   var gar   = (data && data.garageValues) || {};
+  var age   = (data && data.ageValues) || {};
+
+  (AGE_BANDS || []).forEach(function (b) {
+    var el = document.getElementById('a-' + b.key);
+    if (el) el.value = (age[b.key] === undefined || age[b.key] === null) ? '' : age[b.key];
+  });
 
   RATE_FIELDS.forEach(function (k) {
     var el = document.getElementById('r-' + k);
@@ -368,12 +419,17 @@ function collect() {
     var n = parseFloat(raw);
     return Number.isFinite(n) && n >= 0 ? n : null;
   };
-  var rates = {}, bsmt = {}, gar = {};
+  var rates = {}, bsmt = {}, gar = {}, age = {};
   RATE_FIELDS.forEach(function (k) { rates[k] = num('r-' + k); });
   BASEMENT_TYPES.forEach(function (t) { bsmt[t.key] = num('b-' + t.key); });
   GARAGE_TYPES.forEach(function (t) { gar[t.key] = num('g-' + t.key); });
+  (AGE_BANDS || []).forEach(function (b) { age[b.key] = num('a-' + b.key); });
+  /* set() merges nested maps, so a key no longer written would survive
+     forever. Remove the retired per-year rate explicitly. */
+  rates.perYear = firebase.firestore.FieldValue.delete();
   return {
     rates: rates,
+    ageValues: age,
     basementValues: bsmt,
     garageValues: gar,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -389,6 +445,7 @@ function activeFactorCount(data) {
   var n = 0;
   var live = function (v) { var x = parseFloat(v); return Number.isFinite(x) && x > 0; };
   RATE_FIELDS.forEach(function (k) { if (live((data.rates || {})[k])) n++; });
+  if ((AGE_BANDS || []).some(function (b) { return live((data.ageValues || {})[b.key]); })) n++;
   if (BASEMENT_TYPES.some(function (t) { return live((data.basementValues || {})[t.key]); })) n++;
   if (GARAGE_TYPES.some(function (t) { return live((data.garageValues || {})[t.key]); })) n++;
   return n;
@@ -398,7 +455,7 @@ function activeFactorCount(data) {
    never again sit above a form that adjusts nothing. */
 function loadedPill(data) {
   var n = activeFactorCount(data);
-  return n ? n + ' of ' + (RATE_FIELDS.length + 2) + ' in use' : 'No values set';
+  return n ? n + ' of ' + (RATE_FIELDS.length + 3) + ' in use' : 'No values set';
 }
 
 /* Two-step rather than a confirm() dialog. A dialog is dismissed reflexively;
@@ -463,7 +520,7 @@ buildValueGrids();
 /* Editing anything re-arms the empty-form guard, so a value typed after the
    first refusal is checked again rather than waved through. */
 document.addEventListener('input', function (e) {
-  if (e.target && /^[rbg]-/.test(e.target.id || '')) resetEmptyGuard();
+  if (e.target && /^[rabg]-/.test(e.target.id || '')) resetEmptyGuard();
 });
 
 firebase.auth().onAuthStateChanged(function (user) {

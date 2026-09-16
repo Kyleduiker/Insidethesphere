@@ -116,8 +116,29 @@ function garageKey(v) {
 
 /* ── LINE DEFINITIONS ─────────────────────────────────────────────────── */
 
-/* `subj` and `comp` differ for age: the subject form calls it yearBuilt and
-   a comp calls it year. Same fact, two field names. */
+/* ── MATERIALITY ──────────────────────────────────────────────────────────
+   Differences below these are not adjusted. A $2,400 line for a comp built
+   three years later makes the method look fussy rather than rigorous, and
+   precision beyond what the evidence supports is its own kind of overclaim.
+
+   Measured in the factor's own units, not in dollars, because a unit rule is
+   something a seller can be told plainly — "homes within 50 sq.ft. are
+   treated as the same size" — where a dollar floor sounds like trimming.
+   The cost is that the dollars skipped scale with the rate; the editor shows
+   what each skipped line would have been worth, and the total, so a run of
+   small differences all pointing the same way is visible to the agent.
+
+   Strictly "under": a difference of exactly 50 sq.ft., exactly 10% of the
+   subject's lot, or exactly 5 years IS adjusted.
+
+   Constants rather than settings on purpose, until real use shows they need
+   to vary by agent. */
+var MATERIALITY = {
+  sqftMin:     50,     /* living area, sq.ft. */
+  lotShareMin: 0.10,   /* lot size, as a share of the SUBJECT's lot */
+  ageYearsMin: 5       /* years between build dates */
+};
+
 var NUMERIC_LINES = [
   { key: 'bedroomAbove', label: 'Bedrooms above grade',
     subj: 'bedsAbove', comp: 'bedsAbove',
@@ -130,14 +151,152 @@ var NUMERIC_LINES = [
     one: 'half bathroom', many: 'half bathrooms' },
   { key: 'perSqft', label: 'Living area',
     subj: 'sqft', comp: 'sqft',
-    one: 'sq.ft.', many: 'sq.ft.' },
+    one: 'sq.ft.', many: 'sq.ft.',
+    /* null when material. Otherwise the row text, and the phrase used when
+       every skipped factor is gathered into one line on the client card —
+       which needs the factor named, where a row already carries its label. */
+    immaterial: function (diff) {
+      return Math.abs(diff) < MATERIALITY.sqftMin ? {
+        detail: 'Within ' + MATERIALITY.sqftMin + ' sq.ft. of your home.',
+        phrase: 'living area within ' + MATERIALITY.sqftMin + ' sq.ft. of your home'
+      } : null;
+    } },
   { key: 'perLotSqft', label: 'Lot size',
     subj: 'lotSize', comp: 'lotSize',
-    one: 'sq.ft. of lot', many: 'sq.ft. of lot' },
-  { key: 'perYear', label: 'Age',
-    subj: 'yearBuilt', comp: 'year', age: true,
-    one: 'year', many: 'years' }
+    one: 'sq.ft. of lot', many: 'sq.ft. of lot',
+    immaterial: function (diff, s) {
+      var pct = Math.round(MATERIALITY.lotShareMin * 100);
+      return Math.abs(diff) / s < MATERIALITY.lotShareMin ? {
+        detail: 'Within ' + pct + '% of your lot size.',
+        phrase: 'lot size within ' + pct + '% of yours'
+      } : null;
+    } }
 ];
+
+/* ── AGE BANDS ────────────────────────────────────────────────────────────
+   Replaces a flat rate per year, which treated a year of age as worth the
+   same at every age. It is not: the gap between a 2020 and a 2025 build is
+   not the gap between 1965 and 1970. Narrow at the new end, where most of
+   the SE Calgary target communities sit; wider as stock gets older.
+
+   Bands do NOT capture renovation. A renovated 1965 home is still in the
+   oldest band. Nothing in the data records renovation — that belongs in
+   the per-comp override, with a reason.
+
+   Each band carries a value, exactly like garage types, and the adjustment
+   is the subject's band value minus the comp's. Fixed here rather than
+   agent-editable: editable boundaries need gap and overlap checking that
+   nobody has asked for yet. */
+var AGE_BANDS = [
+  { key: 'new',         label: 'New',         min: 0,  max: 5 },
+  { key: 'recent',      label: 'Recent',      min: 6,  max: 15 },
+  { key: 'established', label: 'Established', min: 16, max: 25 },
+  { key: 'mature',      label: 'Mature',      min: 26, max: 40 },
+  { key: 'older',       label: 'Older',       min: 41, max: Infinity }
+];
+
+function bandRange(b) {
+  return bandSpan(b) + ' years';
+}
+
+/* The band NAMES are for the settings page only. "Established" or "Mature"
+   in a sentence a seller reads sounds like a judgement of their house; the
+   age range is the fact, so client-facing copy uses the range alone. */
+function bandSpan(b) {
+  return b.max === Infinity ? b.min + '+' : b.min + '–' + b.max;
+}
+
+/* A build year later than the valuation year — a presale, or a home finished
+   after the appointment — is treated as age 0 rather than as a negative. */
+function bandOf(age) {
+  var a = Math.max(0, age);
+  for (var i = 0; i < AGE_BANDS.length; i++) {
+    if (a >= AGE_BANDS[i].min && a <= AGE_BANDS[i].max) return AGE_BANDS[i];
+  }
+  return null;
+}
+
+/* ── VALUATION YEAR ───────────────────────────────────────────────────────
+   Age is measured against the CMA, NEVER against today. A comp built in 2011
+   is 15 in 2026 and 16 in 2027; measured from the current date it would
+   cross a band boundary on New Year's Day and change the adjusted price on a
+   CMA already sitting in a seller's inbox, with nobody touching it.
+
+   publishCMA() snapshots `valuationYear` onto the published document. For a
+   CMA published before that existed, the appointment date's year is used.
+   If neither is present the age line is UNAVAILABLE — this module never
+   reaches for the clock. */
+function valuationYearOf(subject) {
+  var v = parseInt(subject && subject.valuationYear, 10);
+  if (v >= 1900 && v <= 2200) return v;
+  var m = String((subject && subject.appointmentDate) || '').match(/^(\d{4})/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+var AGE_DEF = { key: 'age', label: 'Age', table: 'ageValues' };
+
+function ageLine(subject, comp, table) {
+  var def = AGE_DEF;
+  /* The subject form calls it yearBuilt and a comp calls it year. Same fact,
+     two field names. */
+  var sy = pos(subject.yearBuilt);
+  var cy = pos(comp.year);
+  var vy = valuationYearOf(subject);
+
+  if (sy === null || cy === null) {
+    return unavailableLine(def,
+      (sy === null && cy === null) ? 'Not recorded for either property.'
+        : (cy === null) ? 'Not recorded for this property.'
+        : 'Not recorded for your home.',
+      'Age: ' + (sy === null ? 'subject yearBuilt missing' : '') +
+      (sy === null && cy === null ? ' and ' : '') +
+      (cy === null ? 'comp year missing' : ''));
+  }
+  if (vy === null) {
+    return unavailableLine(def, 'Not recorded for this evaluation.',
+      'Age: no valuation year — set the appointment date in section 01. ' +
+      'Age is measured against the CMA, never against today.');
+  }
+
+  var sb = bandOf(vy - sy), cb = bandOf(vy - cy);
+  var gap = Math.abs(sy - cy);
+
+  if (sb.key === cb.key) {
+    return { key: def.key, label: def.label, status: 'even', amount: 0,
+             detail: 'In the same age band as your home, ' + bandRange(sb) + '.' };
+  }
+
+  var sv = num(table[sb.key]), cv = num(table[cb.key]);
+  var wouldBe = (sv !== null && cv !== null) ? Math.round(sv - cv) : null;
+
+  /* The 5-year rule sits on top of the bands, because a band edge is a cliff:
+     2020 and 2021 builds are one year apart and a whole band step different.
+     That would be a worse line than the fussy one this replaces.
+
+     Checked BEFORE a missing band value makes the line unavailable: a skipped
+     line never needed the value, so a blank band row must not flag it. */
+  if (gap < MATERIALITY.ageYearsMin) {
+    return { key: def.key, label: def.label, status: 'immaterial', amount: 0,
+             wouldBe: wouldBe,
+             detail: 'Built within ' + MATERIALITY.ageYearsMin + ' years of your home.',
+             phrase: 'built within ' + MATERIALITY.ageYearsMin + ' years of your home' };
+  }
+
+  if (sv === null || cv === null) {
+    var missing = sv === null ? sb : cb;
+    return unavailableLine(def, 'Not recorded for this property.',
+      'Age: no value saved in settings for the ' + missing.label +
+      ' band (' + bandRange(missing) + ').');
+  }
+
+  return {
+    key: def.key, label: def.label,
+    status: wouldBe === 0 ? 'even' : 'applied',
+    amount: wouldBe,
+    detail: 'Built in ' + cy + ', in the ' + bandSpan(cb) + ' year band. ' +
+            'Yours was built in ' + sy + ', in the ' + bandSpan(sb) + ' year band.'
+  };
+}
 
 var CATEGORY_LINES = [
   { key: 'basement', label: 'Basement', table: 'basementValues',
@@ -211,17 +370,19 @@ function numericLine(def, subject, comp, rate) {
              detail: 'The same as your home.' };
   }
 
-  var mag = Math.abs(diff);
-  var detail;
-  if (def.age) {
-    /* diff = subjectYear - compYear. Positive means the subject is newer,
-       so the comp is older and is adjusted up toward it. */
-    detail = 'Built ' + mag + ' ' + plural(mag, def.one, def.many) + ' ' +
-             (diff > 0 ? 'earlier' : 'later') + ' than your home.';
-  } else {
-    detail = 'Has ' + mag.toLocaleString() + ' ' + (diff > 0 ? 'fewer' : 'more') +
-             ' ' + plural(mag, def.one, def.many) + ' than your home.';
+  /* Computed and judged too small to matter. Not unavailable — nothing is
+     missing — and not off. A seller should see that the factor was checked,
+     not forgotten, so it is reported rather than dropped. `wouldBe` is for
+     the editor only and never reaches a client-page string. */
+  var skip = def.immaterial ? def.immaterial(diff, s, c) : null;
+  if (skip) {
+    return { key: def.key, label: def.label, status: 'immaterial', amount: 0,
+             wouldBe: amount, detail: skip.detail, phrase: skip.phrase };
   }
+
+  var mag = Math.abs(diff);
+  var detail = 'Has ' + mag.toLocaleString() + ' ' + (diff > 0 ? 'fewer' : 'more') +
+               ' ' + plural(mag, def.one, def.many) + ' than your home.';
 
   return { key: def.key, label: def.label, status: 'applied',
            amount: amount, detail: detail };
@@ -350,6 +511,14 @@ function compute(subject, comp, settings) {
     lines.push(numericLine(def, subject, comp, rate));
   });
 
+  (function () {
+    var table = settings[AGE_DEF.table];
+    var state = tableState(table);
+    if (state === 'unset') { notConfigured.push(AGE_DEF.label); return; }
+    if (state === 'off')   { switchedOff.push(AGE_DEF.label);   return; }
+    lines.push(ageLine(subject, comp, table));
+  })();
+
   CATEGORY_LINES.forEach(function (def) {
     var table = settings[def.table];
     var state = tableState(table);
@@ -366,11 +535,16 @@ function compute(subject, comp, settings) {
   var basis = basisOf(comp);
   if (!basis.price) return fail('no-price');
 
-  var computedTotal = 0;
-  var unavailable = [];
+  var computedTotal = 0, immaterialTotal = 0;
+  var unavailable = [], immaterial = [];
   lines.forEach(function (l) {
-    if (l.status === 'unavailable') unavailable.push(l);
-    else computedTotal += l.amount;
+    if (l.status === 'unavailable') { unavailable.push(l); return; }
+    if (l.status === 'immaterial') {
+      immaterial.push(l);
+      if (l.wouldBe) immaterialTotal += l.wouldBe;
+      return;
+    }
+    computedTotal += l.amount;
   });
 
   var override = null;
@@ -392,6 +566,12 @@ function compute(subject, comp, settings) {
     lines: lines,
     computedTotal: Math.round(computedTotal),
     unavailable: unavailable,
+    /* Below materiality. Excluded from the total and from the "could not be
+       applied" count — they were applied, and came to nothing worth
+       adjusting. immaterialTotal is what they would have summed to, for the
+       editor, so small differences all pointing one way stay visible. */
+    immaterial: immaterial,
+    immaterialTotal: Math.round(immaterialTotal),
     notConfigured: notConfigured,
     switchedOff: switchedOff,
     override: override,
@@ -417,7 +597,11 @@ root.SphereAdjustments = {
   GARAGE_KEY_BY_LABEL: GARAGE_KEY_BY_LABEL,
   BASEMENT_LABEL: BASEMENT_LABEL,
   NUMERIC_LINES: NUMERIC_LINES,
-  CATEGORY_LINES: CATEGORY_LINES
+  CATEGORY_LINES: CATEGORY_LINES,
+  AGE_BANDS: AGE_BANDS,
+  MATERIALITY: MATERIALITY,
+  bandRange: bandRange,
+  valuationYearOf: valuationYearOf
 };
 
 })(window);

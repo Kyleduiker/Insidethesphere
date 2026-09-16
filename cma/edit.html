@@ -454,6 +454,8 @@ details.override>summary:hover{color:var(--obs)}
 .adjp-row i{font-style:normal;color:var(--stone)}
 .adjp-row em{font-style:normal;text-align:right;color:var(--obs);font-variant-numeric:tabular-nums}
 .adjp-row.even em{color:var(--stone)}
+.adjp-row.immaterial em{color:var(--stone);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.adjp-row.immaterial i{font-style:italic}
 /* Loud on purpose. A factor that did not run is the failure mode this
    whole feature has to make impossible to miss. */
 .adjp-row.unavailable{background:#FBF6F7}
@@ -1876,8 +1878,19 @@ details.override>summary:hover{color:var(--obs)}
             .then(doc => {
                 if (!doc.exists) return null;
                 const d = doc.data() || {};
+                // Allow-list, not a copy. rates.perYear was retired when age
+                // moved to bands, and a document saved before that still
+                // carries it; copying `rates` whole would publish a figure
+                // nothing reads. Only keys the module actually uses travel.
+                const A = window.SphereAdjustments;
+                const rates = {};
+                (A ? A.NUMERIC_LINES : []).forEach(def => {
+                    const v = (d.rates || {})[def.key];
+                    rates[def.key] = (v === undefined) ? null : v;
+                });
                 return {
-                    rates:          d.rates          || {},
+                    rates:          rates,
+                    ageValues:      d.ageValues      || {},
                     basementValues: d.basementValues || {},
                     garageValues:   d.garageValues   || {}
                 };
@@ -1886,6 +1899,15 @@ details.override>summary:hover{color:var(--obs)}
                 console.error('Adjustment settings read failed:', err);
                 return null;
             });
+    }
+
+    // Age is measured against the CMA, never against the clock on the day
+    // someone opens the link. The appointment date's year, falling back to
+    // the year it is published. Snapshotted at publish so a CMA already in a
+    // seller's inbox cannot change on New Year's Day.
+    function valuationYearFor(data) {
+        const m = String((data && data.appointmentDate) || '').match(/^(\d{4})/);
+        return m ? parseInt(m[1], 10) : new Date().getFullYear();
     }
 
     function showPublishMarket(result) {
@@ -1941,6 +1963,7 @@ details.override>summary:hover{color:var(--obs)}
                     // only profile data it will have.
                     ...(agent ? { agent: agent } : {}),
                     ...(adjust ? { adjustments: adjust } : {}),
+                    valuationYear: valuationYearFor(data),
                     agentId: currentUser.uid,
                     cmaId: cmaId,
                     comps: publicComps,
@@ -2114,7 +2137,9 @@ details.override>summary:hover{color:var(--obs)}
         }
 
         const A = window.SphereAdjustments;
-        const r = A.compute(collectFormData(), collectCompForm(), adjSettings);
+        const subj = collectFormData();
+        subj.valuationYear = valuationYearFor(subj);
+        const r = A.compute(subj, collectCompForm(), adjSettings);
         const settingsLink = '<a href="../settings/" style="color:var(--copper)">Settings</a>';
 
         // Each failure names its own cause. The old single message offered
@@ -2153,13 +2178,23 @@ details.override>summary:hover{color:var(--obs)}
 
         const amt = l =>
               l.status === 'unavailable' ? 'Not applied'
+            : l.status === 'immaterial'  ? 'Not material'
             : l.status === 'even'        ? '—'
             : A.signed(l.amount);
+
+        // Below materiality: the seller sees one quiet "not adjusted" line.
+        // Here Kyle sees what each would have been worth, because the
+        // dollars skipped scale with the rate and are not always small.
+        const skippedWorth = l =>
+            (l.status === 'immaterial' && l.wouldBe)
+                ? ' <span style="color:var(--stone)">(would have been ' +
+                  A.signed(l.wouldBe) + ')</span>'
+                : '';
 
         const rows = r.lines.map(l =>
             '<div class="adjp-row ' + l.status + '">' +
               '<b>' + escHtml(l.label) + '</b>' +
-              '<i>' + escHtml(l.detail) + '</i>' +
+              '<i>' + escHtml(l.detail) + skippedWorth(l) + '</i>' +
               '<em>' + amt(l) + '</em>' +
             '</div>').join('');
 
@@ -2201,6 +2236,14 @@ details.override>summary:hover{color:var(--obs)}
                       'or leave blank if you do not adjust on them.');
         if (r.switchedOff.length)
             gaps.push('<strong>Switched off (zero):</strong> ' + escHtml(r.switchedOff.join(', ')) + '.');
+        // A run of small differences can all point the same way. Each is
+        // defensibly immaterial on its own; together they may not be, and
+        // the override is the tool for that.
+        if (r.immaterial.length > 1 && r.immaterialTotal)
+            gaps.push('<strong>Below materiality:</strong> ' +
+                      escHtml(r.immaterial.map(l => l.label).join(', ')) +
+                      ' would have come to ' + A.signed(r.immaterialTotal) +
+                      ' together. If that matters for this comparable, use the override.');
         const gapNote = gaps.length
             ? note('adjp-none', gaps.join('<br>'))
             : '';

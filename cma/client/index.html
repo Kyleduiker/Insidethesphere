@@ -738,6 +738,12 @@ body{counter-reset:section}
   text-align:right;color:var(--text);white-space:nowrap;
 }
 .adj-row.even .adj-amt{color:var(--muted)}
+/* One closing line for everything below materiality. Quieter than a factor
+   row, because nothing was adjusted — but present, because the seller
+   should see the factor was checked rather than forgotten. */
+.adj-row.immaterial .adj-label{color:var(--muted)}
+.adj-row.immaterial .adj-detail{font-style:italic}
+.adj-row.immaterial .adj-amt{color:var(--muted)}
 .adj-row.unavailable .adj-label{color:var(--muted)}
 .adj-row.unavailable .adj-amt{
   font-family:var(--sans);font-size:10px;font-weight:500;
@@ -2453,12 +2459,27 @@ function adjustmentPanel(comp, subject) {
     : l.status === 'even'        ? '—'
     : A.signed(l.amount);
 
-  const rows = r.lines.map(l => `
+  // Skipped lines do not get a row each — a panel of "not adjusted" rows
+  // would be the fussiness the threshold exists to remove. They are gathered
+  // into one closing line below. `wouldBe` is never rendered here.
+  const rows = r.lines.filter(l => l.status !== 'immaterial').map(l => `
     <div class="adj-row ${l.status}">
       <div class="adj-label">${escHtml(l.label)}</div>
       <div class="adj-detail">${escHtml(l.detail)}</div>
       <div class="adj-amt">${amountCell(l)}</div>
     </div>`).join('');
+
+  const skipped = r.immaterial.length
+    ? (() => {
+        const text = r.immaterial.map(l => l.phrase).join('; ');
+        return `
+    <div class="adj-row immaterial">
+      <div class="adj-label">Not adjusted</div>
+      <div class="adj-detail">${escHtml(text.charAt(0).toUpperCase() + text.slice(1))}.</div>
+      <div class="adj-amt">—</div>
+    </div>`;
+      })()
+    : '';
 
   // An override replaces the computed total, but the computed total still
   // renders above it. Showing only the override would hide the fact that a
@@ -2504,6 +2525,7 @@ function adjustmentPanel(comp, subject) {
     </summary>
     <div class="comp-adj-body">
       ${rows}
+      ${skipped}
       ${sums}
       <div class="adj-row final">
         <div class="adj-label">${escHtml(r.basisLabel)}</div>
