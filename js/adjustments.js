@@ -160,6 +160,62 @@ function sliderStep(min, max) {
   return Number((nice * p).toPrecision(12));
 }
 
+/* ── PER-COMP SLIDER STATE ────────────────────────────────────────────────
+   A comparable can move any line away from the agent's default. What is
+   stored is chosen so that correcting the comp's own data afterwards still
+   recalculates sensibly:
+
+     comp.adjLines[key].rate     rate lines — the rate itself ($110 / sq.ft.).
+                                 Fix the square footage and the dollars follow.
+     comp.adjLines[key].factor   table lines (basement, garage, age) — a
+                                 multiple of the computed gap, 0.5 to 1.5.
+                                 Correct a garage type and a stored dollar
+                                 figure could land outside the new range or
+                                 point the wrong way; a multiple cannot.
+     comp.adjLines[key].note     optional, shown to the seller beside the line
+     comp.adjOther               { amount, reason } — what no field captures
+
+   A line with nothing stored follows the default, including a default the
+   agent changes later. A stored value that the current settings range no
+   longer includes is KEPT and flagged `outOfRange`, never clamped: clamping
+   would change an adjusted price with nothing saying so.
+
+   A line has a slider only when it adjusts: never on a same-state table
+   line, an immaterial line or an unavailable one. */
+var NOTE_MAX = 140;
+var GAP_FACTOR_MIN = 0.5, GAP_FACTOR_MAX = 1.5;
+
+function lineState(comp, key) {
+  var all = (comp && comp.adjLines) || {};
+  var st = all[key];
+  return (st && typeof st === 'object') ? st : {};
+}
+
+function lineNote(st) {
+  return String((st && st.note) || '').trim().slice(0, NOTE_MAX);
+}
+
+function fmtNum(n) {
+  return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function signedNum(n, unit) {
+  if (n === 0) return 'Same';
+  return (n > 0 ? '+' : '−') + fmtNum(Math.abs(n)) + (unit || '');
+}
+
+/* Adds the side-by-side fields and the note to any line. */
+function finish(line, parts) {
+  line.subjectValue = parts.subjectValue || '—';
+  line.compValue    = parts.compValue || '—';
+  line.difference   = parts.difference || '';
+  line.note         = parts.note || '';
+  line.slider       = parts.slider || null;
+  line.moved        = !!parts.moved;
+  line.outOfRange   = !!parts.outOfRange;
+  return line;
+}
+
 /* ── LINE DEFINITIONS ─────────────────────────────────────────────────── */
 
 /* ── MATERIALITY ──────────────────────────────────────────────────────────
@@ -186,17 +242,20 @@ var MATERIALITY = {
 };
 
 var NUMERIC_LINES = [
+  /* `unit` names what the rate is per, for the slider; `valueUnit` is
+     appended to the subject and comp values in the side-by-side panel. */
   { key: 'bedroomAbove', label: 'Bedrooms above grade',
-    subj: 'bedsAbove', comp: 'bedsAbove',
+    subj: 'bedsAbove', comp: 'bedsAbove', unit: 'bedroom', valueUnit: '',
     one: 'bedroom', many: 'bedrooms' },
   { key: 'bathFull', label: 'Full bathrooms',
-    subj: 'bathsFull', comp: 'bathsFull', pair: 'baths',
+    subj: 'bathsFull', comp: 'bathsFull', pair: 'baths', unit: 'full bath', valueUnit: '',
     one: 'full bathroom', many: 'full bathrooms' },
   { key: 'bathHalf', label: 'Half bathrooms',
     subj: 'bathsHalf', comp: 'bathsHalf', pair: 'baths', zeroIsReal: true,
+    unit: 'half bath', valueUnit: '',
     one: 'half bathroom', many: 'half bathrooms' },
   { key: 'perSqft', label: 'Living area',
-    subj: 'sqft', comp: 'sqft',
+    subj: 'sqft', comp: 'sqft', unit: 'sq.ft.', valueUnit: ' sq.ft.',
     one: 'sq.ft.', many: 'sq.ft.',
     /* null when material. Otherwise the row text, and the phrase used when
        every skipped factor is gathered into one line on the client card —
@@ -208,7 +267,7 @@ var NUMERIC_LINES = [
       } : null;
     } },
   { key: 'perLotSqft', label: 'Lot size',
-    subj: 'lotSize', comp: 'lotSize',
+    subj: 'lotSize', comp: 'lotSize', unit: 'sq.ft. of lot', valueUnit: ' sq.ft.',
     one: 'sq.ft. of lot', many: 'sq.ft. of lot',
     immaterial: function (diff, s) {
       var pct = Math.round(MATERIALITY.lotShareMin * 100);
@@ -283,6 +342,21 @@ function valuationYearOf(subject) {
 var AGE_DEF = { key: 'age', label: 'Age', table: 'ageValues' };
 
 function ageLine(subject, comp, table) {
+  var line = ageLineCore(subject, comp, table);
+  var st = lineState(comp, AGE_DEF.key);
+  var sy = pos(subject.yearBuilt), cy = pos(comp.year), vy = valuationYearOf(subject);
+  var show = function (y) {
+    if (y === null) return '—';
+    var b = vy !== null ? bandOf(vy - y) : null;
+    return y + (b ? ' · ' + bandSpan(b) + ' yrs' : '');
+  };
+  return gapSlider(line, st, {
+    subjectValue: show(sy), compValue: show(cy),
+    difference: (sy !== null && cy !== null) ? signedNum(cy - sy, ' yrs') : ''
+  });
+}
+
+function ageLineCore(subject, comp, table) {
   var def = AGE_DEF;
   /* The subject form calls it yearBuilt and a comp calls it year. Same fact,
      two field names. */
@@ -372,7 +446,42 @@ function unavailableLine(def, note, diag) {
   };
 }
 
-function numericLine(def, subject, comp, rate) {
+function numericLine(def, subject, comp, spec) {
+  var st = lineState(comp, def.key);
+  var stored = num(st.rate);
+  var rate = stored !== null ? stored : spec.def;
+
+  var line = numericLineCore(def, subject, comp, rate);
+
+  var shown = function (v) {
+    var n = num(v);
+    if (n === null || (!def.zeroIsReal && n <= 0)) return '—';
+    return fmtNum(n) + def.valueUnit;
+  };
+  var bathsHidden = def.pair === 'baths' && line.status === 'unavailable';
+  var sV = bathsHidden && !bathsKnown(subject) ? '—' : shown(subject[def.subj]);
+  var cV = bathsHidden && !bathsKnown(comp) ? '—' : shown(comp[def.comp]);
+  var sN = num(subject[def.subj]), cN = num(comp[def.comp]);
+
+  var hasRange = spec.min !== null && spec.max !== null && spec.max > spec.min;
+  var moved = stored !== null && stored !== spec.def;
+  var outOfRange = stored !== null && (!hasRange || stored < spec.min || stored > spec.max) && moved;
+
+  return finish(line, {
+    subjectValue: sV, compValue: cV,
+    difference: (sV !== '—' && cV !== '—') ? signedNum(cN - sN, def.valueUnit) : '',
+    note: lineNote(st),
+    moved: moved,
+    outOfRange: outOfRange,
+    slider: (line.status === 'applied' && hasRange) ? {
+      kind: 'rate', unit: def.unit,
+      min: spec.min, max: spec.max, step: sliderStep(spec.min, spec.max),
+      'default': spec.def, value: rate
+    } : null
+  });
+}
+
+function numericLineCore(def, subject, comp, rate) {
   var s, c;
 
   if (def.pair === 'baths') {
@@ -435,7 +544,51 @@ function numericLine(def, subject, comp, rate) {
            amount: amount, detail: detail };
 }
 
+/* The ±50% slider for a table-derived line. Only an applied line gets one:
+   a same-state line has no gap to scale. */
+function gapSlider(line, st, parts) {
+  var stored = num(st.factor);
+  var moved = stored !== null && stored !== 1;
+  var outOfRange = moved && (stored < GAP_FACTOR_MIN || stored > GAP_FACTOR_MAX);
+  var slider = null;
+  if (line.status === 'applied') {
+    var gap = line.amount;
+    var factor = stored !== null ? stored : 1;
+    line.gap = gap;
+    line.amount = Math.round(gap * factor);
+    var a = gap * GAP_FACTOR_MIN, b = gap * GAP_FACTOR_MAX;
+    slider = {
+      kind: 'gap', gap: gap, factor: factor,
+      min: Math.min(a, b), max: Math.max(a, b), step: sliderStep(a, b),
+      'default': gap, value: line.amount
+    };
+  }
+  parts.note = lineNote(st);
+  parts.moved = moved;
+  parts.outOfRange = outOfRange;
+  parts.slider = slider;
+  return finish(line, parts);
+}
+
+var BASEMENT_SHORT = { finished: 'Finished', partial: 'Partially finished',
+                       unfinished: 'Unfinished', none: 'None' };
+
 function categoryLine(def, subject, comp, table) {
+  var line = categoryLineCore(def, subject, comp, table);
+  var raw = function (o) { return String((o && o[def.field]) || '').trim(); };
+  var show = function (o) {
+    var v = raw(o);
+    if (!v) return '—';
+    return def.key === 'basement' ? (BASEMENT_SHORT[v.toLowerCase()] || v) : v;
+  };
+  var sk = def.resolve(subject[def.field]), ck = def.resolve(comp[def.field]);
+  return gapSlider(line, lineState(comp, def.key), {
+    subjectValue: show(subject), compValue: show(comp),
+    difference: (sk !== null && ck !== null) ? (sk === ck ? 'Same' : 'Differs') : ''
+  });
+}
+
+function categoryLineCore(def, subject, comp, table) {
   var sk = def.resolve(subject[def.field]);
   var ck = def.resolve(comp[def.field]);
 
@@ -536,6 +689,12 @@ function basisOf(comp) {
  *
  * `notConfigured` and `switchedOff` are also present on success, so a
  * caller can report what is not running even when something is.
+ *
+ * Every line carries subjectValue, compValue and difference for a
+ * side-by-side panel, its seller-facing note, `moved` / `outOfRange`, and a
+ * `slider` — { kind: 'rate' | 'gap', min, max, step, default, value } — or
+ * null when the line cannot be slid. The Other line, when present, is a line
+ * with `other: true` and its reason as the detail.
  */
 function compute(subject, comp, settings) {
   var notConfigured = [], switchedOff = [];
@@ -552,10 +711,10 @@ function compute(subject, comp, settings) {
   var lines = [];
 
   NUMERIC_LINES.forEach(function (def) {
-    var rate = rateSpec(rates[def.key]).def;
-    if (rate === null)  { notConfigured.push(def.label); return; }
-    if (rate <= 0)      { switchedOff.push(def.label);   return; }
-    lines.push(numericLine(def, subject, comp, rate));
+    var spec = rateSpec(rates[def.key]);
+    if (spec.def === null) { notConfigured.push(def.label); return; }
+    if (spec.def <= 0)     { switchedOff.push(def.label);   return; }
+    lines.push(numericLine(def, subject, comp, spec));
   });
 
   (function () {
@@ -574,9 +733,24 @@ function compute(subject, comp, settings) {
     lines.push(categoryLine(def, subject, comp, table));
   });
 
+  /* The "Other" line: what no field captures, in the agent's words. It is
+     an adjustment like any other and counts toward the total. A zero amount
+     adjusts nothing and produces no line. The reason is required by the
+     editor before a comp can be saved. */
+  var other = (comp.adjOther && typeof comp.adjOther === 'object') ? comp.adjOther : {};
+  var otherAmount = num(other.amount);
+  if (otherAmount !== null && Math.round(otherAmount) !== 0) {
+    lines.push(finish({
+      key: 'other', label: 'Other', status: 'applied', other: true,
+      amount: Math.round(otherAmount),
+      detail: String(other.reason || '').trim().slice(0, NOTE_MAX)
+    }, {}));
+  }
+
   /* Settings are checked before price on purpose. When no factor is in use
      no comparable can compute, so "this one has no price" would be a true
-     statement that sends the reader to the wrong place. */
+     statement that sends the reader to the wrong place. An Other line on
+     its own is enough to compute. */
   if (!lines.length) return fail('no-values');
 
   var basis = basisOf(comp);
@@ -594,16 +768,17 @@ function compute(subject, comp, settings) {
     computedTotal += l.amount;
   });
 
-  var override = null;
-  var ov = num(comp.adjOverride);
-  var reason = String(comp.adjReason || '').trim();
-  /* An override of exactly zero is meaningful — "these differences cancel"
-     — so it is accepted, unlike a blank. */
-  if (ov !== null && String(comp.adjOverride).trim() !== '') {
-    override = { amount: Math.round(ov), reason: reason };
+  /* The whole-comp override is retired — sliders and the Other line replace
+     it. A comp that still carries one is reported so the editor can show the
+     old amount and reason for re-entry. It is NOT applied. */
+  var legacyOverride = null;
+  if (comp.adjOverride !== undefined && comp.adjOverride !== null &&
+      String(comp.adjOverride).trim() !== '' && num(comp.adjOverride) !== null) {
+    legacyOverride = { amount: Math.round(num(comp.adjOverride)),
+                       reason: String(comp.adjReason || '').trim() };
   }
 
-  var appliedTotal = override ? override.amount : computedTotal;
+  var appliedTotal = computedTotal;
 
   return {
     ok: true,
@@ -621,7 +796,8 @@ function compute(subject, comp, settings) {
     immaterialTotal: Math.round(immaterialTotal),
     notConfigured: notConfigured,
     switchedOff: switchedOff,
-    override: override,
+    legacyOverride: legacyOverride,
+    movedCount: lines.filter(function (l) { return l.moved; }).length,
     appliedTotal: appliedTotal,
     adjustedPrice: Math.round(basis.price + appliedTotal)
   };
@@ -650,7 +826,10 @@ root.SphereAdjustments = {
   bandRange: bandRange,
   rateSpec: rateSpec,
   sliderStep: sliderStep,
-  valuationYearOf: valuationYearOf
+  valuationYearOf: valuationYearOf,
+  NOTE_MAX: NOTE_MAX,
+  GAP_FACTOR_MIN: GAP_FACTOR_MIN,
+  GAP_FACTOR_MAX: GAP_FACTOR_MAX
 };
 
 })(window);
