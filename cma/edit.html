@@ -445,25 +445,63 @@ details.override>summary:hover{color:var(--obs)}
   color:var(--copper);margin-bottom:3px;
 }
 .adjp-sub{font-size:11px;color:var(--stone);line-height:1.6;margin-bottom:14px}
-.adjp-rows{border:0.5px solid var(--border);border-radius:2px;margin-bottom:14px}
-.adjp-row{
-  display:grid;grid-template-columns:132px 1fr 96px;gap:12px;
-  padding:7px 12px;font-size:11.5px;align-items:baseline;
-  border-bottom:0.5px solid var(--border);
+/* Side by side: factor · yours · this comp · difference · adjustment, with
+   the slider, the seller-facing sentence and the note beneath each line. */
+.adjl-wrap{border:0.5px solid var(--border);border-radius:2px;margin-bottom:14px}
+.adjl-head,.adjl-top{display:grid;grid-template-columns:150px 1fr 1fr 96px 104px;gap:10px;align-items:baseline}
+.adjl-head{
+  padding:8px 12px;background:var(--parch);
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);
 }
-.adjp-row:last-child{border-bottom:none}
-.adjp-row b{font-weight:500;color:var(--obs)}
-.adjp-row i{font-style:normal;color:var(--stone)}
-.adjp-row em{font-style:normal;text-align:right;color:var(--obs);font-variant-numeric:tabular-nums}
-.adjp-row.even em{color:var(--stone)}
-.adjp-row.immaterial em{color:var(--stone);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-.adjp-row.immaterial i{font-style:italic}
-/* Loud on purpose. A factor that did not run is the failure mode this
-   whole feature has to make impossible to miss. */
-.adjp-row.unavailable{background:#FBF6F7}
-.adjp-row.unavailable em{color:var(--ox);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-.adjp-row.total{background:var(--parch)}
-.adjp-row.total em{font-weight:600}
+.adjl-head div:last-child{text-align:right}
+.adjl{padding:9px 12px;border-top:0.5px solid var(--border);font-size:11.5px}
+.adjl-top b{font-weight:500;color:var(--obs)}
+.adjl-top span{color:var(--esp);font-variant-numeric:tabular-nums}
+.adjl-top em{font-style:normal;text-align:right;color:var(--obs);font-weight:500;font-variant-numeric:tabular-nums}
+.adjl.even .adjl-top em{color:var(--stone);font-weight:400}
+.adjl.immaterial .adjl-top em,.adjl.unavailable .adjl-top em{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.adjl.immaterial .adjl-top em{color:var(--stone)}
+/* Loud on purpose. A factor that did not run is the failure mode this whole
+   feature has to make impossible to miss. */
+.adjl.unavailable{background:#FBF6F7}
+.adjl.unavailable .adjl-top em{color:var(--ox)}
+/* Moved from the default: a copper rule down the left edge, and the word. */
+.adjl.moved{border-left:2px solid var(--copper);padding-left:10px}
+.adjl-moved{
+  margin-left:6px;font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--copper);
+}
+.adjl-slide{display:flex;align-items:center;gap:10px;margin:8px 0 2px 160px}
+.adjl-range{flex:1;max-width:300px;accent-color:var(--copper)}
+.adjl-val{min-width:130px;font-size:11px;color:var(--obs);font-variant-numeric:tabular-nums}
+.adjl-flag{flex:1;font-size:10.5px;color:var(--stone);line-height:1.45}
+.adjl-flag.warn{color:var(--ox);font-weight:500}
+.adjl-reset{
+  border:0.5px solid var(--border);background:#fff;border-radius:2px;cursor:pointer;
+  padding:2px 8px;font-size:12px;color:var(--esp);font-family:var(--sans);
+}
+.adjl-reset:hover{border-color:var(--obs);color:var(--obs)}
+.adjl-detail{margin:4px 0 0 160px;font-size:11px;line-height:1.5;color:var(--stone)}
+.adjl-detail i{font-style:normal}
+.adjl.immaterial .adjl-detail i{font-style:italic}
+.adjl-note{
+  display:block;margin:6px 0 0 160px;width:calc(100% - 160px);padding:5px 8px;
+  border:0.5px dashed var(--border);border-radius:2px;background:#fff;
+  font-family:var(--sans);font-size:11px;color:var(--obs);
+}
+.adjl-note:focus{outline:none;border-style:solid;border-color:var(--copper)}
+.adjl-other-in{grid-column:2/5}
+.adjl-other-in input{
+  width:170px;padding:5px 8px;border:0.5px solid var(--border);border-radius:2px;
+  font-family:var(--sans);font-size:12px;color:var(--obs);
+}
+.adjl-total{
+  display:grid;grid-template-columns:150px 1fr 104px;gap:10px;align-items:baseline;
+  padding:9px 12px;border-top:0.5px solid var(--border);background:var(--parch);font-size:11.5px;
+}
+.adjl-total b{font-weight:500}
+.adjl-total i{font-style:normal;color:var(--stone)}
+.adjl-total em{font-style:normal;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
 .adjp-warn{
   border-left:2px solid var(--ox);background:#FBF6F7;border-radius:2px;
   padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--esp);line-height:1.65;
@@ -1307,7 +1345,7 @@ details.override>summary:hover{color:var(--obs)}
 </div>
 
 <div class="modal-overlay" id="compModal" onclick="if(event.target===this)closeCompModal()">
-  <div class="modal">
+  <div class="modal" style="max-width:880px">
     <div class="modal-header">
       <div class="modal-title" id="compModalTitle">Add comparable</div>
       <button class="modal-close" onclick="closeCompModal()">✕</button>
@@ -1433,28 +1471,26 @@ details.override>summary:hover{color:var(--obs)}
         <label>Agent notes <span>— private, not shown to the client</span></label>
         <textarea class="fta" id="comp-notes" rows="2" placeholder="Backing greenspace, similar lot size, sold in 8 days at 101% of asking"></textarea>
       </div>
+      <!-- A separate field on purpose. The one above is filled from the
+           listing's Matrix Public Remarks, which stay private: publishing
+           them would redistribute MLS copy. This one starts empty. -->
+      <div class="fg">
+        <label>Note for the client <span>— shown on the comp card, verbatim</span></label>
+        <textarea class="fta" id="comp-client-note" rows="2" maxlength="200"
+                  placeholder="Same builder and floor plan as yours, backing the same greenspace"></textarea>
+      </div>
 
       <div class="adjp">
         <div class="adjp-head">Adjustments</div>
         <div class="adjp-sub">
-          Computed from your saved values against this property's subject
-          details. Shown to the client, verbatim, inside an expandable
-          panel on the comp card. Adjusted figures are evidence only — they
-          do not feed the Reasoning medians.
+          Every line starts at your default from Settings. Slide a line when that
+          feature is worth more or less than usual on this comparable — a line you
+          move is marked, and ↺ returns it to the default. Each line, its note and
+          the Other line are shown to the client, verbatim, inside an expandable
+          panel on the comp card; your rates and ranges never are. Adjusted
+          figures are evidence only — they do not feed the Reasoning medians.
         </div>
         <div id="adjPreview"></div>
-        <div class="frow">
-          <div class="fg">
-            <label>Override total <span>— optional, leave blank to use the computed figure</span></label>
-            <input class="fi" type="number" id="comp-adj-override" step="500"
-                   placeholder="e.g. -10000">
-          </div>
-          <div class="fg">
-            <label>Reason <span>— shown to client, verbatim</span></label>
-            <input class="fi" type="text" id="comp-adj-reason" maxlength="160"
-                   placeholder="Backs onto Deerfoot; the computed figure understates it">
-          </div>
-        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1501,6 +1537,13 @@ details.override>summary:hover{color:var(--obs)}
     let adjSettings = null;
     let adjSettingsError = '';
 
+    // The open comparable's slider positions, notes and Other line. Held here
+    // rather than read back from the DOM, so re-rendering the panel never
+    // loses a position, and saveComp() writes exactly what the panel shows.
+    //   lines[key] = { rate } | { factor } plus an optional { note }
+    //   other      = { amount, reason } as typed
+    let adjState = { lines: {}, other: { amount: '', reason: '' } };
+
     function loadAdjustmentSettings() {
         return db.collection('users').doc(currentUser.uid)
             .collection('settings').doc('adjustments').get()
@@ -1529,8 +1572,12 @@ details.override>summary:hover{color:var(--obs)}
     (function () {
         const m = document.getElementById('compModal');
         if (!m) { console.error('compModal missing — adjustment preview will not update'); return; }
-        m.addEventListener('input',  renderAdjPreview);
-        m.addEventListener('change', renderAdjPreview);
+        // Events from inside the panel are handled by the panel itself.
+        // Re-rendering it on a slider's own input event would replace the
+        // slider under the pointer mid-drag.
+        const fromPanel = e => e.target && e.target.closest && e.target.closest('#adjPreview');
+        m.addEventListener('input',  e => { if (!fromPanel(e)) renderAdjPreview(); });
+        m.addEventListener('change', e => { if (!fromPanel(e)) renderAdjPreview(); });
     })();
 
     // ── LOAD CMA ──
@@ -2050,10 +2097,16 @@ details.override>summary:hover{color:var(--obs)}
         'notes',
         // Not rendered on the client page
         'mls', 'soldDate',
-        // Adjustment inputs — the result travels as `adjustment`, and the
-        // override amount and reason travel inside it
+        // Adjustment inputs — the result travels as `adjustment`, including
+        // each line's note and the Other line. Slider positions stay private.
         'bedsAbove', 'bathsFull', 'bathsHalf', 'basement', 'lotSize', 'garage',
-        'adjOverride', 'adjReason'
+        'adjLines', 'adjOther',
+        // The retired whole-comp override. Older comps may still carry it
+        // until they are next saved.
+        'adjOverride', 'adjReason',
+        // Held back until the client page renders it — the next commit moves
+        // it to the published list.
+        'clientNote'
     ];
 
     // The cover strip and the "Your home" card read `baths`. The subject form
@@ -2362,9 +2415,13 @@ details.override>summary:hover{color:var(--obs)}
         if (listpriceEl) listpriceEl.value = comp.listPrice || '';
         document.getElementById('comp-photo').value = comp.photoUrl || '';
         document.getElementById('comp-notes').value = comp.notes || '';
-        document.getElementById('comp-adj-override').value =
-            (comp.adjOverride === 0 || comp.adjOverride) ? comp.adjOverride : '';
-        document.getElementById('comp-adj-reason').value = comp.adjReason || '';
+        document.getElementById('comp-client-note').value = comp.clientNote || '';
+        const other = (comp.adjOther && typeof comp.adjOther === 'object') ? comp.adjOther : {};
+        adjState = {
+            lines: JSON.parse(JSON.stringify(comp.adjLines || {})),
+            other: { amount: (other.amount === 0 || other.amount) ? String(other.amount) : '',
+                     reason: other.reason || '' }
+        };
         renderAdjPreview();
 
         // Editing one comp should not leave last upload's review list open.
@@ -2406,9 +2463,7 @@ details.override>summary:hover{color:var(--obs)}
         }
 
         const A = window.SphereAdjustments;
-        const subj = collectFormData();
-        subj.valuationYear = valuationYearFor(subj);
-        const r = A.compute(subj, collectCompForm(), adjSettings);
+        const r = computeAdj();
         const settingsLink = '<a href="../settings/" style="color:var(--copper)">Settings</a>';
 
         // Each failure names its own cause. The old single message offered
@@ -2445,47 +2500,27 @@ details.override>summary:hover{color:var(--obs)}
             return;
         }
 
-        const amt = l =>
-              l.status === 'unavailable' ? 'Not applied'
-            : l.status === 'immaterial'  ? 'Not material'
-            : l.status === 'even'        ? '—'
-            : A.signed(l.amount);
-
-        // Below materiality: the seller sees one quiet "not adjusted" line.
-        // Here Kyle sees what each would have been worth, because the
-        // dollars skipped scale with the rate and are not always small.
-        const skippedWorth = l =>
-            (l.status === 'immaterial' && l.wouldBe)
-                ? ' <span style="color:var(--stone)">(would have been ' +
-                  A.signed(l.wouldBe) + ')</span>'
-                : '';
-
-        const rows = r.lines.map(l =>
-            '<div class="adjp-row ' + l.status + '">' +
-              '<b>' + escHtml(l.label) + '</b>' +
-              '<i>' + escHtml(l.detail) + skippedWorth(l) + '</i>' +
-              '<em>' + amt(l) + '</em>' +
-            '</div>').join('');
-
-        const totals =
-            '<div class="adjp-row total"><b>Computed total</b><i>' +
-              (r.override ? 'Replaced by your override below.' : '') +
-            '</i><em>' + A.signed(r.computedTotal) + '</em></div>' +
-            (r.override
-              ? '<div class="adjp-row total"><b>Your override</b><i>' +
-                  escHtml(r.override.reason || 'No reason set — save will be refused.') +
-                '</i><em>' + A.signed(r.override.amount) + '</em></div>'
-              : '') +
-            '<div class="adjp-row total"><b>' + escHtml(r.basisLabel) + '</b><i>from $' +
-              r.basisPrice.toLocaleString() + '</i><em>$' +
-              r.adjustedPrice.toLocaleString() + '</em></div>';
+        // A comparable saved before sliders may still carry a whole-comp
+        // override. It is no longer applied, so it is shown rather than
+        // silently dropped, for re-entry as the Other line.
+        const prevComp = (editingCompIndex !== null && comps[editingCompIndex]) || {};
+        const legacy = legacyOverrideOf(prevComp);
+        const legacyNote = legacy
+            ? note('adjp-warn',
+                '<strong>This comparable had a whole-comp override of ' +
+                A.signed(legacy.amount) + '</strong>' +
+                (legacy.reason ? ' — “' + escHtml(legacy.reason) + '”' : '') +
+                '. Overrides are no longer applied. Slide the lines below, or ' +
+                're-enter it as the Other line. <strong>Saving this comparable ' +
+                'removes the old override.</strong>')
+            : '';
 
         // The client page tells the seller a factor could not be applied.
         // This tells Kyle which field to go and fix.
         const warn = r.unavailable.length
             ? note('adjp-warn',
                 '<strong>' + escHtml(A.unavailableSummary(r)) + '.</strong> ' +
-                'The adjusted price above is missing them. The client page says ' +
+                'The adjusted price below is missing them. The client page says ' +
                 'so too, on the card, without the panel being opened.' +
                 // The two bath lines fail together and share one cause, so
                 // listing the same sentence twice just makes it look noisier
@@ -2494,6 +2529,34 @@ details.override>summary:hover{color:var(--obs)}
                     '<li>' + escHtml(d) + '</li>').join('') + '</ul>')
             : '';
 
+        const header = '<div class="adjl-head"><div>Factor</div><div>Yours</div>' +
+                       '<div>This comp</div><div>Difference</div><div>Adjustment</div></div>';
+
+        const rows = r.lines.filter(l => !l.other).map(adjLineHtml).join('');
+
+        const otherLine = r.lines.find(l => l.other);
+        const otherRow =
+            '<div class="adjl other">' +
+              '<div class="adjl-top"><b>Other</b>' +
+                '<span class="adjl-other-in"><input type="number" step="500" id="adj-other-amount" ' +
+                  'placeholder="+ or − dollars" value="' + escHtml(adjState.other.amount) + '"></span>' +
+                '<em id="adjamt-other">' + (otherLine ? A.signed(otherLine.amount) : '—') + '</em>' +
+              '</div>' +
+              '<input class="adjl-note" type="text" id="adj-other-reason" maxlength="' + A.NOTE_MAX + '" ' +
+                'placeholder="Reason — required with an amount, shown to the client" ' +
+                'value="' + escHtml(adjState.other.reason) + '">' +
+              '<div class="adjl-detail"><i>For what no line above captures — condition, a ' +
+                'renovation, a busy road, a view. A quality difference between two matching ' +
+                'garages goes here too.</i></div>' +
+            '</div>';
+
+        const totals =
+            '<div class="adjl-total"><b>Total adjustment</b><i id="adj-moved">' + movedText(r) + '</i>' +
+              '<em id="adj-total">' + A.signed(r.computedTotal) + '</em></div>' +
+            '<div class="adjl-total"><b>' + escHtml(r.basisLabel) + '</b><i>from $' +
+              r.basisPrice.toLocaleString() + '</i><em id="adj-final">$' +
+              r.adjustedPrice.toLocaleString() + '</em></div>';
+
         // Reported even when the computation succeeds. A factor that never
         // got a value is an omission Kyle can act on; one set to zero is a
         // decision he already made. Naming both, separately, is the whole
@@ -2501,24 +2564,208 @@ details.override>summary:hover{color:var(--obs)}
         const gaps = [];
         if (r.notConfigured.length)
             gaps.push('<strong>Never filled in:</strong> ' + escHtml(r.notConfigured.join(', ')) +
-                      ' — set at <a href="../settings/" style="color:var(--copper)">Settings</a> ' +
-                      'or leave blank if you do not adjust on them.');
+                      ' — set at ' + settingsLink + ' or leave blank if you do not adjust on them.');
         if (r.switchedOff.length)
             gaps.push('<strong>Switched off (zero):</strong> ' + escHtml(r.switchedOff.join(', ')) + '.');
         // A run of small differences can all point the same way. Each is
-        // defensibly immaterial on its own; together they may not be, and
-        // the override is the tool for that.
+        // defensibly immaterial on its own; together they may not be.
         if (r.immaterial.length > 1 && r.immaterialTotal)
             gaps.push('<strong>Below materiality:</strong> ' +
                       escHtml(r.immaterial.map(l => l.label).join(', ')) +
                       ' would have come to ' + A.signed(r.immaterialTotal) +
-                      ' together. If that matters for this comparable, use the override.');
-        const gapNote = gaps.length
-            ? note('adjp-none', gaps.join('<br>'))
+                      ' together. If that matters for this comparable, use the Other line.');
+        const gapNote = gaps.length ? note('adjp-none', gaps.join('<br>')) : '';
+
+        box.innerHTML = legacyNote + warn +
+            '<div class="adjl-wrap">' + header + rows + otherRow + totals + '</div>' + gapNote;
+    }
+
+    function computeAdj() {
+        const subj = collectFormData();
+        subj.valuationYear = valuationYearFor(subj);
+        return window.SphereAdjustments.compute(subj, collectCompForm(), adjSettings);
+    }
+
+    function legacyOverrideOf(c) {
+        const raw = c && c.adjOverride;
+        if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+        const n = parseFloat(raw);
+        return Number.isFinite(n) ? { amount: Math.round(n), reason: String(c.adjReason || '').trim() } : null;
+    }
+
+    function adjMoney(v) {
+        return '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    function adjAmountText(l) {
+        return l.status === 'unavailable' ? 'Not applied'
+             : l.status === 'immaterial'  ? 'Not material'
+             : l.status === 'even'        ? '—'
+             : window.SphereAdjustments.signed(l.amount);
+    }
+
+    // The slider's readout: the rate for a rate line, the multiple of the gap
+    // for a basement, garage or age line.
+    function adjValueText(l) {
+        const s = l.slider;
+        if (!s) return '';
+        return s.kind === 'rate'
+            ? adjMoney(s.value) + ' / ' + s.unit
+            : '×' + (s.value / s.gap).toFixed(2) + ' of ' + adjMoney(Math.abs(s.gap));
+    }
+
+    function adjFlagText(l) {
+        const s = l.slider;
+        if (l.outOfRange) {
+            if (!s) return 'Slid away from the default, but this line has no range now — ↺ clears it.';
+            return s.kind === 'rate'
+                ? 'Outside your range of ' + adjMoney(s.min) + '–' + adjMoney(s.max) +
+                  ' — kept, not clamped. ↺ returns it to the default.'
+                : 'Beyond ±50% of the gap — kept, not clamped. ↺ returns it to the default.';
+        }
+        if (!l.moved) return '';
+        if (!s) return 'Has a slider position that no longer applies here — ↺ clears it.';
+        return s.kind === 'rate'
+            ? 'Default ' + adjMoney(s['default']) + ' / ' + s.unit
+            : 'Default ' + window.SphereAdjustments.signed(s['default']);
+    }
+
+    function movedText(r) {
+        const n = r.movedCount;
+        return n ? n + ' line' + (n === 1 ? '' : 's') + ' moved from your defaults'
+                 : 'Every line at your defaults';
+    }
+
+    function adjLineHtml(l) {
+        const A = window.SphereAdjustments;
+        const key = escHtml(l.key);
+        const s = l.slider;
+        const wouldBe = (l.status === 'immaterial' && l.wouldBe)
+            ? ' <span style="color:var(--stone)">(would have been ' + A.signed(l.wouldBe) + ')</span>' : '';
+        const noteVal = ((adjState.lines[l.key] || {}).note) || '';
+
+        const range = s
+            ? '<input type="range" class="adjl-range" data-key="' + key + '" data-kind="' + s.kind + '"' +
+              ' data-default="' + s['default'] + '"' + (s.kind === 'gap' ? ' data-gap="' + s.gap + '"' : '') +
+              // step="any", snapped in the input handler to steps counted
+              // from the DEFAULT. The browser counts steps from min, which
+              // can leave the default between two positions and unreachable.
+              ' data-step="' + s.step + '" min="' + s.min + '" max="' + s.max + '" step="any" value="' + s.value + '">' +
+              '<span class="adjl-val" id="adjval-' + key + '">' + escHtml(adjValueText(l)) + '</span>'
             : '';
 
-        box.innerHTML = warn + '<div class="adjp-rows">' + rows + totals + '</div>' + gapNote;
+        const slideRow = (s || l.moved)
+            ? '<div class="adjl-slide">' + range +
+                '<span class="adjl-flag' + (l.outOfRange ? ' warn' : '') + '" id="adjflag-' + key + '">' +
+                  escHtml(adjFlagText(l)) + '</span>' +
+                (l.moved ? '<button type="button" class="adjl-reset" data-key="' + key +
+                           '" title="Return this line to your default">↺</button>' : '') +
+              '</div>'
+            : '';
+
+        return '<div class="adjl ' + l.status + (l.moved ? ' moved' : '') + '" data-key="' + key + '">' +
+            '<div class="adjl-top">' +
+              '<b>' + escHtml(l.label) + (l.moved ? '<span class="adjl-moved">moved</span>' : '') + '</b>' +
+              '<span>' + escHtml(l.subjectValue) + '</span>' +
+              '<span>' + escHtml(l.compValue) + '</span>' +
+              '<span>' + escHtml(l.difference) + '</span>' +
+              '<em id="adjamt-' + key + '">' + adjAmountText(l) + '</em>' +
+            '</div>' +
+            slideRow +
+            '<div class="adjl-detail"><i>' + escHtml(l.detail) + '</i>' + wouldBe + '</div>' +
+            // Immaterial lines are gathered into one "Not adjusted" line for the
+            // seller, so a note on one would have nowhere to render.
+            (l.status !== 'immaterial'
+              ? '<input class="adjl-note" type="text" maxlength="' + A.NOTE_MAX + '" data-key="' + key + '" ' +
+                'placeholder="Note for the client — optional, shown beside this line" value="' + escHtml(noteVal) + '">'
+              : '') +
+          '</div>';
     }
+
+    // Numbers only — used while a slider is being dragged, when rebuilding
+    // the panel would pull the slider out from under the pointer.
+    function refreshAdjNumbers() {
+        const r = computeAdj();
+        if (!r.ok) { renderAdjPreview(); return; }
+        const A = window.SphereAdjustments;
+        const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+        r.lines.forEach(l => {
+            if (l.other) return;
+            set('adjamt-' + l.key, adjAmountText(l));
+            set('adjval-' + l.key, adjValueText(l));
+            set('adjflag-' + l.key, adjFlagText(l));
+        });
+        const otherLine = r.lines.find(l => l.other);
+        set('adjamt-other', otherLine ? A.signed(otherLine.amount) : '—');
+        set('adj-total', A.signed(r.computedTotal));
+        set('adj-final', '$' + r.adjustedPrice.toLocaleString());
+        set('adj-moved', movedText(r));
+    }
+
+    function adjEntry(key) {
+        return (adjState.lines[key] = adjState.lines[key] || {});
+    }
+
+    // An entry with no position and no note is removed, so an untouched line
+    // stores nothing and keeps following the default.
+    function pruneAdjEntry(key) {
+        const e = adjState.lines[key];
+        if (!e) return;
+        if (e.rate === undefined && e.factor === undefined && !String(e.note || '').trim()) {
+            delete adjState.lines[key];
+        }
+    }
+
+    (function () {
+        const box = document.getElementById('adjPreview');
+        if (!box) { console.error('adjPreview missing — adjustment sliders will not respond'); return; }
+
+        box.addEventListener('input', e => {
+            const t = e.target;
+            if (t.classList.contains('adjl-range')) {
+                const key = t.dataset.key;
+                const st = adjEntry(key);
+                const def = Number(t.dataset['default']), step = Number(t.dataset.step);
+                const lo = Number(t.min), hi = Number(t.max);
+                // Snap to whole steps away from the default, then keep inside
+                // the range. The default is therefore always a position.
+                const k = Math.round((Number(t.value) - def) / step);
+                const v = Math.round(Math.min(hi, Math.max(lo, def + k * step)) * 1e6) / 1e6;
+                const atDefault = k === 0;
+                if (t.dataset.kind === 'rate') {
+                    delete st.factor;
+                    if (atDefault) delete st.rate; else st.rate = v;
+                } else {
+                    delete st.rate;
+                    if (atDefault) delete st.factor;
+                    else st.factor = Math.round((v / Number(t.dataset.gap)) * 10000) / 10000;
+                }
+                pruneAdjEntry(key);
+                refreshAdjNumbers();
+            } else if (t.id === 'adj-other-amount' || t.id === 'adj-other-reason') {
+                adjState.other.amount = document.getElementById('adj-other-amount').value;
+                adjState.other.reason = document.getElementById('adj-other-reason').value;
+                refreshAdjNumbers();
+            } else if (t.classList.contains('adjl-note') && t.dataset.key) {
+                adjEntry(t.dataset.key).note = t.value;
+                pruneAdjEntry(t.dataset.key);
+            }
+        });
+
+        // Released: rebuild, so the moved marker, ↺ and flags catch up.
+        box.addEventListener('change', e => {
+            if (e.target.classList.contains('adjl-range')) renderAdjPreview();
+        });
+
+        box.addEventListener('click', e => {
+            const b = e.target.closest && e.target.closest('.adjl-reset');
+            if (!b) return;
+            const st = adjState.lines[b.dataset.key];
+            if (st) { delete st.rate; delete st.factor; }
+            pruneAdjEntry(b.dataset.key);
+            renderAdjPreview();
+        });
+    })();
 
     function closeCompModal() {
         document.getElementById('compModal').classList.remove('open');
@@ -2531,7 +2778,22 @@ details.override>summary:hover{color:var(--obs)}
     function collectCompForm() {
         const v  = id => (document.getElementById(id) || {}).value || '';
         const nf = id => parseFloat(v(id)) || 0;
-        const ov = v('comp-adj-override').trim();
+
+        // Only what the panel holds: a position, a note, or both. Written as
+        // a whole map every time, so a line returned to its default is
+        // actually cleared in Firestore rather than left behind.
+        const adjLines = {};
+        Object.keys(adjState.lines).forEach(k => {
+            const e = adjState.lines[k] || {};
+            const out = {};
+            if (Number.isFinite(e.rate))   out.rate = e.rate;
+            if (Number.isFinite(e.factor)) out.factor = e.factor;
+            const note = String(e.note || '').trim();
+            if (note) out.note = note;
+            if (Object.keys(out).length) adjLines[k] = out;
+        });
+        const otherAmt = parseFloat(String(adjState.other.amount).trim());
+
         return {
             address: v('comp-address').trim(),
             community: v('comp-community'),
@@ -2550,11 +2812,14 @@ details.override>summary:hover{color:var(--obs)}
             garage: v('comp-garage'),
             photoUrl: v('comp-photo'),
             notes: v('comp-notes'),
-            // Stored as '' rather than omitted when blank, so clearing an
-            // override in the form actually clears it in Firestore — an
-            // absent key in an update() leaves the old value in place.
-            adjOverride: ov === '' ? '' : (parseFloat(ov) || 0),
-            adjReason: v('comp-adj-reason').trim()
+            clientNote: v('comp-client-note').trim(),
+            adjLines: adjLines,
+            // Always written, blank included, so clearing the Other line in
+            // the panel clears it in Firestore.
+            adjOther: {
+                amount: Number.isFinite(otherAmt) ? Math.round(otherAmt) : null,
+                reason: String(adjState.other.reason || '').trim()
+            }
         };
     }
 
@@ -2562,12 +2827,12 @@ details.override>summary:hover{color:var(--obs)}
         const comp = collectCompForm();
         if (!comp.address) { showToast('Please enter an address', 'error'); return; }
 
-        // An unexplained override is a number on a client page with nothing
-        // behind it. The reason renders to the seller verbatim, so it is
-        // the thing that makes the override defensible.
-        if (comp.adjOverride !== '' && !comp.adjReason) {
-            showToast('An adjustment override needs a reason — the client sees it', 'error');
-            const r = document.getElementById('comp-adj-reason');
+        // An unexplained Other adjustment is a number on a client page with
+        // nothing behind it. The reason renders to the seller verbatim, so it
+        // is the thing that makes the adjustment defensible.
+        if (comp.adjOther.amount !== null && comp.adjOther.amount !== 0 && !comp.adjOther.reason) {
+            showToast('The Other adjustment needs a reason — the client sees it', 'error');
+            const r = document.getElementById('adj-other-reason');
             if (r) r.focus();
             return;
         }
@@ -2590,9 +2855,20 @@ details.override>summary:hover{color:var(--obs)}
             .collection('comps');
 
         const idx = editingCompIndex;
+        // The panel showed the retired whole-comp override and said saving
+        // removes it. FieldValue.delete() goes only into the Firestore write,
+        // never into the in-memory comp: publishCMA() writes comps[] into an
+        // array, and Firestore rejects sentinels inside arrays.
+        const hadLegacy = !!legacyOverrideOf(prev) ||
+            (prev.adjOverride !== undefined) || (prev.adjReason !== undefined);
         let promise;
         if (idx !== null && comps[idx] && comps[idx].id) {
-            promise = colRef.doc(comps[idx].id).update(comp);
+            const payload = hadLegacy
+                ? Object.assign({}, comp, {
+                      adjOverride: firebase.firestore.FieldValue.delete(),
+                      adjReason: firebase.firestore.FieldValue.delete() })
+                : comp;
+            promise = colRef.doc(comps[idx].id).update(payload);
         } else {
             comp.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             promise = colRef.add(comp);
@@ -2602,6 +2878,8 @@ details.override>summary:hover{color:var(--obs)}
             closeCompModal();
             if (idx !== null && comps[idx]) {
                 comps[idx] = { ...comps[idx], ...comp, createdAt: comps[idx].createdAt };
+                delete comps[idx].adjOverride;
+                delete comps[idx].adjReason;
             } else {
                 comps.push({ id: docRef ? docRef.id : String(Date.now()), ...comp, createdAt: Date.now() });
             }
