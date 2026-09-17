@@ -313,11 +313,15 @@ var BASEMENT_TYPES = [
    If those change, these must change with them or a comp's garage will not
    resolve to a value. */
 var GARAGE_TYPES = [
-  { key: 'none',      label: 'No garage',      hint: 'Usually zero — the baseline.' },
-  { key: 'att1',      label: '1 car attached', hint: '' },
-  { key: 'att2',      label: '2 car attached', hint: '' },
-  { key: 'det2',      label: '2 car detached', hint: 'Set independently of attached.' },
-  { key: 'att3',      label: '3 car attached', hint: '' }
+  { key: 'none', label: 'No garage',       hint: 'Usually zero — the baseline.' },
+  { key: 'att1', label: '1 car attached',  hint: '' },
+  { key: 'det1', label: '1 car detached',  hint: '' },
+  { key: 'att2', label: '2 car attached',  hint: '' },
+  { key: 'det2', label: '2 car detached',  hint: 'Set independently of attached.' },
+  { key: 'att3', label: '3 car attached',  hint: '' },
+  { key: 'det3', label: '3 car detached',  hint: '' },
+  { key: 'att4', label: '4+ car attached', hint: 'Matrix calls this "Quad or More".' },
+  { key: 'det4', label: '4+ car detached', hint: '' }
 ];
 
 var currentUser = null;

@@ -77,12 +77,14 @@ function plural(n, one, many) {
 }
 
 /* ── CATEGORY VOCABULARIES ────────────────────────────────────────────────
-   These MUST track the <select> options in cma/edit.html. Basement keys are
-   already stored as keys and match one to one. Garage is stored as the
-   option's display string, so it needs a lookup — and mapGarage() in the
-   Matrix parser can emit strings that are in neither list ('3 car',
-   '1 car detached', 'Garage'). Those resolve to null and render as
-   unavailable, which is the whole point of this file. */
+   These MUST track the <select> options in cma/edit.html, mapGarage() in its
+   Matrix parser, and GARAGE_TYPES on the settings page. Basement is stored as
+   keys and matches one to one. Garage is stored as the option's display
+   string, so it needs this lookup.
+
+   "Garage" — a garage the sheet mentions without a size or attachment — is
+   deliberately NOT here. It resolves to null and renders as unavailable, as
+   does anything imported before the vocabulary was reconciled ("3 car"). */
 
 /* Full noun phrases, not adjectives. These are dropped straight into a
    sentence a seller reads. */
@@ -94,19 +96,27 @@ var BASEMENT_LABEL = {
 };
 
 var GARAGE_KEY_BY_LABEL = {
-  'no garage':      'none',
-  '1 car attached': 'att1',
-  '2 car attached': 'att2',
-  '2 car detached': 'det2',
-  '3 car attached': 'att3'
+  'no garage':       'none',
+  '1 car attached':  'att1',
+  '1 car detached':  'det1',
+  '2 car attached':  'att2',
+  '2 car detached':  'det2',
+  '3 car attached':  'att3',
+  '3 car detached':  'det3',
+  '4+ car attached': 'att4',
+  '4+ car detached': 'det4'
 };
 
 var GARAGE_LABEL = {
   none: 'no garage',
   att1: 'a single attached garage',
+  det1: 'a single detached garage',
   att2: 'a double attached garage',
   det2: 'a double detached garage',
-  att3: 'a triple attached garage'
+  att3: 'a triple attached garage',
+  det3: 'a triple detached garage',
+  att4: 'an attached garage for four or more',
+  det4: 'a detached garage for four or more'
 };
 
 function basementKey(v) {

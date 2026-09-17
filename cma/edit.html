@@ -814,9 +814,12 @@ details.override>summary:hover{color:var(--obs)}
               <label>Garage</label>
               <select class="fsel" id="garage" onchange="markDirty()">
                 <option value="">Select</option>
-                <option>No garage</option><option>1 car attached</option>
+                <option>No garage</option>
+                <option>1 car attached</option><option>1 car detached</option>
                 <option>2 car attached</option><option>2 car detached</option>
-                <option>3 car attached</option>
+                <option>3 car attached</option><option>3 car detached</option>
+                <option>4+ car attached</option><option>4+ car detached</option>
+                <option value="Garage">Garage, type not recorded</option>
               </select>
             </div>
             <div class="fg">
@@ -1413,9 +1416,12 @@ details.override>summary:hover{color:var(--obs)}
           <label>Garage</label>
           <select class="fsel" id="comp-garage">
             <option value="">Select</option>
-            <option>No garage</option><option>1 car attached</option>
+            <option>No garage</option>
+            <option>1 car attached</option><option>1 car detached</option>
             <option>2 car attached</option><option>2 car detached</option>
-            <option>3 car attached</option>
+            <option>3 car attached</option><option>3 car detached</option>
+            <option>4+ car attached</option><option>4+ car detached</option>
+            <option value="Garage">Garage, type not recorded</option>
           </select>
         </div>
       </div>
@@ -1619,6 +1625,26 @@ details.override>summary:hover{color:var(--obs)}
             });
     }
 
+    // A <select> silently shows blank for a stored value that is not one of
+    // its options — and saving the form then writes that blank back, erasing
+    // what was stored and, on a comp, marking the field as hand-edited. A value
+    // the list does not recognise (a garage imported before the vocabulary was
+    // fixed, such as "3 car") is kept as its own flagged option instead, so it
+    // stays visible until a real type is picked.
+    function setSelectKeepingValue(el, value) {
+        if (!el) return;
+        el.querySelectorAll('option[data-unrecognised]').forEach(o => o.remove());
+        const v = value == null ? '' : String(value);
+        if (v && !Array.from(el.options).some(o => o.value === v)) {
+            const o = document.createElement('option');
+            o.value = v;
+            o.textContent = v + ' — not a recognised type, pick one';
+            o.setAttribute('data-unrecognised', '');
+            el.appendChild(o);
+        }
+        el.value = v;
+    }
+
     // ── POPULATE FORM ──
     function populateForm() {
         const fields = [
@@ -1644,6 +1670,8 @@ details.override>summary:hover{color:var(--obs)}
                 el.value = cmaData[id];
             }
         });
+
+        setSelectKeepingValue(document.getElementById('garage'), cmaData.garage);
 
         // Explicit rather than relying on 'res' happening to be the first
         // <option>: a reordered markup list must not change the default.
@@ -2323,7 +2351,7 @@ details.override>summary:hover{color:var(--obs)}
         document.getElementById('comp-sqft').value = comp.sqft || '';
         document.getElementById('comp-dom').value = comp.dom || '';
         document.getElementById('comp-year').value = comp.year || '';
-        document.getElementById('comp-garage').value = comp.garage || '';
+        setSelectKeepingValue(document.getElementById('comp-garage'), comp.garage);
         const communityEl = document.getElementById('comp-community');
         if (communityEl) {
           Array.from(communityEl.options).forEach(o => {
@@ -3980,16 +4008,30 @@ function splitListings(pageTexts, skipped) {
 
 const _num = s => (s == null ? null : parseFloat(String(s).replace(/,/g, '')));
 
+// Matrix "Parking:" is a comma list that mixes the garage with its
+// accessories — "Garage Faces Front, Insulated, Single Garage Attached". Only
+// the size and the attachment matter here, and they are read together.
+//
+// Checked against every listing in test-pdfs on Sep 17, 2026. That included
+// "Quad or More Attached", which has no word "garage" in it: the old pattern
+// list recorded a four-car garage as no garage information at all. It also
+// returned "3 car" (attachment dropped), "1 car detached" and "Garage", none
+// of which were options on either garage select or rows in the settings
+// garage table — so those comps could never be adjusted on garage.
+//
+// Every value returned here is an option on both garage selects and a row in
+// the settings garage table, except "Garage": a garage is mentioned but its
+// size or attachment is not, so the adjustment says it cannot be applied
+// rather than guessing.
+const GARAGE_SIZE = { 'single': '1', 'double': '2', 'triple': '3', 'quad or more': '4+' };
+
 function mapGarage(parking) {
   if (!parking) return '';
   const p = parking.toLowerCase();
-  if (/triple garage/.test(p))          return '3 car';
-  if (/double garage attached/.test(p)) return '2 car attached';
-  if (/double garage detached/.test(p)) return '2 car detached';
-  if (/single garage attached/.test(p)) return '1 car attached';
-  if (/single garage detached/.test(p)) return '1 car detached';
-  if (/garage/.test(p))                 return 'Garage';
-  if (/parking pad|driveway|off street/.test(p)) return 'No garage';
+  const m = p.match(/\b(single|double|triple|quad or more)(?:\s+garage)?\s+(attached|detached)\b/);
+  if (m) return GARAGE_SIZE[m[1]] + ' car ' + m[2];
+  if (/garage/.test(p)) return 'Garage';
+  if (/parking pad|driveway|off street|on street/.test(p)) return 'No garage';
   return '';
 }
 
@@ -4280,7 +4322,7 @@ function fillCompForm(d) {
   set('comp-sqft',      d.sqft);
   set('comp-dom',       d.dom);
   set('comp-year',      d.year);
-  set('comp-garage',    d.garage);
+  setSelectKeepingValue(document.getElementById('comp-garage'), d.garage);
 
   // Manual wins. The generic set() writes '' when the value is null, so
   // re-parsing a sheet into an already-open comp used to silently wipe a
