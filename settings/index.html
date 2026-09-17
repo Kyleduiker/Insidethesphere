@@ -82,6 +82,19 @@ section{margin-top:36px}
 .fg input:focus{outline:none;border-color:var(--copper)}
 .fhint{font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:5px}
 
+/* Per-unit rates: one row per rate, min / default / max side by side. */
+.rate-head,.rate-row{display:grid;grid-template-columns:230px repeat(3,1fr);gap:14px}
+.rate-head{
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--stone);padding-bottom:8px;border-bottom:0.5px solid var(--border);
+}
+.rate-row{padding:14px 0;border-bottom:0.5px solid var(--border);align-items:start}
+.rate-row:last-child{border-bottom:none}
+.rate-name{font-size:12px;font-weight:500;color:var(--obs);line-height:1.4}
+.rate-name small{display:block;font-size:10.5px;font-weight:400;color:var(--stone);margin-top:3px;line-height:1.5}
+.rate-status{grid-column:2/-1;font-size:10.5px;color:var(--stone);line-height:1.5;margin-top:-4px}
+.rate-status.warn{color:var(--ox);font-weight:500}
+
 .note{
   border-left:2px solid var(--champ);background:#FDFBF6;
   padding:14px 18px;font-size:12px;color:var(--stone);line-height:1.7;
@@ -166,40 +179,17 @@ section{margin-top:36px}
         <div class="card-title">Per-unit rates</div>
         <div class="card-sub">
           Multiplied by the difference between the comparable and the subject.
-          <strong>Blank and zero are not the same thing.</strong> Blank means
-          you have not decided yet, and this page will tell you so. Zero means
-          you have decided not to adjust on it — that factor is skipped
-          silently and never appears in a breakdown.
+          The <strong>default</strong> is what every comparable uses. <strong>Min
+          and max</strong> set how far you can slide that line on an individual
+          comp, when a feature there is worth more or less than usual — leave both
+          blank and the line uses the default with no slider.
+          <strong>Blank and zero are not the same thing.</strong> A blank default
+          means you have not decided yet, and this page will tell you so. A
+          default of zero means you have decided not to adjust on it — that factor
+          is skipped silently and never appears in a breakdown.
         </div>
-        <div class="grid">
-          <div class="fg">
-            <label>Bedroom <span>— above grade</span></label>
-            <div class="money"><input type="number" id="r-bedroomAbove" min="0" step="500" placeholder="Not set"></div>
-            <div class="fhint">Per bedroom. Above-grade only; basement bedrooms are not counted.</div>
-          </div>
-          <div class="fg">
-            <label>Full bathroom</label>
-            <div class="money"><input type="number" id="r-bathFull" min="0" step="500" placeholder="Not set"></div>
-            <div class="fhint">Per full bath.</div>
-          </div>
-          <div class="fg">
-            <label>Half bathroom</label>
-            <div class="money"><input type="number" id="r-bathHalf" min="0" step="500" placeholder="Not set"></div>
-            <div class="fhint">Set independently — not assumed to be half a full bath.</div>
-          </div>
-        </div>
-        <div class="grid" style="margin-top:20px">
-          <div class="fg">
-            <label>Per square foot <span>— living area</span></label>
-            <div class="money"><input type="number" id="r-perSqft" min="0" step="5" placeholder="Not set"></div>
-            <div class="fhint">Applied to the difference in above-grade square footage.</div>
-          </div>
-          <div class="fg">
-            <label>Per square foot <span>— lot</span></label>
-            <div class="money"><input type="number" id="r-perLotSqft" min="0" step="1" placeholder="Not set"></div>
-            <div class="fhint">Applied to the difference in lot size.</div>
-          </div>
-        </div>
+        <div class="rate-head"><div>Rate</div><div>Min</div><div>Default</div><div>Max</div></div>
+        <div id="rateGrid"></div>
       </div>
     </section>
 
@@ -295,6 +285,22 @@ section{margin-top:36px}
 var RATE_FIELDS = ['bedroomAbove', 'bathFull', 'bathHalf',
                    'perSqft', 'perLotSqft'];
 
+/* Display for each rate. Keys match RATE_FIELDS and the module's
+   NUMERIC_LINES. */
+var RATE_DEFS = {
+  bedroomAbove: { name: 'Bedroom', unit: 'bedroom',
+                  hint: 'Above grade only; basement bedrooms are not counted.' },
+  bathFull:     { name: 'Full bathroom', unit: 'full bath', hint: '' },
+  bathHalf:     { name: 'Half bathroom', unit: 'half bath',
+                  hint: 'Set independently — not assumed to be half a full bath.' },
+  perSqft:      { name: 'Per sq.ft. — living area', unit: 'sq.ft.',
+                  hint: 'Applied to the difference in above-grade square footage.' },
+  perLotSqft:   { name: 'Per sq.ft. — lot', unit: 'sq.ft. of lot',
+                  hint: 'Applied to the difference in lot size.' }
+};
+
+var RATE_PARTS = ['min', 'default', 'max'];
+
 /* From the module, never a local copy. If it did not load, the age card
    says so rather than rendering an empty grid that looks unconfigured. */
 var AGE_BANDS = (window.SphereAdjustments && window.SphereAdjustments.AGE_BANDS) || null;
@@ -339,7 +345,79 @@ function showError(msg) {
   el.style.display = 'block';
 }
 
+function money0(n) {
+  return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+/* What one rate's three inputs currently mean, in words. Also the save-time
+   validation: `problem` is set when the combination cannot be saved. */
+function rateState(k) {
+  var get = function (part) {
+    var el = document.getElementById('r-' + k + '-' + part);
+    var raw = el ? String(el.value).trim() : '';
+    if (raw === '') return null;
+    var n = parseFloat(raw);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  var min = get('min'), def = get('default'), max = get('max');
+  var d = RATE_DEFS[k];
+
+  if ([min, def, max].some(function (v) { return Number.isNaN(v); })) {
+    return { problem: 'is not a number', text: 'One of these is not a number.' };
+  }
+  if ([min, def, max].some(function (v) { return v !== null && v < 0; })) {
+    return { problem: 'has a negative value', text: 'Enter what the feature is worth — never a negative number.' };
+  }
+  if (def === null) {
+    if (min !== null || max !== null) {
+      return { problem: 'has a range but no default', text: 'Set a default — a range with no default is never used.' };
+    }
+    return { text: 'Not set — this factor is not adjusted.' };
+  }
+  if (def === 0) {
+    return { text: 'Switched off — this factor is never adjusted.' };
+  }
+  if ((min === null) !== (max === null)) {
+    return { problem: 'has only one end of its range', text: 'Set both min and max, or leave both blank.' };
+  }
+  if (min === null) {
+    return { text: 'Range not set — every comp uses ' + money0(def) + ' per ' + d.unit + ', with no slider.' };
+  }
+  if (!(min <= def && def <= max)) {
+    return { problem: 'needs min ≤ default ≤ max', text: 'Must be min ≤ default ≤ max.' };
+  }
+  var step = window.SphereAdjustments.sliderStep(min, max);
+  return { text: step
+    ? 'Slides from ' + money0(min) + ' to ' + money0(max) + ' per ' + d.unit + ', in steps of ' + money0(step) + '.'
+    : 'Min and max are equal — every comp uses ' + money0(def) + ', with no slider.' };
+}
+
+function renderRateStatus(k) {
+  var el = document.getElementById('r-' + k + '-status');
+  if (!el) return;
+  var s = rateState(k);
+  el.textContent = s.text;
+  el.className = 'rate-status' + (s.problem ? ' warn' : '');
+}
+
 function buildValueGrids() {
+  var rateGrid = document.getElementById('rateGrid');
+  if (window.SphereAdjustments) {
+    rateGrid.innerHTML = RATE_FIELDS.map(function (k) {
+      var d = RATE_DEFS[k];
+      return '<div class="rate-row">' +
+        '<div class="rate-name">' + d.name + (d.hint ? '<small>' + d.hint + '</small>' : '') + '</div>' +
+        RATE_PARTS.map(function (part) {
+          return '<div class="fg"><div class="money"><input type="number" step="any" min="0" ' +
+                 'id="r-' + k + '-' + part + '" placeholder="Not set"></div></div>';
+        }).join('') +
+        '<div></div><div class="rate-status" id="r-' + k + '-status"></div>' +
+        '</div>';
+    }).join('');
+  } else {
+    rateGrid.innerHTML = '<div class="err">js/adjustments.js did not load, so the rates cannot be shown.</div>';
+  }
+
   var ageGrid = document.getElementById('ageGrid');
   if (!AGE_BANDS) {
     console.error('js/adjustments.js did not load — age bands cannot render.');
@@ -394,9 +472,16 @@ function fill(data) {
     if (el) el.value = (age[b.key] === undefined || age[b.key] === null) ? '' : age[b.key];
   });
 
+  /* rateSpec() reads the new { min, max, default } shape and a bare number
+     saved before it — which becomes the default, with the range blank. */
   RATE_FIELDS.forEach(function (k) {
-    var el = document.getElementById('r-' + k);
-    if (el) el.value = (rates[k] === undefined || rates[k] === null) ? '' : rates[k];
+    var spec = window.SphereAdjustments.rateSpec(rates[k]);
+    var vals = { min: spec.min, 'default': spec.def, max: spec.max };
+    RATE_PARTS.forEach(function (part) {
+      var el = document.getElementById('r-' + k + '-' + part);
+      if (el) el.value = vals[part] === null ? '' : vals[part];
+    });
+    renderRateStatus(k);
   });
   BASEMENT_TYPES.forEach(function (t) {
     var el = document.getElementById('b-' + t.key);
@@ -427,7 +512,10 @@ function collect() {
     return Number.isFinite(n) && n >= 0 ? n : null;
   };
   var rates = {}, bsmt = {}, gar = {}, age = {};
-  RATE_FIELDS.forEach(function (k) { rates[k] = num('r-' + k); });
+  RATE_FIELDS.forEach(function (k) {
+    rates[k] = { min: num('r-' + k + '-min'), 'default': num('r-' + k + '-default'),
+                 max: num('r-' + k + '-max') };
+  });
   BASEMENT_TYPES.forEach(function (t) { bsmt[t.key] = num('b-' + t.key); });
   GARAGE_TYPES.forEach(function (t) { gar[t.key] = num('g-' + t.key); });
   (AGE_BANDS || []).forEach(function (b) { age[b.key] = num('a-' + b.key); });
@@ -451,7 +539,9 @@ function activeFactorCount(data) {
   if (!data) return 0;
   var n = 0;
   var live = function (v) { var x = parseFloat(v); return Number.isFinite(x) && x > 0; };
-  RATE_FIELDS.forEach(function (k) { if (live((data.rates || {})[k])) n++; });
+  RATE_FIELDS.forEach(function (k) {
+    if (live(window.SphereAdjustments.rateSpec((data.rates || {})[k]).def)) n++;
+  });
   if ((AGE_BANDS || []).some(function (b) { return live((data.ageValues || {})[b.key]); })) n++;
   if (BASEMENT_TYPES.some(function (t) { return live((data.basementValues || {})[t.key]); })) n++;
   if (GARAGE_TYPES.some(function (t) { return live((data.garageValues || {})[t.key]); })) n++;
@@ -477,6 +567,19 @@ function resetEmptyGuard() {
 
 function saveSettings() {
   var btn = document.getElementById('saveBtn');
+
+  /* A rate that cannot be interpreted is refused by name, before anything
+     else — a range with no default, one end of a range, min above max. */
+  var problems = RATE_FIELDS.map(function (k) {
+    var s = rateState(k);
+    return s.problem ? RATE_DEFS[k].name + ' ' + s.problem : null;
+  }).filter(Boolean);
+  if (problems.length) {
+    pill('Not saved', 'err');
+    showError('Not saved — fix these rates first:\n\n' + problems.join('\n'));
+    return;
+  }
+
   var data = collect();
 
   /* Saving a form where nothing is in use produces a document that looks
@@ -527,7 +630,10 @@ buildValueGrids();
 /* Editing anything re-arms the empty-form guard, so a value typed after the
    first refusal is checked again rather than waved through. */
 document.addEventListener('input', function (e) {
-  if (e.target && /^[rabg]-/.test(e.target.id || '')) resetEmptyGuard();
+  var id = (e.target && e.target.id) || '';
+  if (/^[rabg]-/.test(id)) resetEmptyGuard();
+  var m = id.match(/^r-(\w+)-(min|default|max)$/);
+  if (m) renderRateStatus(m[1]);
 });
 
 firebase.auth().onAuthStateChanged(function (user) {

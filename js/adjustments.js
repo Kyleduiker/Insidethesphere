@@ -129,6 +129,37 @@ function garageKey(v) {
   return GARAGE_KEY_BY_LABEL[k] || null;
 }
 
+/* ── RATES: MIN / MAX / DEFAULT ───────────────────────────────────────────
+   Each per-unit rate is stored as { min, max, default }. The default is what
+   every comparable uses until the agent slides that line; min and max bound
+   the slider. A document saved before this shape existed holds a bare
+   number, which is read as the default with no range — so an old settings
+   document keeps computing exactly as it did.
+
+   The default carries the blank-versus-zero rule: null is never filled in,
+   zero is deliberately off. With no min and max, the line computes at its
+   default and has no slider. */
+function rateSpec(raw) {
+  if (raw !== null && typeof raw === 'object') {
+    return { min: num(raw.min), max: num(raw.max), def: num(raw['default']) };
+  }
+  return { min: null, max: null, def: num(raw) };
+}
+
+/* Derived from the range, never configured: about forty positions, rounded
+   to a clean 1, 2, 2.5 or 5 times a power of ten. $80–$140 per sq.ft. moves in
+   $2 steps; $10,000–$25,000 per bedroom in $500. Null when there is no range
+   to move across. */
+function sliderStep(min, max) {
+  var range = Math.abs(num(max) - num(min));
+  if (!(range > 0)) return null;
+  var raw = range / 40;
+  var p = Math.pow(10, Math.floor(Math.log10(raw)));
+  var f = raw / p;
+  var nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+  return Number((nice * p).toPrecision(12));
+}
+
 /* ── LINE DEFINITIONS ─────────────────────────────────────────────────── */
 
 /* ── MATERIALITY ──────────────────────────────────────────────────────────
@@ -521,7 +552,7 @@ function compute(subject, comp, settings) {
   var lines = [];
 
   NUMERIC_LINES.forEach(function (def) {
-    var rate = num(rates[def.key]);
+    var rate = rateSpec(rates[def.key]).def;
     if (rate === null)  { notConfigured.push(def.label); return; }
     if (rate <= 0)      { switchedOff.push(def.label);   return; }
     lines.push(numericLine(def, subject, comp, rate));
@@ -617,6 +648,8 @@ root.SphereAdjustments = {
   AGE_BANDS: AGE_BANDS,
   MATERIALITY: MATERIALITY,
   bandRange: bandRange,
+  rateSpec: rateSpec,
+  sliderStep: sliderStep,
   valuationYearOf: valuationYearOf
 };
 
