@@ -1989,15 +1989,16 @@ details.override>summary:hover{color:var(--obs)}
             computedTotal:    r.computedTotal,
             unavailableCount: r.unavailable.length,
             notAdjusted:      notAdjusted,
-            override: r.override
-                ? { amount: r.override.amount, reason: r.override.reason || '' }
-                : null,
+            // Each line's note and the Other line travel; slider positions,
+            // defaults, ranges and whether a line was moved do not. A seller
+            // sees the adjustment that was made, not how far it moved.
             lines: r.lines
                 .filter(l => l.status !== 'immaterial')
                 .map(l => ({
                     label:  l.label,
                     status: l.status,
                     detail: l.detail,
+                    note:   l.note || '',
                     amount: l.status === 'applied' ? l.amount : 0
                 }))
         };
@@ -2084,7 +2085,10 @@ details.override>summary:hover{color:var(--obs)}
 
     const PUBLISHED_COMP_FIELDS = [
         'address', 'community', 'status', 'price', 'listPrice', 'soldPrice',
-        'beds', 'baths', 'sqft', 'dom', 'year', 'photoUrl', 'sheetUrl'
+        'beds', 'baths', 'sqft', 'dom', 'year', 'photoUrl', 'sheetUrl',
+        // Agent-written, shown on the comp card. Not `notes`, which holds
+        // Matrix Public Remarks and stays private.
+        'clientNote'
         // plus `adjustment`, computed at publish — see publicAdjustment()
     ];
 
@@ -2103,10 +2107,7 @@ details.override>summary:hover{color:var(--obs)}
         'adjLines', 'adjOther',
         // The retired whole-comp override. Older comps may still carry it
         // until they are next saved.
-        'adjOverride', 'adjReason',
-        // Held back until the client page renders it — the next commit moves
-        // it to the published list.
-        'clientNote'
+        'adjOverride', 'adjReason'
     ];
 
     // The cover strip and the "Your home" card read `baths`. The subject form

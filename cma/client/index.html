@@ -658,6 +658,11 @@ body{counter-reset:section}
   margin-top:12px;line-height:1.7;
 }
 .comp-specs span{color:var(--muted);margin:0 7px}
+/* The agent's own note on this comparable, in their words. */
+.comp-client-note{
+  font-family:var(--serif);font-size:1.02rem;font-style:italic;
+  color:var(--text);line-height:1.55;margin-top:10px;max-width:60ch;
+}
 .comp-sheet{
   display:inline-flex;align-items:center;gap:8px;
   margin-top:14px;text-decoration:none;
@@ -729,6 +734,11 @@ body{counter-reset:section}
   letter-spacing:.05em;color:var(--text);
 }
 .adj-detail{font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.5}
+/* A note the agent attached to one line, beneath the sentence it explains. */
+.adj-line-note{
+  display:block;margin-top:3px;
+  font-family:var(--serif);font-size:.98rem;font-style:italic;color:var(--text);line-height:1.5;
+}
 .adj-amt{
   font-family:var(--serif);font-size:1rem;
   text-align:right;color:var(--text);white-space:nowrap;
@@ -2456,10 +2466,13 @@ function adjustmentPanel(comp, subject) {
     : l.status === 'even'        ? '—'
     : signedMoney(l.amount);
 
+  // The Other line arrives as an ordinary line, labelled Other, with the
+  // agent's reason as its sentence.
   const rows = a.lines.map(l => `
     <div class="adj-row ${escHtml(l.status)}">
       <div class="adj-label">${escHtml(l.label)}</div>
-      <div class="adj-detail">${escHtml(l.detail)}</div>
+      <div class="adj-detail">${escHtml(l.detail)}${l.note
+        ? `<span class="adj-line-note">“${escHtml(l.note)}”</span>` : ''}</div>
       <div class="adj-amt">${amountCell(l)}</div>
     </div>`).join('');
 
@@ -2474,6 +2487,12 @@ function adjustmentPanel(comp, subject) {
     </div>`
     : '';
 
+  // Whole-comp overrides are retired: sliders and the Other line replace
+  // them, and a publish no longer writes one. This branch stays only for a
+  // CMA published before that, whose stored adjustedPrice includes its
+  // override — rendering the plain total there would show numbers that do
+  // not add up. Republishing removes it.
+  //
   // An override replaces the computed total, but the computed total still
   // renders above it. Showing only the override would hide the fact that a
   // judgement was made — the reason is the point, and it needs the number
@@ -2615,6 +2634,7 @@ function buildComps(comps, subject) {
         <div class="comp-address">${c.address || '—'}</div>
         <div class="comp-community">${c.community || 'SE Calgary'}${c.year ? ' · built ' + c.year : ''}</div>
         <div class="comp-specs">${specs}</div>
+        ${c.clientNote ? `<div class="comp-client-note">${escHtml(c.clientNote)}</div>` : ''}
         ${sheet}
         ${adjustmentPanel(c, subject)}
       </div>
