@@ -360,12 +360,30 @@ Existing and working: photos, subject card, status grouping, MLS sheets, $/sqft.
 **SOLD AT — BUILT** (`13fa4c5`). Sold cards read SOLD AT, not "Listed at", and
 the struck-through list price renders only when it differs from the sale price.
 
-**Adjustment tool — BUILT with single values; redesign around sliders, not
-built.** What exists (`13fa4c5` through `519cd37`): one stored value per rate
-and per table state at `/settings/`, computed per comp with the sign handled
-automatically, materiality thresholds, banded age, a whole-comp override with a
-reason, and results-only publishing. **Everything below is design, not built.**
-It replaces the per-line values and the whole-comp override.
+**Adjustment tool with sliders — BUILT** (Sep 17, 2026). First built with
+single values (`13fa4c5` through `519cd37`), then rebuilt around sliders:
+min / max / default on the rates (`1a993a0`), per-comp slider state in the
+calculation (`7b54005`), the side-by-side editor panel (`c4e1356`), and line
+notes, the Other line and the client note on the client page (`de48b3e`).
+Preceded by one garage vocabulary shared by the Matrix parser, both garage
+dropdowns, the settings table and the calculation (`6b76612`). The whole-comp
+override is retired. The spec below is what was built.
+
+Decisions made during the build:
+- **A moved rate line stores the rate; a moved table line stores a multiple of
+  its gap** (0.5–1.5), never dollars — so correcting the comp's square footage
+  or garage type recalculates instead of leaving a stale figure.
+- **A stored position the current range no longer includes is kept and
+  flagged, never clamped.** Clamping would change an adjusted price silently.
+- **Sliders snap in code to steps counted from the default** — see Key
+  learnings, Sep 17.
+- **The Other line counts on its own**, even when every setting is blank.
+- **No note field on an immaterial line**: those are gathered into one "Not
+  adjusted" line on the card, so a note would have nowhere to render.
+- **Only results are published** — each line's amount, sentence and note. Slider
+  positions, defaults, ranges and whether a line moved never reach
+  `public_cmas`. The client page keeps a branch for a whole-comp override only
+  so a CMA published before the rebuild still adds up; republishing removes it.
 
 **Why sliders.** A single stored value cannot express that a comp's triple
 garage is standard while the subject's is oversized and heated. The count is
@@ -830,6 +848,39 @@ Open: whether two or three reviews sit inside the agent section instead.
   generalises to every computed claim on the client page, and it is the same test
   that removed "554 contacts" and the pyramid percentages.
 
+### Key learnings — Sep 17, 2026
+
+- **The UI renders a plausible default for data it does not have or does not
+  understand — and where a form saves, it writes that default back.** Three
+  instances. The first shows the display half; the other two show both halves,
+  which is what turns a display bug into data loss.
+  - **Agent profile fallback** (fixed `62d1db7`). The client page's profile read
+    failed on every published CMA and fell through to hardcoded defaults that
+    were Kyle's own real name, headshot initials, brokerage and phone. Nothing
+    was written back, but a read that never once succeeded looked correct for
+    months.
+  - **Settings page zeros** (fixed `98b942e`). Blank inputs were coerced to `0`
+    on save and reloaded showing `0`, under value-shaped placeholders — so an
+    untouched form looked configured, every later save wrote the zeros again,
+    and every comparable computed no adjustments.
+  - **Garage dropdown** (fixed `6b76612`). A stored garage the `<select>` had no
+    option for — `3 car`, from the old parser — displayed as blank. Saving the
+    comp wrote that blank back, erasing the garage and marking it hand-edited.
+
+  **The rule:** a field that cannot represent the stored value shows the stored
+  value as itself, flagged — never a substitute. Blank is not zero, a missing
+  read is not a default, and an unrecognised option is not an empty one. When
+  adding any field, ask what it displays for a value it does not understand,
+  and what a save then writes.
+- **Browser range inputs count steps from `min`, so a default that is not a
+  whole number of steps above the minimum is unreachable by dragging.** With
+  `min=80` and `step=2` the positions are 80, 82 … 94, 96, and a $95 default is
+  not one of them — dragging back to the default can never land on it, and the
+  line stays marked as moved. Fixed in `c4e1356` with `step="any"` on the input
+  and snapping in the input handler to whole steps counted from the **default**,
+  so the default is always a position. Applies to any slider whose resting value
+  is not derived from its minimum.
+
 ### Build order — nine weeks to Oct 25
 
 Set Aug 24, 2026. Reconciles the presentation spec above with what was already
@@ -840,11 +891,16 @@ Shipped Aug 24 (`753452b`, `e926a6b`, `ab97407`). See Done — Aug 24 above. The
 range itself stays in Pricing Strategy; Reasoning ends with the agent's
 conclusion.
 
-**Weeks 3–5 · Adjustment tool — NEXT**
-The largest build. Agent-level settings for adjustment values, computed
-adjustments with automatic sign handling, per-comp override with a reason field,
-expandable breakdown on the card. Also fixes SOLD AT versus LISTED AT and the
-redundant strikethrough when sale price equals list price.
+**Weeks 3–5 · Adjustment tool — COMPLETE**
+Shipped Sep 17. Agent-level settings with min / max / default on the rates,
+computed adjustments with automatic sign handling, materiality thresholds,
+banded age, per-line sliders with notes and an Other line replacing the
+whole-comp override, results-only publishing, and SOLD AT with the redundant
+strikethrough removed. See **Comparable Sales** in the presentation
+architecture for what was built and the decisions made building it
+(`13fa4c5` through `de48b3e`).
+
+**Next: Week 6 · Pricing strategy.**
 
 **Week 6 · Pricing strategy**
 Computed range suggestion from the 25th–75th percentile of sold $/sqft. Pyramid
