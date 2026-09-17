@@ -848,6 +848,57 @@ Open: whether two or three reviews sit inside the agent section instead.
   generalises to every computed claim on the client page, and it is the same test
   that removed "554 contacts" and the pyramid percentages.
 
+### Done — Sep 16–17, 2026
+
+Privacy work. **`public_cmas` is world-readable, and the password gate runs in
+the browser only** — anything written to a published CMA can be read by anyone
+holding its link.
+
+- **The whole subject form was published on every publish** (fixed `94b92fd`).
+  `publishCMA()` spread the editor form onto `public_cmas`, carrying
+  `sellerNotes`, `sellerMotivation`, `sellerTimeline` and `clientEmail` — none
+  read by the client page. Both the CMA and its comps now go through an explicit
+  allow-list: every field is either published or not published by name, a field
+  in neither list is **withheld and named at publish**, so adding a field forces
+  a decision instead of defaulting to world-readable. **`clientPassword` is
+  still published** — the gate compares against it in the browser and breaks
+  without it. That is the week 9 encrypted-gate item, not fixed here.
+- **The adjustment settings grid was published** (fixed `61d6e2f`). Every rate
+  and table value — the agent's methodology — went onto `public_cmas` so the
+  client page could compute adjustments itself. They are now computed at
+  publish and only each comparable's result is written.
+- **Comp `notes` held Matrix Public Remarks and were published** (fixed
+  `94b92fd`, `de48b3e`). The editor labelled the field "appears on client page
+  comp card"; the client page never rendered it, so MLS listing copy sat unseen
+  on a public document. It is now private, and a separate agent-written
+  `clientNote` is what a seller sees.
+- **11 orphaned published CMAs found and deleted** — real addresses, live at
+  their URLs, carrying the `sellerNotes`, `clientEmail` and `clientPassword`
+  fields from before the allow-list. Their source CMAs had been deleted; the
+  published copies had not. The surviving CMA was republished to purge the old
+  fields.
+- **Root cause: `deleteCMA()` deleted only the CMA document** (fixed `26c7bab`),
+  leaving the client page, the comps subcollection and every photo and MLS sheet
+  in Storage. It now runs a cascade in `js/cma-cleanup.js`: **client page first,
+  then Storage files, then comps, then the CMA document last.** Files go before
+  comps because the comps hold the only record of which files belong to them;
+  the CMA document goes last so a failure leaves it in the list, ready to delete
+  again. Every step treats "already gone" as success. Files are deleted by exact
+  stored reference and only inside that CMA's own folders; a folder sweep then
+  catches files nothing references.
+- **Account deletion had the same bug at larger scale** (fixed `3e5f2ac`) —
+  every CMA, comp, file and client page was left behind. It now runs the cascade
+  for every CMA, then removes any page still published under the agent, while
+  the user is still signed in. It also deleted the profile **before** the login,
+  so Firebase refusing a stale sign-in left an authenticated user with no
+  profile; sign-in recency is now checked before anything is touched.
+- **Unpublish added** (`0ee65d7`). There was no way to take a client page down
+  without deleting the whole CMA.
+
+**Verified on the live site:** the cascade removed a CMA, its 9 comps, its client
+page and all 19 of its files. Storage allows listing a folder, so the folder
+sweep runs.
+
 ### Key learnings — Sep 17, 2026
 
 - **The UI renders a plausible default for data it does not have or does not
