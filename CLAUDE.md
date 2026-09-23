@@ -899,6 +899,40 @@ holding its link.
 page and all 19 of its files. Storage allows listing a folder, so the folder
 sweep runs.
 
+### Done — Sep 23, 2026
+
+Security pass, from a whole-codebase review (saved in the CMA project as
+`reviews/2026-09-23-direction-review.md`). All four were week 9 items; they
+were cheap and the write rule was an XSS hole, so they moved up.
+
+- **`public_cmas` write rules.** Create requires `agentId == uid`; update
+  requires it on both the existing and incoming document; delete requires it
+  on the existing one. Read stays public. Published from the Firebase console
+  — rules are not in the repo. **`agentId` and `cmaId` must stay on the
+  published document:** the rule reads the first, `cma-cleanup.js` reads both
+  for the ownership check on unpublish.
+- **One slug generator** in `js/slug.js` — there were two copies, the second
+  in `clients/view.html`, and CLAUDE.md had named only one. Address prefix
+  kept; the token is 12 characters from `crypto.getRandomValues`, ~2^59
+  possibilities. Existing slugs are unchanged; only new CMAs get the long
+  form. A page that creates a CMA must load `js/slug.js`.
+- **Password is an exact match.** `unlock()` lowercased both sides. The
+  editor labels the field case-sensitive; the `Mahogany2026` placeholder is
+  gone.
+- **Agent-snapshot and comp fields are escaped on the client page.** Headshot
+  `<img>` is built with DOM methods (no inline `onerror` attribute); headshot,
+  Calendly and MLS-sheet URLs go through `safePhotoUrl()` before `src`/`href`;
+  stats, comp address, community and status key go through `escHtml()`. Until
+  the rules change, any signed-in account could have written script into
+  another agent's seller page through these.
+
+Still open from the same review, in order: client-page plausible defaults
+(`priceRec || 700000`, `commissionType || 'tiered'`, Kyle's own details as
+another agent's fallback, unknown status counted as sold); the adjustment
+tool has no bracketing check and no gross/net % per comp — both needed
+before the week 6 range computation, which as specced extrapolates $/sqft
+past the comp set; `collectCompForm()` writes blank as 0.
+
 ### Key learnings — Sep 17, 2026
 
 - **The UI renders a plausible default for data it does not have or does not
@@ -951,7 +985,10 @@ strikethrough removed. See **Comparable Sales** in the presentation
 architecture for what was built and the decisions made building it
 (`13fa4c5` through `de48b3e`).
 
-**Next: Week 6 · Pricing strategy.**
+**Next: Week 6 · Pricing strategy** — but the adjustment tool first becomes
+a section (all comps side by side, not a modal per comp) with gross/net % and
+a bracketing flag per comp, then the range is computed from adjusted sold
+prices, then the pyramid. See Done — Sep 23 for why.
 
 **Week 6 · Pricing strategy**
 Computed range suggestion from the 25th–75th percentile of sold $/sqft. Pyramid
@@ -968,9 +1005,7 @@ ingest is built and unread. **First to cut if anything slips** — the Reasoning
 section already makes the pricing argument with data already in hand.
 
 **Week 9 · Conference readiness — reserved, not overflow**
-- **`public_cmas` write rules. Not optional.** Any authenticated user can
-  currently overwrite any published CMA. Harmless while Kyle is the only account;
-  live the moment someone signs up after the demo.
+- **`public_cmas` write rules — DONE Sep 23.** See Done — Sep 23.
 - **Password gate — option B, client-side encryption. Not optional; same
   security pass as the write rules.** The gate compares the entered password
   against `clientPassword` stored on the very document it protects
@@ -993,10 +1028,8 @@ section already makes the pricing argument with data already in hand.
     ciphertext once and guess offline at the speed of their hardware, so the
     password's strength is the entire protection. The editor's placeholder is
     `Mahogany2026`; a password shaped like that falls immediately.
-  - **A long random slug from `crypto.getRandomValues`.** `generateSlug()` in
-    `cma/index.html` builds the link from the street address plus a five-digit
-    `Math.random()` number — **90,000 possibilities**. Anyone who knows an
-    address can find its document for a few cents of reads.
+  - **A long random slug — DONE Sep 23** (`js/slug.js`). Republishing an
+    older CMA keeps its old five-digit slug; recreate it to get the new form.
 
   **The slug enumeration is the bigger hole than the password.** The password
   only matters once someone has the document, and the slug hands the document
@@ -1050,9 +1083,6 @@ not development.** Do it before the demo.
 
 ### Loose ends
 
-- **`public_cmas` allows write to ANY authenticated user**, not just the owner. Any
-  agent could overwrite another agent's published CMA. Harmless while Kyle is the
-  only account; **must be fixed before anyone else is on the platform.**
 - **Nothing reads `users/{uid}/market/city-calgary/` yet.** Whether city-wide
   figures belong in section 03 alongside community data, or somewhere else,
   is undecided.
