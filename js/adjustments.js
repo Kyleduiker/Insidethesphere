@@ -241,6 +241,18 @@ var MATERIALITY = {
   ageYearsMin: 5       /* years between build dates */
 };
 
+/* ── SIZE OF THE ADJUSTMENT ───────────────────────────────────────────────
+   Gross: every applied line's magnitude added up, as a share of the basis
+   price. Net: the signed total, as a share. Appraisal convention treats a
+   comparable past about 25% gross or 15% net as one the subject is being
+   built out of rather than read from — too much of its adjusted price is
+   the agent's own arithmetic. Reported, never enforced: the agent decides
+   whether to keep the comparable, and the editor says why it is flagged. */
+var LARGE_ADJUSTMENT = {
+  grossShare: 0.25,
+  netShare:   0.15
+};
+
 var NUMERIC_LINES = [
   /* `unit` names what the rate is per, for the slider; `valueUnit` is
      appended to the subject and comp values in the side-by-side panel. */
@@ -756,7 +768,7 @@ function compute(subject, comp, settings) {
   var basis = basisOf(comp);
   if (!basis.price) return fail('no-price');
 
-  var computedTotal = 0, immaterialTotal = 0;
+  var computedTotal = 0, grossTotal = 0, immaterialTotal = 0;
   var unavailable = [], immaterial = [];
   lines.forEach(function (l) {
     if (l.status === 'unavailable') { unavailable.push(l); return; }
@@ -766,7 +778,24 @@ function compute(subject, comp, settings) {
       return;
     }
     computedTotal += l.amount;
+    grossTotal += Math.abs(l.amount);
   });
+
+  /* Shares of the basis price. Both are what the agent reads to judge
+     whether this comparable is close enough to be evidence at all. */
+  var grossShare = grossTotal / basis.price;
+  var netShare = Math.abs(computedTotal) / basis.price;
+  var largeReasons = [];
+  if (grossShare > LARGE_ADJUSTMENT.grossShare) {
+    largeReasons.push('gross adjustments are ' + Math.round(grossShare * 100) +
+      '% of the ' + (basis.kind === 'sold' ? 'sale' : 'asking') + ' price (over ' +
+      Math.round(LARGE_ADJUSTMENT.grossShare * 100) + '%)');
+  }
+  if (netShare > LARGE_ADJUSTMENT.netShare) {
+    largeReasons.push('the net adjustment is ' + Math.round(netShare * 100) +
+      '% of the ' + (basis.kind === 'sold' ? 'sale' : 'asking') + ' price (over ' +
+      Math.round(LARGE_ADJUSTMENT.netShare * 100) + '%)');
+  }
 
   /* The whole-comp override is retired — sliders and the Other line replace
      it. A comp that still carries one is reported so the editor can show the
@@ -787,6 +816,13 @@ function compute(subject, comp, settings) {
     basisLabel: basis.label,
     lines: lines,
     computedTotal: Math.round(computedTotal),
+    grossTotal: Math.round(grossTotal),
+    grossShare: grossShare,
+    netShare: netShare,
+    /* True when either share is past its threshold; `largeReasons` says
+       which, in a sentence the editor can show beside the comparable. */
+    large: largeReasons.length > 0,
+    largeReasons: largeReasons,
     unavailable: unavailable,
     /* Below materiality. Excluded from the total and from the "could not be
        applied" count — they were applied, and came to nothing worth
@@ -803,6 +839,71 @@ function compute(subject, comp, settings) {
   };
 }
 
+/**
+ * bracketing(subject, comps)
+ *
+ * Is the subject inside the range the comparables span? A subject bigger
+ * than every comparable is priced by extrapolation: the size line has to
+ * carry it past the evidence, and no per-foot rate makes that defensible.
+ * Checked on living area, bedrooms above grade and age — the three that
+ * decide which homes a buyer weighs against this one.
+ *
+ * The caller chooses which comparables count. Sold and pending are the
+ * evidence; an active listing brackets nothing, because nobody has paid
+ * its price yet.
+ *
+ * Returns one entry per factor:
+ *   { key, label, subject, min, max, count, bracketed, text }
+ * `bracketed` is true, false, or null when it cannot be judged — the
+ * subject has no value, or no comparable does. `text` is a sentence for
+ * the editor. Age uses the valuation year like every age line does, and is
+ * null without one.
+ */
+function bracketing(subject, comps) {
+  subject = subject || {};
+  comps = Array.isArray(comps) ? comps : [];
+  var vy = valuationYearOf(subject);
+
+  var factors = [
+    { key: 'sqft', label: 'Living area', unit: ' sq.ft.',
+      subj: function (s) { return pos(s.sqft); },
+      comp: function (c) { return pos(c.sqft); } },
+    { key: 'bedsAbove', label: 'Bedrooms above grade', unit: '',
+      subj: function (s) { return pos(s.bedsAbove); },
+      comp: function (c) { return pos(c.bedsAbove); } },
+    { key: 'age', label: 'Age', unit: ' years',
+      subj: function (s) { var y = pos(s.yearBuilt); return (vy !== null && y !== null) ? Math.max(0, vy - y) : null; },
+      comp: function (c) { var y = pos(c.year);      return (vy !== null && y !== null) ? Math.max(0, vy - y) : null; } }
+  ];
+
+  return factors.map(function (f) {
+    var s = f.subj(subject);
+    var vals = comps.map(f.comp).filter(function (v) { return v !== null; });
+    var out = { key: f.key, label: f.label, subject: s, min: null, max: null,
+                count: vals.length, bracketed: null, text: '' };
+    if (s === null) {
+      out.text = f.label + ': not recorded for your home' +
+        (f.key === 'age' && vy === null ? ' (no valuation year)' : '') + '.';
+      return out;
+    }
+    if (!vals.length) {
+      out.text = f.label + ': no comparable has a value to compare against.';
+      return out;
+    }
+    out.min = Math.min.apply(null, vals);
+    out.max = Math.max.apply(null, vals);
+    out.bracketed = s >= out.min && s <= out.max;
+    var span = fmtNum(out.min) + (out.min === out.max ? '' : '–' + fmtNum(out.max)) + f.unit;
+    if (out.bracketed) {
+      out.text = f.label + ': bracketed — comparables span ' + span + ', yours is ' + fmtNum(s) + f.unit + '.';
+    } else {
+      out.text = f.label + ': NOT bracketed — comparables span ' + span + ', yours is ' +
+        fmtNum(s) + f.unit + ', ' + (s > out.max ? 'above every one' : 'below every one') + '.';
+    }
+    return out;
+  });
+}
+
 /* A single sentence naming what did not run, for the collapsed summary and
    for the editor. Returns '' when everything applied. */
 function unavailableSummary(result) {
@@ -813,7 +914,9 @@ function unavailableSummary(result) {
 
 root.SphereAdjustments = {
   compute: compute,
+  bracketing: bracketing,
   unavailableSummary: unavailableSummary,
+  LARGE_ADJUSTMENT: LARGE_ADJUSTMENT,
   money: money,
   signed: signed,
   basisOf: basisOf,

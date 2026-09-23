@@ -123,6 +123,70 @@ body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height
 }
 .panel-sub{font-size:13px;color:var(--stone)}
 
+/* ── ADJUSTMENTS GRID ──────────────────────────────────────────────────
+   The appraisal grid: factors down, comparables across, the subject pinned
+   on the left. This is the one panel that needs more than 760px, so the
+   content column widens while it is showing (.content.wide). */
+.content.wide{max-width:none}
+.adjb{
+  display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 18px;margin-bottom:14px;
+  background:#fff;border:0.5px solid var(--border);border-radius:2px;font-size:12px;
+}
+.adjb-item{display:flex;align-items:baseline;gap:8px}
+.adjb-item b{font-weight:500;color:var(--obs)}
+.adjb-item span{color:var(--stone)}
+.adjb-item.no b{color:var(--ox)}
+.adjb-item.na b{color:var(--stone);font-weight:400}
+.adjb-lead{
+  flex-basis:100%;font-size:9px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--copper);margin-bottom:2px;
+}
+.adjg-wrap{overflow-x:auto;background:#fff;border:0.5px solid var(--border);border-radius:2px;margin-bottom:14px}
+.adjg{border-collapse:separate;border-spacing:0;font-size:11.5px;min-width:100%}
+.adjg th,.adjg td{
+  padding:8px 12px;border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border);
+  vertical-align:top;text-align:left;white-space:nowrap;
+}
+.adjg th:last-child,.adjg td:last-child{border-right:none}
+.adjg tr:last-child td{border-bottom:none}
+/* Factor column and subject column stay put while the comps scroll. */
+.adjg th:first-child,.adjg td:first-child{
+  position:sticky;left:0;z-index:2;background:#fff;min-width:150px;
+  font-weight:500;color:var(--obs);
+}
+.adjg th:nth-child(2),.adjg td:nth-child(2){
+  position:sticky;left:150px;z-index:2;background:var(--ivory);min-width:120px;
+  box-shadow:1px 0 0 var(--border);
+}
+.adjg thead th{
+  background:var(--parch);font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--stone);vertical-align:bottom;
+}
+.adjg thead th:first-child,.adjg thead th:nth-child(2){background:var(--parch)}
+.adjg th.adjg-comp{
+  cursor:pointer;min-width:150px;color:var(--obs);text-transform:none;letter-spacing:0;
+  font-size:11.5px;font-weight:500;
+}
+.adjg th.adjg-comp:hover{background:var(--ivory)}
+.adjg th.adjg-comp.selected{background:#fff;box-shadow:inset 0 -2px 0 var(--copper)}
+.adjg th.adjg-comp .comp-badge{margin-top:4px;display:inline-block}
+.adjg th.adjg-comp small{display:block;font-size:10px;font-weight:400;color:var(--stone);margin-top:3px;letter-spacing:0}
+.adjg td.adjg-comp.selected{background:#FCFAF6}
+/* A cell: the comp's value, then the adjustment beneath it. */
+.adjg-v{color:var(--esp);font-variant-numeric:tabular-nums}
+.adjg-a{display:block;margin-top:2px;font-weight:500;color:var(--obs);font-variant-numeric:tabular-nums}
+.adjg-a.even{color:var(--stone);font-weight:400}
+.adjg-a.immaterial{color:var(--stone);font-weight:400;font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.adjg-a.unavailable{color:var(--ox);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.adjg td.moved{box-shadow:inset 2px 0 0 var(--copper)}
+.adjg tr.adjg-total td{background:var(--ivory);font-weight:500}
+.adjg tr.adjg-total td:nth-child(2){background:var(--parch)}
+.adjg tr.adjg-final td{font-size:12.5px}
+.adjg-share{font-variant-numeric:tabular-nums}
+.adjg-share.large{color:var(--ox);font-weight:600}
+.adjg-share small{display:block;font-size:10px;color:var(--stone);font-weight:400;white-space:normal;max-width:180px;line-height:1.4;margin-top:3px}
+.adjg td.adjg-fail{white-space:normal;max-width:200px;color:var(--stone);font-size:11px;line-height:1.45}
+
 /* CARDS */
 .card{
   background:#fff;border:0.5px solid var(--border);
@@ -632,17 +696,20 @@ details.override>summary:hover{color:var(--obs)}
       <div class="sec-nav-item" id="nav-comps" onclick="showPanel('comps')">
         <span class="sec-num">04</span> Comparables
       </div>
+      <div class="sec-nav-item" id="nav-adjustments" onclick="showPanel('adjustments')">
+        <span class="sec-num">05</span> Adjustments
+      </div>
       <div class="sec-nav-item" id="nav-pricing" onclick="showPanel('pricing')">
-        <span class="sec-num">05</span> Pricing strategy
+        <span class="sec-num">06</span> Pricing strategy
       </div>
       <div class="sec-nav-item" id="nav-netsheet" onclick="showPanel('netsheet')">
-        <span class="sec-num">06</span> Net sheet
+        <span class="sec-num">07</span> Net sheet
       </div>
       <div class="sec-nav-item" id="nav-marketing" onclick="showPanel('marketing')">
-        <span class="sec-num">07</span> Marketing plan
+        <span class="sec-num">08</span> Marketing plan
       </div>
       <div class="sec-nav-item" id="nav-publish" onclick="showPanel('publish')">
-        <span class="sec-num">08</span> Publish & share
+        <span class="sec-num">09</span> Publish & share
       </div>
     </nav>
 
@@ -1045,10 +1112,25 @@ details.override>summary:hover{color:var(--obs)}
         </div>
       </div>
 
-      <!-- 05 PRICING -->
+      <!-- 05 ADJUSTMENTS -->
+      <div class="panel" id="panel-adjustments">
+        <div class="panel-header">
+          <div class="panel-eyebrow">05 · Adjustments</div>
+          <div class="panel-title">What each comparable would have sold for as your home</div>
+          <div class="panel-sub">
+            Every comparable side by side, restated toward your home line by line.
+            Click a comparable's address to slide its lines. Only each line's result
+            reaches the client page — your rates and ranges never do.
+          </div>
+        </div>
+        <div id="adjBracketing"></div>
+        <div id="adjGrid"></div>
+      </div>
+
+      <!-- 06 PRICING -->
       <div class="panel" id="panel-pricing">
         <div class="panel-header">
-          <div class="panel-eyebrow">05 · Pricing strategy</div>
+          <div class="panel-eyebrow">06 · Pricing strategy</div>
           <div class="panel-title">Your home's estimated value</div>
           <div class="panel-sub">Set the price range based on your comparable analysis</div>
         </div>
@@ -1091,7 +1173,7 @@ details.override>summary:hover{color:var(--obs)}
       <!-- 06 NET SHEET -->
       <div class="panel" id="panel-netsheet">
         <div class="panel-header">
-          <div class="panel-eyebrow">06 · Net sheet</div>
+          <div class="panel-eyebrow">07 · Net sheet</div>
           <div class="panel-title">Estimated proceeds</div>
           <div class="panel-sub">What the seller walks away with — appears as an interactive slider on the client page</div>
         </div>
@@ -1193,7 +1275,7 @@ details.override>summary:hover{color:var(--obs)}
       <!-- 07 MARKETING -->
       <div class="panel" id="panel-marketing">
         <div class="panel-header">
-          <div class="panel-eyebrow">07 · Marketing plan</div>
+          <div class="panel-eyebrow">08 · Marketing plan</div>
           <div class="panel-title">How we sell your home</div>
           <div class="panel-sub">Photography details and offer strategy for this listing</div>
         </div>
@@ -1225,7 +1307,7 @@ details.override>summary:hover{color:var(--obs)}
       <!-- 08 PUBLISH -->
       <div class="panel" id="panel-publish">
         <div class="panel-header">
-          <div class="panel-eyebrow">08 · Publish & share</div>
+          <div class="panel-eyebrow">09 · Publish & share</div>
           <div class="panel-title">Share with your client</div>
           <div class="panel-sub">Publish to generate a private password-protected link for your client</div>
         </div>
@@ -2382,7 +2464,11 @@ details.override>summary:hover{color:var(--obs)}
         document.getElementById('panel-' + id).classList.add('active');
         document.getElementById('nav-' + id).classList.add('active');
 
+        const content = document.querySelector('.content');
+        if (content) content.classList.toggle('wide', id === 'adjustments');
+
         if (id === 'comps')    { renderComps(); recalcCompStats(); }
+        if (id === 'adjustments') renderAdjGrid();
         if (id === 'pricing')  recalcPricing();
         if (id === 'netsheet') { toggleCommission(); updateCapLabel(); recalcNet(); }
         if (id === 'publish')  { updatePublishPanel(); updateClientUrl(); }
@@ -2768,9 +2854,195 @@ details.override>summary:hover{color:var(--obs)}
         });
     })();
 
+    // ── ADJUSTMENTS GRID ──
+    // The appraisal grid. Same module, same subject, same settings as the
+    // modal preview and as publish, so what is read here is what a seller
+    // gets. Cells only show; sliding happens in the rail for the selected
+    // comparable (step 4). Until that lands, the address opens the modal.
+    let adjGridSelected = null;   // comps[] index of the selected column
+
+    const ADJ_ROW_ORDER = ['perSqft','bedroomAbove','bathFull','bathHalf',
+                           'perLotSqft','age','basement','garage','other'];
+
+    function adjGridCompsInOrder() {
+        // Same grouping as the comp table: STATUS_ORDER, price descending,
+        // then anything with an unrecognised status.
+        const indexed = comps.map((c, i) => ({ c: c, i: i }));
+        const out = [];
+        STATUS_ORDER.forEach(st => {
+            indexed.filter(r => (r.c.status || 'sold') === st)
+                   .sort((a, b) => (b.c.price || 0) - (a.c.price || 0))
+                   .forEach(r => out.push(r));
+        });
+        indexed.filter(r => STATUS_ORDER.indexOf(r.c.status || 'sold') === -1)
+               .forEach(r => out.push(r));
+        return out;
+    }
+
+    function renderAdjBracketing(subj) {
+        const box = document.getElementById('adjBracketing');
+        if (!box || !window.SphereAdjustments) return;
+        // Sold and pending are the evidence. An active listing brackets
+        // nothing — nobody has paid its price.
+        const evidence = comps.filter(c => {
+            const st = String(c.status || 'sold').toLowerCase();
+            return st === 'sold' || st === 'pending';
+        });
+        const rows = window.SphereAdjustments.bracketing(subj, evidence);
+        const items = rows.map(b => {
+            const cls = b.bracketed === true ? 'yes' : b.bracketed === false ? 'no' : 'na';
+            const mark = b.bracketed === true ? '✓' : b.bracketed === false ? '✗' : '–';
+            return '<div class="adjb-item ' + cls + '"><b>' + mark + ' ' + escHtml(b.label) + '</b>' +
+                   '<span>' + escHtml(b.text.replace(/^[^:]+:\s*/, '')) + '</span></div>';
+        }).join('');
+        const lead = evidence.length
+            ? 'Is your home bracketed by the ' + evidence.length + ' sold and pending comparable' +
+              (evidence.length === 1 ? '' : 's') + '?'
+            : 'No sold or pending comparables yet — nothing brackets your home.';
+        box.innerHTML = '<div class="adjb"><div class="adjb-lead">' + escHtml(lead) + '</div>' + items + '</div>';
+    }
+
+    function renderAdjGrid() {
+        const box = document.getElementById('adjGrid');
+        if (!box) return;
+        const note = (cls, html) => '<div class="card"><div class="' + cls + '">' + html + '</div></div>';
+
+        if (!window.SphereAdjustments) {
+            box.innerHTML = note('adjp-warn', '<strong>js/adjustments.js did not load.</strong>');
+            document.getElementById('adjBracketing').innerHTML = '';
+            return;
+        }
+        const A = window.SphereAdjustments;
+        const subj = collectFormData();
+        subj.valuationYear = valuationYearFor(subj);
+        renderAdjBracketing(subj);
+
+        if (adjSettingsError) {
+            box.innerHTML = note('adjp-warn', '<strong>Could not read your adjustment values.</strong><br>' +
+                escHtml(adjSettingsError));
+            return;
+        }
+        if (!adjSettings) {
+            box.innerHTML = note('adjp-none', 'No adjustment values saved yet — set them at ' +
+                '<a href="../settings/" style="color:var(--copper)">Settings</a>.');
+            return;
+        }
+        if (!comps.length) {
+            box.innerHTML = note('adjp-none', 'No comparables yet — add them in 04 · Comparables.');
+            return;
+        }
+
+        const cols = adjGridCompsInOrder().map(r => ({
+            i: r.i, c: r.c, r: A.compute(subj, r.c, adjSettings)
+        }));
+
+        // Rows: every line key any comparable produced, in canonical order.
+        const present = new Set();
+        cols.forEach(col => { if (col.r.ok) col.r.lines.forEach(l => present.add(l.key)); });
+        const keys = ADJ_ROW_ORDER.filter(k => present.has(k));
+        const labelOf = {}; const subjOf = {};
+        cols.forEach(col => { if (col.r.ok) col.r.lines.forEach(l => {
+            labelOf[l.key] = labelOf[l.key] || l.label;
+            if (!(l.key in subjOf) && l.subjectValue && l.subjectValue !== '—') subjOf[l.key] = l.subjectValue;
+        }); });
+
+        const th = (col) => {
+            const st = (col.c.status || 'sold');
+            const badge = STATUS_BADGE[st] || 'b-exp';
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            return '<th class="adjg-comp' + sel + '" data-index="' + col.i + '">' +
+                escHtml(col.c.address || '—') +
+                '<span class="comp-badge ' + badge + '">' + escHtml(STATUS_LABEL[st] || st) + '</span>' +
+                (col.c.dom ? '<small>' + escHtml(col.c.dom) + ' days on market</small>' : '') +
+                '</th>';
+        };
+
+        const cellFor = (col, key) => {
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            if (!col.r.ok) return '<td class="adjg-comp' + sel + '"></td>';
+            const l = col.r.lines.find(x => x.key === key);
+            if (!l) return '<td class="adjg-comp' + sel + '"><span class="adjg-v">—</span></td>';
+            const amt = l.status === 'unavailable' ? 'Not applied'
+                      : l.status === 'immaterial'  ? 'Not material'
+                      : l.status === 'even'        ? '—'
+                      : A.signed(l.amount);
+            const v = l.other ? (l.detail ? '“' + l.detail + '”' : '') : l.compValue;
+            return '<td class="adjg-comp' + sel + (l.moved ? ' moved' : '') + '"' +
+                (l.note ? ' title="' + escHtml(l.note) + '"' : '') + '>' +
+                '<span class="adjg-v">' + escHtml(v || '') + '</span>' +
+                '<span class="adjg-a ' + escHtml(l.status) + '">' + escHtml(amt) + '</span></td>';
+        };
+
+        let html = '<table class="adjg"><thead><tr><th></th><th>Your home</th>' +
+                   cols.map(th).join('') + '</tr></thead><tbody>';
+
+        // Basis
+        html += '<tr><td>Basis</td><td></td>' + cols.map(col => {
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            if (!col.r.ok) {
+                const why = col.r.reason === 'no-price' ? 'No price entered — nothing to adjust.'
+                          : col.r.reason === 'no-values' ? 'No adjustment values in Settings.'
+                          : escHtml(col.r.reason);
+                return '<td class="adjg-comp adjg-fail' + sel + '">' + why + '</td>';
+            }
+            return '<td class="adjg-comp' + sel + '"><span class="adjg-v">' +
+                (col.r.basis === 'sold' ? 'Sold at' : 'Asking') + '</span>' +
+                '<span class="adjg-a">$' + col.r.basisPrice.toLocaleString() + '</span></td>';
+        }).join('') + '</tr>';
+
+        keys.forEach(key => {
+            html += '<tr><td>' + escHtml(labelOf[key] || key) + '</td>' +
+                    '<td><span class="adjg-v">' + escHtml(subjOf[key] || '—') + '</span></td>' +
+                    cols.map(col => cellFor(col, key)).join('') + '</tr>';
+        });
+
+        html += '<tr class="adjg-total"><td>Total adjustment</td><td></td>' + cols.map(col => {
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            if (!col.r.ok) return '<td class="adjg-comp' + sel + '"></td>';
+            const n = col.r.movedCount;
+            return '<td class="adjg-comp' + sel + '">' + A.signed(col.r.computedTotal) +
+                (n ? '<small style="display:block;font-weight:400;color:var(--copper);font-size:10px">' +
+                     n + ' line' + (n === 1 ? '' : 's') + ' moved</small>' : '') +
+                (col.r.unavailable.length ? '<small style="display:block;font-weight:400;color:var(--ox);font-size:10px">' +
+                     escHtml(A.unavailableSummary(col.r)) + '</small>' : '') + '</td>';
+        }).join('') + '</tr>';
+
+        html += '<tr><td>Gross / net</td><td></td>' + cols.map(col => {
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            if (!col.r.ok) return '<td class="adjg-comp' + sel + '"></td>';
+            const g = Math.round(col.r.grossShare * 100), nn = Math.round(col.r.netShare * 100);
+            return '<td class="adjg-comp' + sel + '"><span class="adjg-share' + (col.r.large ? ' large' : '') + '">' +
+                g + '% / ' + nn + '%' +
+                (col.r.large ? '<small>Large adjustments — weaker comparable: ' +
+                    escHtml(col.r.largeReasons.join('; ')) + '.</small>' : '') +
+                '</span></td>';
+        }).join('') + '</tr>';
+
+        html += '<tr class="adjg-total adjg-final"><td>Adjusted price</td><td></td>' + cols.map(col => {
+            const sel = col.i === adjGridSelected ? ' selected' : '';
+            if (!col.r.ok) return '<td class="adjg-comp' + sel + '"></td>';
+            return '<td class="adjg-comp' + sel + '">$' + col.r.adjustedPrice.toLocaleString() +
+                '<small style="display:block;font-weight:400;color:var(--stone);font-size:10px">' +
+                escHtml(col.r.basisLabel) + '</small></td>';
+        }).join('') + '</tr>';
+
+        html += '</tbody></table>';
+        box.innerHTML = '<div class="adjg-wrap">' + html + '</div>';
+
+        box.querySelectorAll('th.adjg-comp').forEach(el => {
+            el.addEventListener('click', () => {
+                adjGridSelected = Number(el.dataset.index);
+                openCompModal(adjGridSelected);
+            });
+        });
+    }
+
     function closeCompModal() {
         document.getElementById('compModal').classList.remove('open');
         editingCompIndex = null;
+        // A comparable saved from the modal changes its column.
+        const p = document.getElementById('panel-adjustments');
+        if (p && p.classList.contains('active')) renderAdjGrid();
     }
 
     // One reader for the comp modal, used by both saveComp() and the
