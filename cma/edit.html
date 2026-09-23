@@ -694,8 +694,8 @@ details.override>summary:hover{color:var(--obs)}
               <input type="date" class="fi" id="appointmentDate" oninput="markDirty()">
             </div>
             <div class="fg">
-              <label>Client page password</label>
-              <input class="fi" id="clientPassword" placeholder="e.g. Mahogany2026" oninput="markDirty();updateClientUrl()">
+              <label>Client page password <span style="font-weight:400;opacity:.7">— case-sensitive</span></label>
+              <input class="fi" id="clientPassword" placeholder="Case-sensitive" autocomplete="off" oninput="markDirty();updateClientUrl()">
             </div>
           </div>
         </div>

@@ -13,6 +13,7 @@
 <script src="../js/firebase-config.js"></script>
 <script>window.sphereActivePage = 'clients';</script>
 <script src="../js/header.js"></script>
+<script src="../js/slug.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -712,14 +713,6 @@ function closeBuildCMA() {
   document.getElementById('cma-overlay').classList.remove('open');
 }
 
-function generateSlug(address) {
-  const addr = (address || '').toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '').trim()
-    .replace(/\s+/g, '-').slice(0, 40);
-  const num = Math.floor(Math.random() * 90000) + 10000;
-  return addr + '-' + num;
-}
-
 function buildCMA() {
   const address   = document.getElementById('c-address').value.trim();
   const date      = document.getElementById('c-date').value;
@@ -743,7 +736,7 @@ function buildCMA() {
     appointmentDate: date,
     community: community,
     clientPassword: password,
-    slug: generateSlug(address),
+    slug: SphereSlug.generateSlug(address),
     status: 'draft',
     agentId: currentUser.uid,
     createdAt: now,

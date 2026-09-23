@@ -1640,7 +1640,10 @@ function unlock() {
     errEl.textContent = 'Please enter your access code';
     return;
   }
-  if (entered.toLowerCase() !== (cmaData.clientPassword || '').toLowerCase()) {
+  // Exact match. This used to lowercase both sides, which shrank the
+  // keyspace of every password before comparing. Passcodes are
+  // case-sensitive; the editor says so beside the field.
+  if (entered !== (cmaData.clientPassword || '')) {
     errEl.textContent = 'Incorrect code — please try again';
     document.getElementById('gate-pw').value = '';
     document.getElementById('gate-pw').focus();
@@ -1707,15 +1710,36 @@ function populateReport() {
   const email = p.email || 'kyleduiker@royallepage.ca';
   const calendly = p.calendlyUrl || 'https://calendly.com/kyleduiker';
   const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-  const headshot = p.photoUrls?.headshot || '';
+  // Everything below comes off a world-readable document that any signed-in
+  // account could write until the public_cmas rules were tightened. Nothing
+  // from the agent snapshot goes into markup unescaped, and no URL goes into
+  // src or href without a scheme check. `safePhotoUrl` is the same test the
+  // comp photos already use.
+  const headshot = safePhotoUrl(p.photoUrls?.headshot) || '';
+
+  // An <img> that falls back to initials on error, without an inline onerror
+  // attribute — an attribute is one more place a string can escape from.
+  function headshotImg(cls, fallbackCls) {
+    const img = document.createElement('img');
+    img.src = headshot;
+    img.className = cls;
+    img.alt = fullName;
+    img.onerror = () => {
+      const d = document.createElement('div');
+      d.className = fallbackCls;
+      d.textContent = initials;
+      img.replaceWith(d);
+    };
+    return img;
+  }
 
   // Cover agent card
   document.getElementById('cover-agent-name').textContent = `${fullName} · ${title}`;
   document.getElementById('cover-agent-title').textContent = `${brokerage} · ${phone}`;
 
   if (headshot) {
-    document.getElementById('cover-photo-wrap').innerHTML =
-      `<img src="${headshot}" class="cover-headshot" alt="${fullName}" onerror="this.outerHTML='<div class=\\'cover-initials\\'>${initials}</div>'">`;
+    document.getElementById('cover-photo-wrap').replaceChildren(
+      headshotImg('cover-headshot', 'cover-initials'));
   } else {
     document.getElementById('cover-initials').textContent = initials;
   }
@@ -1729,8 +1753,8 @@ function populateReport() {
   }
 
   if (headshot) {
-    document.getElementById('about-photo-wrap').innerHTML =
-      `<img src="${headshot}" class="about-photo" alt="${fullName}" onerror="this.outerHTML='<div class=\\'about-photo-placeholder\\'>${initials}</div>'">`;
+    document.getElementById('about-photo-wrap').replaceChildren(
+      headshotImg('about-photo', 'about-photo-placeholder'));
   } else {
     document.getElementById('about-initials').textContent = initials;
   }
@@ -1745,15 +1769,15 @@ function populateReport() {
     if (p.brokerYear) stats.push({ val: p.brokerYear, label: 'Broker since' });
     statsEl.innerHTML = stats.map(s => `
       <div>
-        <div class="about-stat-val">${s.val}</div>
-        <div class="about-stat-label">${s.label}</div>
+        <div class="about-stat-val">${escHtml(s.val)}</div>
+        <div class="about-stat-label">${escHtml(s.label)}</div>
       </div>`).join('');
   }
 
   // Contact links
   if (phone) document.getElementById('about-phone-link').href = 'tel:' + phone.replace(/\D/g, '');
   if (email) document.getElementById('about-email-link').href = 'mailto:' + email;
-  if (calendly) document.getElementById('about-calendly-link').href = calendly;
+  if (safePhotoUrl(calendly)) document.getElementById('about-calendly-link').href = calendly;
 
   // CTA
   document.getElementById('cta-sub').textContent = `${fullName} · ${phone} · ${email}`;
@@ -2591,9 +2615,10 @@ function buildComps(comps, subject) {
       psf     ? '$' + psf + ' per sq.ft.' : ''
     ].filter(Boolean).join('<span>·</span>');
 
-    const sheet = c.sheetUrl
-      ? `<a class="comp-sheet" href="${c.sheetUrl}" target="_blank" rel="noopener"
-             onclick="event.preventDefault();openSheet('${esc(c.sheetUrl)}','${esc(c.address)}')">
+    const sheetUrl = safePhotoUrl(c.sheetUrl);
+    const sheet = sheetUrl
+      ? `<a class="comp-sheet" href="${escHtml(sheetUrl)}" target="_blank" rel="noopener"
+             onclick="event.preventDefault();openSheet('${esc(sheetUrl)}','${esc(escHtml(c.address))}')">
            <span class="comp-sheet-icon"></span>View MLS sheet</a>`
       : '';
 
@@ -2631,8 +2656,8 @@ function buildComps(comps, subject) {
         ${c.dom ? `<div class="comp-dom">${c.dom} days on market</div>` : ''}
       </div>
       <div class="comp-body">
-        <div class="comp-address">${c.address || '—'}</div>
-        <div class="comp-community">${c.community || 'SE Calgary'}${c.year ? ' · built ' + c.year : ''}</div>
+        <div class="comp-address">${escHtml(c.address) || '—'}</div>
+        <div class="comp-community">${escHtml(c.community) || 'SE Calgary'}${c.year ? ' · built ' + escHtml(c.year) : ''}</div>
         <div class="comp-specs">${specs}</div>
         ${c.clientNote ? `<div class="comp-client-note">${escHtml(c.clientNote)}</div>` : ''}
         ${sheet}
@@ -2646,7 +2671,7 @@ function buildComps(comps, subject) {
       (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
     return `<div class="comp-group">
       <div class="comp-group-head">
-        <div class="comp-group-label">${statusLabels[k] || k}</div>
+        <div class="comp-group-label">${statusLabels[k] || escHtml(k)}</div>
         <div class="comp-group-count">${rows.length} ${rows.length === 1 ? 'property' : 'properties'}</div>
       </div>
       <div class="comp-group-rows">${rows.map(card).join('')}</div>
