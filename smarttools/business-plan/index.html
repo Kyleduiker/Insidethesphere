@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Plan Builder | Inside the Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase (v9 compat, matches the rest of insidethesphere.com) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/profile.js"></script>
+<script src="/js/header.js"></script>
+<script>window.sphereActivePage = 'businessplan';</script>
+
+<style>
+:root{
+  --rls-red:#EA002A; --rls-red-dk:#B80021; --rls-black:#1A1A1A;
+  --rls-dark-grey:#4A4A4A; --rls-warm-grey:#E6E2DC; --rls-light-grey:#F6F4F1;
+  --rls-sans:'Raleway',sans-serif;
+  --green:#2E7D4F; --amber:#C98A00;
+  --bp-top-offset:84px; /* space for the portal header when the nav sticks */
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--rls-light-grey);color:var(--rls-black);font-family:var(--rls-sans);font-size:15px;line-height:1.5}
+.bp{max-width:1240px;margin:0 auto;padding:24px 16px 80px}
+
+/* Hero */
+.bp-hero{background:var(--rls-black);color:#fff;border-radius:6px;padding:28px 28px 22px;margin-bottom:20px;position:relative;overflow:hidden}
+.bp-hero:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--rls-red)}
+.bp-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.bp-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#bbb;font-weight:600}
+.bp-hero h1{margin:4px 0 0;font-size:30px;font-weight:800;letter-spacing:-.01em}
+.bp-hero h1 span{color:var(--rls-red)}
+.bp-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bp-tools select{background:#2a2a2a;color:#fff;border:1px solid #444;border-radius:4px;padding:8px 10px;font:600 13px var(--rls-sans);width:auto}
+.bp-status{font-size:12px;color:#aaa;margin-top:8px}
+.bp-status b{color:#fff;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#333;margin-top:20px;border-radius:4px;overflow:hidden}
+.kpi{background:#222;padding:14px 16px}
+.kpi .v{font-size:22px;font-weight:800;white-space:nowrap}
+.kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#aaa;font-weight:600}
+.kpi .v.neg{color:#ff6b81}.kpi .v.pos{color:#7fd6a0}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:4px;padding:9px 14px;font:700 13px var(--rls-sans);cursor:pointer;text-decoration:none;transition:background .15s}
+.btn-red{background:var(--rls-red);color:#fff}.btn-red:hover{background:var(--rls-red-dk)}
+.btn-ghost{background:transparent;color:#fff;border:1px solid #555}.btn-ghost:hover{border-color:#fff}
+.btn-line{background:#fff;color:var(--rls-black);border:1px solid var(--rls-warm-grey)}.btn-line:hover{border-color:var(--rls-black)}
+.btn-sm{padding:6px 10px;font-size:12px}
+.btn-x{background:none;border:0;color:#999;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px}.btn-x:hover{color:var(--rls-red)}
+
+/* Layout */
+.bp-grid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start}
+.bp-nav{position:sticky;top:var(--bp-top-offset);background:#fff;border-radius:6px;padding:8px;border:1px solid var(--rls-warm-grey)}
+.bp-nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:4px;padding:9px 10px;font:600 13.5px var(--rls-sans);color:var(--rls-dark-grey);cursor:pointer}
+.bp-nav button:hover{background:var(--rls-light-grey);color:var(--rls-black)}
+.bp-nav button.on{background:var(--rls-black);color:#fff}
+.bp-nav .n{flex:0 0 22px;height:22px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:11px;font-weight:700}
+.bp-nav button.done .n{background:var(--rls-red);border-color:var(--rls-red);color:#fff}
+.bp-nav .t{flex:1}
+
+.sec{display:none;background:#fff;border-radius:6px;border:1px solid var(--rls-warm-grey);padding:28px}
+.sec.on{display:block}
+.sec-h{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid var(--rls-warm-grey);padding-bottom:16px;margin-bottom:22px}
+.sec-h h2{margin:0;font-size:24px;font-weight:800}
+.sec-h p{margin:4px 0 0;color:var(--rls-dark-grey);max-width:640px}
+.sec-num{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--rls-red);font-weight:700}
+h3{font-size:15px;font-weight:700;margin:28px 0 12px;text-transform:uppercase;letter-spacing:.06em}
+.sec-h+h3,.sec-h+div h3:first-child{margin-top:0}
+.sec-foot{display:flex;justify-content:space-between;gap:8px;margin-top:32px;padding-top:18px;border-top:1px solid var(--rls-warm-grey)}
+
+/* Fields */
+.row{display:grid;gap:14px 18px;margin-bottom:14px;align-items:end}
+.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.c3{grid-template-columns:repeat(3,minmax(0,1fr))}.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.f{display:flex;flex-direction:column;gap:5px}
+.f>span{font-size:12.5px;font-weight:600;color:var(--rls-dark-grey)}
+.f small{font-size:11.5px;color:#888;font-weight:500}
+input,textarea,select{font:500 14px var(--rls-sans);color:var(--rls-black);border:1px solid #D6D1CA;border-radius:4px;padding:9px 11px;background:#fff;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--rls-black);box-shadow:0 0 0 3px rgba(234,0,42,.12)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+.iw{position:relative}
+.iw em{position:absolute;top:50%;transform:translateY(-50%);font-style:normal;color:#888;font-size:13px;font-weight:600;pointer-events:none}
+.iw em.pre{left:10px}.iw em.post{right:10px}
+.iw.hp input{padding-left:22px}.iw.hs input{padding-right:28px}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.tip{background:var(--rls-light-grey);border-left:3px solid var(--rls-red);padding:12px 14px;border-radius:0 4px 4px 0;font-size:13.5px;color:var(--rls-dark-grey);margin:16px 0}
+.tip b{color:var(--rls-black)}
+.seg{display:inline-flex;border:1px solid #D6D1CA;border-radius:4px;overflow:hidden}
+.seg button{background:#fff;border:0;padding:9px 14px;font:600 13px var(--rls-sans);cursor:pointer;color:var(--rls-dark-grey)}
+.seg button+button{border-left:1px solid #D6D1CA}
+.seg button.on{background:var(--rls-black);color:#fff}
+
+/* Result cards */
+.res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.res.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rc{border:1px solid var(--rls-warm-grey);border-top:3px solid var(--rls-red);border-radius:4px;padding:14px}
+.rc .v{font-size:22px;font-weight:800}
+.rc .l{font-size:12px;color:var(--rls-dark-grey);font-weight:600}
+.rc.dark{background:var(--rls-black);color:#fff;border-color:var(--rls-black);border-top-color:var(--rls-red)}
+.rc.dark .l{color:#bbb}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rls-dark-grey);font-weight:700;padding:8px;border-bottom:2px solid var(--rls-black)}
+td{padding:6px 8px;border-bottom:1px solid var(--rls-warm-grey);vertical-align:middle}
+td input,td select,td textarea{padding:7px 9px;font-size:13.5px}
+td .iw.hp input{padding-left:22px}
+td.num,th.num{text-align:right;white-space:nowrap}
+tfoot td{font-weight:800;border-top:2px solid var(--rls-black);border-bottom:0}
+.tbl-wrap{overflow-x:auto}
+
+/* Activity funnel */
+.funnel{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;border:1px solid var(--rls-warm-grey);border-radius:4px;overflow:hidden;margin:16px 0}
+.funnel div{padding:10px 14px;border-bottom:1px solid var(--rls-warm-grey)}
+.funnel .h{background:var(--rls-black);color:#fff;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.funnel .k{font-weight:600;color:var(--rls-dark-grey)}
+.funnel .x{font-weight:800;text-align:right;font-size:17px}
+.funnel .today{background:#FFF1F3}
+
+/* Seasonality */
+.season{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end;margin:30px 0 10px}
+.mo{display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar-box{height:140px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.bar{width:70%;background:var(--rls-black);border-radius:3px 3px 0 0;min-height:2px;transition:height .25s;position:relative}
+.bar.pk{background:var(--rls-red)}
+.bar b{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:800;color:var(--rls-black)}
+.mo .ml{font-size:12px;font-weight:700;color:var(--rls-dark-grey)}
+.mo input{text-align:center;padding:6px 2px;font-size:13px}
+.qs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+
+/* Calendar */
+.cal td{min-width:150px}
+.cal td:first-child{min-width:110px;font-weight:700;font-size:12.5px;color:var(--rls-dark-grey);background:var(--rls-light-grey)}
+.cal textarea{min-height:52px;font-size:13px;padding:6px 8px}
+.qtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+
+/* Checklist */
+.chk{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--rls-warm-grey);border-radius:4px;margin-bottom:8px;cursor:pointer;font-weight:500}
+.chk input{width:18px;height:18px;accent-color:var(--rls-red);flex:0 0 18px}
+
+/* SWOT */
+.swot{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.swot .f>span{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--rls-black)}
+.swot textarea{min-height:150px}
+.swot-l{font-size:11px;color:#888;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+
+/* RYG */
+.ryg button{width:100%;border:1px solid #D6D1CA;border-radius:4px;padding:9px;font:700 12px var(--rls-sans);cursor:pointer;background:#fff;color:#999}
+.ryg button[data-s="1"]{background:#FDE3E6;border-color:var(--rls-red);color:var(--rls-red-dk)}
+.ryg button[data-s="2"]{background:#FFF4D6;border-color:var(--amber);color:#8A5E00}
+.ryg button[data-s="3"]{background:#DFF2E6;border-color:var(--green);color:var(--green)}
+
+.flag{font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:3px;display:inline-block}
+.flag.ok{background:#DFF2E6;color:var(--green)}.flag.warn{background:#FFF4D6;color:#8A5E00}.flag.bad{background:#FDE3E6;color:var(--rls-red-dk)}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.sum-card{border:1px solid var(--rls-warm-grey);border-radius:4px;padding:16px}
+.sum-card h4{margin:0 0 10px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--rls-red)}
+.sum-card dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0}
+.sum-card dt{color:var(--rls-dark-grey)}.sum-card dd{margin:0;font-weight:700;text-align:right}
+.sum-card p{margin:0 0 8px;white-space:pre-wrap}
+.sum-card ol{margin:0;padding-left:18px}
+.sum-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;text-align:center;font-size:12px}
+.sum-months b{display:block;font-size:16px}
+.muted{color:#999;font-style:italic}
+
+.toast{opacity:0;pointer-events:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--rls-black);color:#fff;padding:11px 18px;border-radius:4px;font-weight:600;font-size:13.5px;transition:transform .25s;z-index:1000}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.print-only{display:none}
+
+@media (max-width:980px){
+  .bp-grid{grid-template-columns:minmax(0,1fr)}
+  .bp-nav{position:static;display:flex;overflow-x:auto;gap:4px;padding:6px}
+  .bp-nav button{flex:0 0 auto;width:auto;white-space:nowrap}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .res{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  .sec{padding:18px}
+  .c2,.c3,.c4,.swot,.sum-grid,.res.c3{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .season{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .qs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .funnel{font-size:13px}
+  .funnel div{padding:8px}
+  .funnel .x{font-size:15px}
+  .bp-hero{padding:22px 18px 18px}
+  .bp-hero h1{font-size:24px}
+  .kpi .v{font-size:18px}
+  .sum-months{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+
+@media print{
+  @page{margin:14mm}
+  body{background:#fff;font-size:11.5px}
+  .bp{padding:0 2px;max-width:none}
+  .sum-card,.rc,.funnel{break-inside:avoid}
+  .bp-nav,.bp-tools,.sec-foot,.no-print,.btn,.btn-x,#sphere-header,body>header,body>nav{display:none!important}
+  .bp-grid{display:block}
+  .bp-hero,.rc,.funnel div,.bar,.kpi,.kpis,.ryg button,.flag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sec{display:block;border:0;padding:0;break-before:page}
+  body.print-summary .bp-hero{display:none}
+  body.print-summary .sec{display:none}
+  body.print-summary .sec#s-summary{display:block;break-before:auto}
+  body.print-summary .sec#s-summary .sec-h{display:none}
+  input,textarea,select{border:0;border-bottom:1px solid #ccc;border-radius:0;padding:3px 0;resize:none}
+  .print-only{display:block}
+  ::placeholder{color:transparent}
+}
+</style>
+</head>
+<body>
+
+<div class="bp">
+  <div class="bp-hero">
+    <div class="bp-hero-top">
+      <div>
+        <div class="bp-eyebrow">Royal LePage Solutions · Agent Business Plan</div>
+        <h1>My <span id="h-year">2027</span> Business Plan</h1>
+        <div class="bp-status" id="status">Loading your plan…</div>
+      </div>
+      <div class="bp-tools">
+        <select id="year-sel" aria-label="Plan year"></select>
+        <button class="btn btn-ghost btn-sm" id="b-export" type="button">Export</button>
+        <button class="btn btn-ghost btn-sm" id="b-import" type="button">Import</button>
+        <button class="btn btn-ghost btn-sm" id="b-print-full" type="button">Print full plan</button>
+        <button class="btn btn-red btn-sm" id="b-print-sum" type="button">Print one-page summary</button>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" data-o="gci">$0</div><div class="l">GCI goal</div></div>
+      <div class="kpi"><div class="v" data-o="sides">0</div><div class="l">Closed sides</div></div>
+      <div class="kpi"><div class="v" data-o="convDay">0</div><div class="l">Conversations / day</div></div>
+      <div class="kpi"><div class="v" data-o="contactsDay">0</div><div class="l">Referral contacts / day</div></div>
+      <div class="kpi"><div class="v" data-o="surplus" data-sign="1">$0</div><div class="l">Budget surplus</div></div>
+    </div>
+  </div>
+
+  <div class="bp-grid">
+    <nav class="bp-nav" id="nav" aria-label="Plan sections"></nav>
+    <main id="sections"></main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------------------------------------------------------
+   Reference data
+---------------------------------------------------------------- */
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SOURCES=['Past clients & sphere','Referrals (clients & friends)','Agent-to-agent referrals','Online leads','Geo farm','Open houses','Sign & call-ins','Other'];
+const CAL_ROWS=[['call','Reason to call'],['text','Reason to text / email'],['popby','Pop-by idea'],['video','Video / social post'],['event','Event / client party']];
+const PILLARS=[['build','Build — goals & numbers'],['brand','Brand — reputation & presence'],['amplify','Amplify — content & marketing'],['connect','Connect — sphere & referrals'],['simplify','Simplify — systems & delegation']];
+const BIZ=[['desk','Brokerage desk / admin fees'],['board','Board & association dues'],['license','Licence & E&O insurance'],['tech','Technology, CRM & phone'],['vehicle','Vehicle & travel'],['coaching','Coaching & education'],['assistant','Assistant / admin support'],['prof','Accounting & legal'],['other','Other business']];
+const PERS=[['housing','Housing (mortgage/rent, tax, insurance)'],['transport','Personal transportation'],['groceries','Groceries & household'],['utilities','Utilities & internet'],['insurance','Life, health & other insurance'],['family','Childcare & family'],['debt','Personal debt payments'],['lifestyle','Lifestyle, dining & travel'],['giving','Giving & charity'],['other','Other personal']];
+const MKTG=[['paid','Paid social & online ads'],['print','Print & mailers'],['events','Client events & appreciation'],['popby','Pop-bys & client gifts'],['email','Email, newsletter & CRM add-ons'],['signage','Signage, photos & listing marketing'],['other','Other marketing']];
+const BRAND=[['google','My first three Google results are professional and accurate'],['gbp','Google Business Profile is claimed and has reviews from the last 90 days'],['photo','The same current headshot is used on every platform'],['bio','My Royal LePage bio page and website are current'],['linkedin','LinkedIn headline and profile are up to date'],['social','Every social profile links back to my website or bio page']];
+const DEFAULT_TASKS=['Lead follow-up','Transaction management','Social media scheduling','Client onboarding','Listing prep & marketing','Database updates'];
+const SEASON_W=[5,7,9,10,11,10,9,9,8,8,7,5];
+
+const IDEAS={
+ call:['New-year market outlook','Spring plans check-in','Spring market is here: home value update','Tax season wrap-up: any plans this year?','Yard season check-in','Summer plans and a home value update','Stampede invite','Back-to-school check-in','Fall market update','Thanksgiving thank-you calls','Year-end review: any moves next year?','Holiday greetings and referral thank-yous'],
+ text:['Assessment notice arrived? Happy to review it','Family Day weekend ideas','Clocks change: test your smoke detectors','Tax deadline reminder','Victoria Day long weekend','Happy Father’s Day','Happy Canada Day','Long weekend wishes','Back-to-school wishes','Happy Thanksgiving','Furnace filter reminder','Season’s greetings'],
+ popby:['Year-ahead planner','Valentine’s chocolates','Seed packets or garden kit','Car wash voucher','Flower pot','BBQ spice kit','Pancake mix for Stampede','Popsicles','Apples or a local pie','Pumpkin','Hot chocolate kit','Holiday baking'],
+ video:['Year-ahead Calgary market forecast','Top 5 spring prep projects','Spring market stats','Hot communities update','What sold in your community','Moving with kids: summer timing','Mid-year market review','Fall market preview','Fall maintenance checklist','Winterize your home','Year in review','Holiday message'],
+ event:['','','Spring client kickoff','','Community shred day or garage sale','Summer BBQ or lake day','Stampede pancake breakfast','','Fall client appreciation','Pumpkin patch day','','Holiday open house']
+};
+
+function nextYearDefault(){const d=new Date();return d.getMonth()>=6?d.getFullYear()+1:d.getFullYear();}
+
+function DEFAULT(){
+ return {
+  meta:{year:nextYearDefault()},
+  vision:{ten:'',five:'',one:'',northStar:'',goal1:'',goal2:'',goal3:'',mission:'',values:'',why:'',commitment:'',andId:''},
+  last:{listings:'',buyers:'',avgPrice:'',gci:''},
+  goals:{method:'income',netGoal:120000,tax:30,split:20,avgPrice:650000,commModel:'tier',t1:3.5,t2:1.5,flat:2.5,listShare:50,listings:10,buyers:10},
+  season:{w:SEASON_W.slice()},
+  kpi:{lApptSign:60,lSignClose:85,bConsSign:60,bSignClose:75,convPerAppt:25,convPerHour:5,weeksOff:4,daysPerWeek:5,refPerClose:3,contactsPerRef:20},
+  sources:SOURCES.map(nm=>({name:nm,last:'',goal:'',how:''})),
+  content:{personal:1,professional:2,and:1,andTopic:''},
+  mktg:{paid:'',print:'',events:'',popby:'',email:'',signage:'',other:''},
+  brand:{},
+  cal:MONTHS.map(()=>({call:'',text:'',popby:'',video:'',event:''})),
+  tech:{crm:'',tm:'',forms:'',acct:'',social:'',other:''},
+  tasks:DEFAULT_TASKS.map(t=>({task:t,owner:'Me',action:'',tool:''})),
+  inits:[{what:'',date:'',priority:'High'},{what:'',date:'',priority:'Medium'},{what:'',date:'',priority:'Medium'}],
+  biz:{desk:'',board:'',license:'',tech:'',vehicle:'',coaching:'',assistant:'',prof:'',other:''},
+  pers:{housing:'',transport:'',groceries:'',utilities:'',insurance:'',family:'',debt:'',lifestyle:'',giving:'',other:''},
+  save:{rrsp:'',postTax:'',debt:'',reserves:''},
+  alloc:{biz:'',tax:'',pers:''},
+  swot:{s:'',w:'',o:'',t:''},
+  score:{q:[0,1,2,3].map(()=>({units:'',gci:'',notes:''})),ryg:{build:[0,0,0,0],brand:[0,0,0,0],amplify:[0,0,0,0],connect:[0,0,0,0],simplify:[0,0,0,0]}},
+  letter:''
+ };
+}
+
+function merge(base,src){
+ if(src===null||src===undefined) return base;
+ if(Array.isArray(base)){
+  if(!Array.isArray(src)) return base;
+  if(base.length&&typeof base[0]==='object'&&base[0]!==null){
+   const tpl=base[0];
+   return src.map((s,i)=>merge(JSON.parse(JSON.stringify(base[i]||tpl)),s));
+  }
+  return src.slice();
+ }
+ if(typeof base==='object'&&base!==null){
+  if(typeof src!=='object') return base;
+  Object.keys(src).forEach(k=>{ base[k]=(k in base)?merge(base[k],src[k]):src[k]; });
+  return base;
+ }
+ return src;
+}
+
+let S=DEFAULT();
+
+/* ---------------------------------------------------------------
+   Helpers
+---------------------------------------------------------------- */
+function getP(path){return path.split('.').reduce((o,k)=>o==null?undefined:o[k],S);}
+function setP(path,val){const ks=path.split('.');let o=S;for(let i=0;i<ks.length-1;i++){if(o[ks[i]]==null)o[ks[i]]={};o=o[ks[i]];}o[ks[ks.length-1]]=val;}
+const n=v=>{const x=parseFloat(v);return isFinite(x)?x:0;};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=v=>(v<0?'-$':'$')+Math.round(Math.abs(v)).toLocaleString('en-CA');
+const moneyK=v=>{const a=Math.abs(v);const s=v<0?'-$':'$';return a>=1e6?s+(a/1e6).toFixed(2)+'M':a>=1e4?s+Math.round(a/1e3)+'K':money(v);};
+const int=v=>Math.round(v).toLocaleString('en-CA');
+const dec=v=>(Math.round(v*10)/10).toLocaleString('en-CA');
+const pct=v=>Math.round(v*100)+'%';
+const small=v=>v>0&&v<0.1?'<0.1':dec(v);
+
+function F(label,key,o={}){
+ const type=o.type||'text';
+ const numeric=type==='money'||type==='pct'||type==='num';
+ const inp=`<input data-k="${key}" type="${numeric?'number':type}" ${numeric?'inputmode="decimal" step="any"':''} placeholder="${esc(o.ph||'')}"${label?'':` aria-label="${esc(o.aria||key)}"`}>`;
+ let wrap=inp;
+ if(type==='money') wrap=`<div class="iw hp"><em class="pre">$</em>${inp}</div>`;
+ if(type==='pct') wrap=`<div class="iw hs">${inp}<em class="post">%</em></div>`;
+ if(!label) return wrap;
+ return `<label class="f"><span>${label}${o.hint?` <small>${o.hint}</small>`:''}</span>${wrap}</label>`;
+}
+function T(label,key,o={}){
+ return `<label class="f"><span>${label}${o.hint?` <small>${o.hint}</small>`:''}</span><textarea data-k="${key}" rows="${o.rows||3}" placeholder="${esc(o.ph||'')}"></textarea></label>`;
+}
+function tip(html){return `<div class="tip">${html}</div>`;}
+function RC(label,key,cls=''){return `<div class="rc ${cls}"><div class="v" data-o="${key}">–</div><div class="l">${label}</div></div>`;}
+
+/* ---------------------------------------------------------------
+   Sections
+---------------------------------------------------------------- */
+const SECTIONS=[
+ {id:'vision',t:'Vision & Why',d:'Where you are going and why it matters. Everything else in this plan should point back to this page.',html:()=>`
+  <h3>Vision</h3>
+  <div class="row">${T('10-year vision','vision.ten',{hint:'Think big: income, clients served, team, investments, lifestyle',rows:3})}</div>
+  <div class="row c2">${T('5-year vision','vision.five')}${T('This year','vision.one',{hint:'Specific milestones for the plan year'})}</div>
+  <div class="row">${F('My north star','vision.northStar',{ph:'The one outcome every decision this year builds toward',hint:'One sentence'})}</div>
+  <h3>Three core growth goals</h3>
+  <div class="row c3">${F('Goal 1','vision.goal1')}${F('Goal 2','vision.goal2')}${F('Goal 3','vision.goal3')}</div>
+  <h3>Mission, values & motivation</h3>
+  <div class="row">${T('Mission statement','vision.mission',{rows:2,hint:'Your purpose and how you deliver it, in one or two sentences'})}</div>
+  <div class="row c2">${T('Core values','vision.values',{rows:5,hint:'Short sentences, not single words',ph:'e.g. I tell clients the truth about the market, even when it is not what they want to hear.'})}${T('My why','vision.why',{rows:5,hint:'What truly drives you, not what should'})}</div>
+  <div class="row c2">${T('My commitment','vision.commitment',{rows:3,hint:'How seriously will you hold yourself to this plan?'})}${T('I’m a REALTOR® AND…','vision.andId',{rows:3,hint:'The expertise or passion that sets you apart',ph:'e.g. a lake-community local, a new-build specialist, a hockey parent'})}</div>
+ `},
+ {id:'numbers',t:'Goals & Numbers',d:'Work backwards from the income you need, or forwards from the deals you want. The rest of the plan runs on these numbers.',html:()=>`
+  <h3>Last 12 months</h3>
+  <div class="row c4">${F('Listing sides closed','last.listings',{type:'num'})}${F('Buyer sides closed','last.buyers',{type:'num'})}${F('Average sale price','last.avgPrice',{type:'money'})}${F('Gross commission (GCI)','last.gci',{type:'money'})}</div>
+  <h3>How do you want to set your goal?</h3>
+  <div class="seg" id="method-seg"><button data-m="income" type="button">Start from income</button><button data-m="units" type="button">Start from deals</button></div>
+  <div class="row c4" style="margin-top:16px" id="m-income">${F('Take-home income goal','goals.netGoal',{type:'money',hint:'after tax'})}${F('Listing share of sides','goals.listShare',{type:'pct'})}<div class="f"><span>&nbsp;</span><button class="btn btn-line" id="use-budget" type="button">Use my budget</button></div></div>
+  <div class="row c4" style="margin-top:16px" id="m-units">${F('Listing sides goal','goals.listings',{type:'num'})}${F('Buyer sides goal','goals.buyers',{type:'num'})}</div>
+  <h3>Your economics</h3>
+  <div class="row c4">${F('Average sale price','goals.avgPrice',{type:'money'})}${F('Brokerage split','goals.split',{type:'pct',hint:'share to brokerage'})}${F('Combined tax rate','goals.tax',{type:'pct',hint:'estimate'})}
+   <label class="f"><span>Commission per side</span><select data-k="goals.commModel"><option value="tier">Tiered (first $100K / balance)</option><option value="flat">Flat % of price</option></select></label></div>
+  <div class="row c4" id="c-tier">${F('On the first $100K','goals.t1',{type:'pct'})}${F('On the balance','goals.t2',{type:'pct'})}</div>
+  <div class="row c4" id="c-flat">${F('Flat rate per side','goals.flat',{type:'pct'})}</div>
+  <div class="res">${RC('GCI per side','gciSide')}${RC('Your net per side','netSide')}${RC('Business expenses / yr','bizAnnual')}${RC('Profit needed before tax','profitNeed')}</div>
+  <div class="res">${RC('GCI goal','gci','dark')}${RC('Total closed sides','sides','dark')}${RC('Listings / buyers','lb','dark')}${RC('Sales volume','volume','dark')}</div>
+  <div id="vs-last"></div>
+  ${tip('<b>How this is calculated:</b> take-home goal ÷ (1 − tax rate), plus RRSP contributions, plus business expenses (from the Budget page, including your marketing budget), then grossed up for your brokerage split. Figures exclude GST. This is a planning estimate, not tax advice — confirm your rate with your accountant.')}
+ `},
+ {id:'season',t:'Seasonality',d:'Calgary does not sell evenly across the year. Weight each month to plan when your closings will land.',html:()=>`
+  <p style="margin-top:0;color:var(--rls-dark-grey)">Adjust the weight under each month. Closings per month update from your goal on the Goals page.</p>
+  <div class="season" id="season"></div>
+  <div class="qs">${RC('Q1 (Jan–Mar)','q1')}${RC('Q2 (Apr–Jun)','q2')}${RC('Q3 (Jul–Sep)','q3')}${RC('Q4 (Oct–Dec)','q4')}</div>
+  <div class="no-print" style="margin-top:14px"><button class="btn btn-line btn-sm" id="season-reset" type="button">Reset to a typical Calgary curve</button></div>
+  ${tip('<b>Tip:</b> closings lag conversations by roughly 60–120 days. To close in May, the prospecting happens January through March.')}
+ `},
+ {id:'activity',t:'Activity Plan',d:'Turn your goal into the daily conversations and contacts that produce it. Use your own ratios if you track them.',html:()=>`
+  <h3>Your conversion ratios</h3>
+  <div class="row c4">${F('Listing appts that sign','kpi.lApptSign',{type:'pct'})}${F('Signed listings that close','kpi.lSignClose',{type:'pct'})}${F('Buyer consults that sign','kpi.bConsSign',{type:'pct'})}${F('Signed buyers that close','kpi.bSignClose',{type:'pct'})}</div>
+  <div class="row c4">${F('Conversations per appointment','kpi.convPerAppt',{type:'num'})}${F('Conversations per prospecting hour','kpi.convPerHour',{type:'num'})}${F('Prospecting days per week','kpi.daysPerWeek',{type:'num'})}${F('Weeks off this year','kpi.weeksOff',{type:'num'})}</div>
+  <h3>Prospecting targets</h3>
+  <div class="funnel">
+   <div class="h">Activity</div><div class="h" style="text-align:right">Year</div><div class="h" style="text-align:right">Week</div><div class="h" style="text-align:right">Day</div>
+   <div class="k">Conversations</div><div class="x" data-o="convY"></div><div class="x" data-o="convW"></div><div class="x today" data-o="convDay"></div>
+   <div class="k">Prospecting hours</div><div class="x" data-o="hrsY"></div><div class="x" data-o="hrsW"></div><div class="x today" data-o="hrsD"></div>
+   <div class="k">Listing appointments</div><div class="x" data-o="lApY"></div><div class="x" data-o="lApW"></div><div class="x today" data-o="lApD"></div>
+   <div class="k">Buyer consultations</div><div class="x" data-o="bCoY"></div><div class="x" data-o="bCoW"></div><div class="x today" data-o="bCoD"></div>
+   <div class="k">Listings taken</div><div class="x" data-o="lTkY"></div><div class="x" data-o="lTkW"></div><div class="x today" data-o="lTkD"></div>
+  </div>
+  <p style="color:var(--rls-dark-grey);font-size:13.5px">That works out to about <b data-o="convPerClose"></b> conversations for every closed side, over <b data-o="workDays"></b> prospecting days.</p>
+  <h3>Referral targets</h3>
+  <div class="row c4">${F('Referrals needed per close','kpi.refPerClose',{type:'num',hint:'typical: 3'})}${F('Contacts needed per referral','kpi.contactsPerRef',{type:'num',hint:'typical: 20'})}</div>
+  <div class="res">${RC('Referrals needed (year)','refY')}${RC('Referrals per month','refM')}${RC('Contacts per month','conM')}${RC('Contacts per day','contactsDay','dark')}</div>
+  ${tip('<b>What counts as a contact:</b> a real voice-to-voice or face-to-face conversation where you ask for a referral. Likes, emails and mailers don’t count. A simple way to stay on pace: reach out to 5 people every day across 3 channels — calls, DMs and in person.')}
+ `},
+ {id:'sources',t:'Lead Sources',d:'Where your business came from last year, and where it will come from this year.',html:()=>`
+  <div class="tbl-wrap"><table>
+   <thead><tr><th>Source</th><th class="num">Last year (sides)</th><th class="num">%</th><th class="num">Goal (sides)</th><th class="num">%</th><th style="min-width:240px">How I’ll strengthen it</th></tr></thead>
+   <tbody id="src-body"></tbody>
+   <tfoot><tr><td>Total</td><td class="num" data-o="srcLast"></td><td></td><td class="num" data-o="srcGoal"></td><td></td><td id="src-flag"></td></tr></tfoot>
+  </table></div>
+  ${tip('<b>Tip:</b> for most agents, past clients and referrals are the least expensive business to win. If they make up less than half of your goal, look at your touch calendar before your ad budget.')}
+ `},
+ {id:'marketing',t:'Marketing & Brand',d:'Your budget by channel, your content mix, and a quick audit of how you show up online.',html:()=>`
+  <h3>Annual marketing budget</h3>
+  <div class="tbl-wrap"><table><thead><tr><th>Channel</th><th style="width:180px">Annual $</th><th class="num">% of budget</th></tr></thead>
+  <tbody>${MKTG.map(([k,l])=>`<tr><td>${l}</td><td>${F('','mktg.'+k,{type:'money',aria:l})}</td><td class="num" data-o="mk_${k}"></td></tr>`).join('')}</tbody>
+  <tfoot><tr><td>Total marketing</td><td class="num" data-o="mktgTotal"></td><td class="num" data-o="mktgPctGci"></td></tr></tfoot></table></div>
+  <p style="font-size:12.5px;color:#888">The total flows into business expenses on the Goals and Budget pages.</p>
+  <h3>Weekly content mix</h3>
+  <div class="row c4">${F('Personal posts / week','content.personal',{type:'num',hint:'family, hobbies'})}${F('Professional posts / week','content.professional',{type:'num',hint:'listings, market, wins'})}${F('“AND” posts / week','content.and',{type:'num',hint:'your niche'})}${F('My AND topic','content.andTopic',{ph:'e.g. lake living'})}</div>
+  <p style="font-size:13.5px;color:var(--rls-dark-grey)">Total: <b data-o="postsW"></b> posts a week · <b data-o="postsY"></b> this year. Aim for at least 3 a week with a mix of all three.</p>
+  <h3>Brand audit — Google yourself</h3>
+  ${BRAND.map(([k,l])=>`<label class="chk"><input type="checkbox" data-k="brand.${k}">${l}</label>`).join('')}
+  <p style="font-size:13.5px;color:var(--rls-dark-grey)"><b data-o="brandScore"></b> complete. Repeat this audit every quarter.</p>
+ `},
+ {id:'calendar',t:'Touch Calendar',d:'A reason to reach out every month. Fill in your own, or start from Calgary-specific suggestions and edit them.',html:()=>`
+  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><button class="btn btn-red btn-sm" id="cal-fill" type="button">Fill empty cells with suggestions</button></div>
+  <div class="qtabs no-print" id="cal-tabs"></div>
+  <div class="tbl-wrap"><table class="cal"><thead id="cal-head"></thead><tbody id="cal-body"></tbody></table></div>
+  ${tip('<b>Minimum rhythm:</b> one business mixer a quarter and a client appreciation event at least twice a year. Put the dates in your calendar now.')}
+ `},
+ {id:'ops',t:'Operations',d:'The systems behind your business. Decide what you keep doing, delegate, automate or drop.',html:()=>`
+  <h3>Tech stack</h3>
+  <div class="row c3">${F('CRM','tech.crm',{ph:'e.g. BoldTrail / rlpSPHERE'})}${F('Transaction management','tech.tm',{ph:'e.g. brokerage back office'})}${F('Forms & e-signature','tech.forms',{ph:'e.g. WEBForms, DocuSign'})}</div>
+  <div class="row c3">${F('Accounting & budget','tech.acct',{ph:'e.g. QuickBooks'})}${F('Social scheduling','tech.social',{ph:'e.g. Meta Business Suite'})}${F('Other','tech.other')}</div>
+  <h3>Do · Delegate · Automate · Delete</h3>
+  <div class="tbl-wrap"><table><thead><tr><th>Task</th><th>Current owner</th><th style="width:150px">Decision</th><th>Tool or process</th><th class="no-print"></th></tr></thead><tbody id="task-body"></tbody></table></div>
+  <button class="btn btn-line btn-sm no-print" id="task-add" type="button" style="margin-top:10px">+ Add task</button>
+  <h3>Operations initiatives this year</h3>
+  <div class="tbl-wrap"><table><thead><tr><th>Initiative</th><th style="width:170px">Target date</th><th style="width:130px">Priority</th><th class="no-print"></th></tr></thead><tbody id="init-body"></tbody></table></div>
+  <button class="btn btn-line btn-sm no-print" id="init-add" type="button" style="margin-top:10px">+ Add initiative</button>
+ `},
+ {id:'money',t:'Budget & Finances',d:'It is not what you gross, it is what you keep. Build your budget and decide how every commission cheque gets split.',html:()=>`
+  <div class="row c2" style="align-items:start">
+   <div><h3>Business expenses (monthly)</h3><table><tbody>${BIZ.map(([k,l])=>`<tr><td>${l}</td><td style="width:150px">${F('','biz.'+k,{type:'money',aria:l})}</td></tr>`).join('')}
+    <tr><td>Marketing <small style="color:#888">(from Marketing page)</small></td><td class="num" data-o="mktgMonthly"></td></tr></tbody>
+    <tfoot><tr><td>Annual business total</td><td class="num" data-o="bizAnnual"></td></tr></tfoot></table></div>
+   <div><h3>Personal expenses (monthly)</h3><table><tbody>${PERS.map(([k,l])=>`<tr><td>${l}</td><td style="width:150px">${F('','pers.'+k,{type:'money',aria:l})}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>Annual personal total</td><td class="num" data-o="persAnnual"></td></tr></tfoot></table></div>
+  </div>
+  <h3>Savings & reserves (annual)</h3>
+  <div class="row c4">${F('RRSP / pre-tax savings','save.rrsp',{type:'money'})}${F('TFSA / after-tax savings','save.postTax',{type:'money'})}${F('Debt reduction goal','save.debt',{type:'money'})}${F('Cash reserves today','save.reserves',{type:'money'})}</div>
+  <h3>Your financial picture at goal</h3>
+  <div class="res">${RC('Net commissions (after split)','netComm')}${RC('Estimated income tax','taxAmt')}${RC('Take-home after tax & RRSP','takeHome')}${RC('Needed for budget & savings','needs')}</div>
+  <div class="res c3">${RC('Surplus / shortfall','surplus','dark')}${RC('Months of reserves','reserveMonths','dark')}${RC('Business expenses as % of GCI','bizPct','dark')}</div>
+  <h3>How to split every commission cheque</h3>
+  <p style="margin-top:0;color:var(--rls-dark-grey);font-size:13.5px">Suggested split from your numbers: <b data-o="sugAlloc"></b>. Enter your own below, or leave blank to use the suggestion.</p>
+  <div class="row c3">${F('To business account','alloc.biz',{type:'pct'})}${F('To tax account','alloc.tax',{type:'pct'})}${F('To personal & savings','alloc.pers',{type:'pct'})}</div>
+  <div id="alloc-ex"></div>
+ `},
+ {id:'swot',t:'SWOT',d:'Your vision says where you’re going. This says where you are today.',html:()=>`
+  <div class="swot">
+   <div><div class="swot-l">Internal</div>${T('Strengths','swot.s',{rows:6,ph:'e.g. Deep knowledge of the SE lake communities'})}</div>
+   <div><div class="swot-l">Internal</div>${T('Weaknesses','swot.w',{rows:6,ph:'e.g. Inconsistent follow-up with online leads'})}</div>
+   <div><div class="swot-l">External</div>${T('Opportunities','swot.o',{rows:6,ph:'e.g. New phases opening in a nearby community'})}</div>
+   <div><div class="swot-l">External</div>${T('Threats','swot.t',{rows:6,ph:'e.g. Rising inventory lengthening days on market'})}</div>
+  </div>
+ `},
+ {id:'score',t:'Scorecard',d:'Check in every quarter. Track actuals against plan and grade each part of your business.',html:()=>`
+  <h3>Quarterly results</h3>
+  <div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th class="num">Target sides</th><th style="width:110px">Actual sides</th><th class="num">Target GCI</th><th style="width:160px">Actual GCI</th><th class="num">Pace</th><th>Notes</th></tr></thead><tbody id="score-body"></tbody></table></div>
+  <h3>Red · Yellow · Green check-in</h3>
+  <p style="margin-top:0;color:var(--rls-dark-grey);font-size:13.5px">Click a cell to cycle through red, yellow and green.</p>
+  <div class="tbl-wrap"><table class="ryg"><thead><tr><th>Area</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody id="ryg-body"></tbody></table></div>
+  <h3>Letter to future you</h3>
+  ${T('Dated December 31. What did you achieve? What are you proudest of? How did you grow? Why didn’t you give up?','letter',{rows:8})}
+ `},
+ {id:'summary',t:'One-Page Summary',d:'Your plan at a glance. Print it, pin it up, and bring it to your quarterly check-ins.',html:()=>`<div id="summary"></div>`}
+];
+
+/* ---------------------------------------------------------------
+   Render
+---------------------------------------------------------------- */
+const nav=document.getElementById('nav'), main=document.getElementById('sections');
+let current='vision', calQ=0;
+
+function renderShell(){
+ nav.innerHTML=SECTIONS.map((s,i)=>`<button type="button" data-go="${s.id}" id="nav-${s.id}"><span class="n">${i+1}</span><span class="t">${s.t}</span></button>`).join('');
+ main.innerHTML=SECTIONS.map((s,i)=>`<section class="sec" id="s-${s.id}">
+   <div class="sec-h"><div><div class="sec-num">Step ${i+1} of ${SECTIONS.length}</div><h2>${s.t}</h2><p>${s.d}</p></div></div>
+   ${s.html()}
+   <div class="sec-foot">${i>0?`<button class="btn btn-line" data-go="${SECTIONS[i-1].id}" type="button">← ${SECTIONS[i-1].t}</button>`:'<span></span>'}
+   ${i<SECTIONS.length-1?`<button class="btn btn-red" data-go="${SECTIONS[i+1].id}" type="button">${SECTIONS[i+1].t} →</button>`:'<button class="btn btn-red" id="b-print-sum2" type="button">Print one-page summary</button>'}</div>
+ </section>`).join('');
+ renderSources();renderTasks();renderInits();renderCal();renderScore();renderSeason();
+ show(current,false);
+}
+
+function show(id,scroll){
+ current=id;
+ if(!S.meta.visited) S.meta.visited=[];
+ if(!S.meta.visited.includes(id)){ S.meta.visited.push(id); queueSave(); }
+ document.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+ nav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
+ if(id==='summary') renderSummary();
+ if(C) recompute();
+ if(scroll){ const top=document.querySelector('.bp-grid').getBoundingClientRect().top+window.scrollY-100; if(window.scrollY>top) window.scrollTo({top,behavior:'smooth'}); }
+}
+
+function renderSources(){
+ document.getElementById('src-body').innerHTML=S.sources.map((s,i)=>`<tr>
+  <td>${esc(s.name)}</td>
+  <td style="width:110px"><input type="number" inputmode="decimal" data-k="sources.${i}.last" aria-label="${esc(s.name)} last year"></td><td class="num" data-o="srcL${i}"></td>
+  <td style="width:110px"><input type="number" inputmode="decimal" data-k="sources.${i}.goal" aria-label="${esc(s.name)} goal"></td><td class="num" data-o="srcG${i}"></td>
+  <td><input data-k="sources.${i}.how" placeholder="e.g. quarterly pop-bys to my top 50" aria-label="${esc(s.name)} strategy"></td></tr>`).join('');
+}
+function renderTasks(){
+ document.getElementById('task-body').innerHTML=S.tasks.map((t,i)=>`<tr>
+  <td><input data-k="tasks.${i}.task" aria-label="Task"></td><td><input data-k="tasks.${i}.owner" aria-label="Owner"></td>
+  <td><select data-k="tasks.${i}.action" aria-label="Decision"><option value="">Choose…</option><option>Do</option><option>Delegate</option><option>Automate</option><option>Delete</option></select></td>
+  <td><input data-k="tasks.${i}.tool" aria-label="Tool or process"></td><td class="no-print"><button class="btn-x" data-del-task="${i}" title="Remove" type="button">×</button></td></tr>`).join('');
+}
+function renderInits(){
+ document.getElementById('init-body').innerHTML=S.inits.map((t,i)=>`<tr>
+  <td><input data-k="inits.${i}.what" placeholder="e.g. Build a 30-day new-client follow-up plan" aria-label="Initiative"></td><td><input type="date" data-k="inits.${i}.date" aria-label="Target date"></td>
+  <td><select data-k="inits.${i}.priority" aria-label="Priority"><option>High</option><option>Medium</option><option>Low</option></select></td>
+  <td class="no-print"><button class="btn-x" data-del-init="${i}" title="Remove" type="button">×</button></td></tr>`).join('');
+}
+function renderCal(){
+ document.getElementById('cal-tabs').innerHTML=['Q1','Q2','Q3','Q4','All months'].map((q,i)=>`<button class="btn btn-sm ${i===calQ?'btn-red':'btn-line'}" data-calq="${i}" type="button">${q}</button>`).join('');
+ const ms=calQ===4?[...Array(12).keys()]:[calQ*3,calQ*3+1,calQ*3+2];
+ document.getElementById('cal-head').innerHTML=`<tr><th></th>${ms.map(m=>`<th>${MONTHS_FULL[m]}</th>`).join('')}</tr>`;
+ document.getElementById('cal-body').innerHTML=CAL_ROWS.map(([k,l])=>`<tr><td>${l}</td>${ms.map(m=>`<td><textarea data-k="cal.${m}.${k}" rows="2" aria-label="${MONTHS_FULL[m]} ${l}"></textarea></td>`).join('')}</tr>`).join('');
+ fillAll(document.getElementById('s-calendar'));
+}
+function renderScore(){
+ document.getElementById('score-body').innerHTML=[0,1,2,3].map(q=>`<tr><td><b>Q${q+1}</b></td><td class="num" data-o="tq${q}"></td>
+  <td><input type="number" inputmode="decimal" data-k="score.q.${q}.units" aria-label="Q${q+1} actual sides"></td><td class="num" data-o="tg${q}"></td>
+  <td><div class="iw hp"><em class="pre">$</em><input type="number" inputmode="decimal" data-k="score.q.${q}.gci" aria-label="Q${q+1} actual GCI"></div></td>
+  <td class="num" data-o="pace${q}"></td><td><input data-k="score.q.${q}.notes" aria-label="Q${q+1} notes"></td></tr>`).join('');
+ document.getElementById('ryg-body').innerHTML=PILLARS.map(([k,l])=>`<tr><td><b>${l}</b></td>${[0,1,2,3].map(q=>{const s=S.score.ryg[k][q]||0;return `<td><button type="button" data-ryg="${k}.${q}" data-s="${s}">${['—','Red','Yellow','Green'][s]}</button></td>`;}).join('')}</tr>`).join('');
+}
+function renderSeason(){
+ document.getElementById('season').innerHTML=MONTHS.map((m,i)=>`<div class="mo"><div class="bar-box"><div class="bar" id="bar${i}"><b id="bu${i}"></b></div></div><div class="ml">${m}</div><input type="number" inputmode="decimal" data-k="season.w.${i}" aria-label="${MONTHS_FULL[i]} weight"></div>`).join('');
+}
+
+/* ---------------------------------------------------------------
+   Binding
+---------------------------------------------------------------- */
+function fillAll(root){
+ (root||document).querySelectorAll('[data-k]').forEach(el=>{
+  const v=getP(el.dataset.k);
+  if(el.type==='checkbox') el.checked=!!v;
+  else el.value=(v===undefined||v===null)?'':v;
+ });
+ document.querySelectorAll('#method-seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.goals.method));
+}
+
+function onField(el){
+ if(!el.dataset||!el.dataset.k) return;
+ let v=el.type==='checkbox'?el.checked:el.value;
+ if(el.type==='number'&&v!=='') v=parseFloat(v);
+ setP(el.dataset.k,v);
+ if(el.dataset.k==='goals.commModel') toggleVis();
+ recompute(); queueSave();
+}
+document.addEventListener('input',e=>onField(e.target));
+document.addEventListener('change',e=>{ const t=e.target; if(t.tagName==='SELECT'||t.type==='checkbox'||t.type==='date') onField(t); });
+
+document.addEventListener('click',e=>{
+ const t=e.target.closest('button'); if(!t) return;
+ if(t.dataset.go){ show(t.dataset.go,true); return; }
+ if(t.dataset.m){ if(t.dataset.m==='units'&&S.goals.method!=='units'){ const c=calc(); S.goals.listings=c.L; S.goals.buyers=c.B; } S.goals.method=t.dataset.m; fillAll(); toggleVis(); recompute(); queueSave(); return; }
+ if(t.dataset.calq!==undefined){ calQ=+t.dataset.calq; renderCal(); return; }
+ if(t.dataset.ryg){ const [k,q]=t.dataset.ryg.split('.'); const s=((S.score.ryg[k][q]||0)+1)%4; S.score.ryg[k][q]=s; t.dataset.s=s; t.textContent=['—','Red','Yellow','Green'][s]; queueSave(); return; }
+ if(t.dataset.delTask!==undefined){ S.tasks.splice(+t.dataset.delTask,1); renderTasks(); fillAll(document.getElementById('task-body')); queueSave(); return; }
+ if(t.dataset.delInit!==undefined){ S.inits.splice(+t.dataset.delInit,1); renderInits(); fillAll(document.getElementById('init-body')); recompute(); queueSave(); return; }
+ switch(t.id){
+  case 'task-add': S.tasks.push({task:'',owner:'',action:'',tool:''}); renderTasks(); fillAll(document.getElementById('task-body')); queueSave(); break;
+  case 'init-add': S.inits.push({what:'',date:'',priority:'Medium'}); renderInits(); fillAll(document.getElementById('init-body')); queueSave(); break;
+  case 'season-reset': S.season.w=SEASON_W.slice(); fillAll(document.getElementById('season')); recompute(); queueSave(); break;
+  case 'use-budget': { const c=calc(); if(c.needs<=0){ toast('Add your personal budget on the Budget & Finances page first'); break; } S.goals.netGoal=Math.round(c.needs); fillAll(); recompute(); queueSave(); toast('Take-home goal set to '+money(c.needs)); break; }
+  case 'cal-fill': { let k=0; S.cal.forEach((m,i)=>CAL_ROWS.forEach(([r])=>{ if(!m[r]&&IDEAS[r][i]){ m[r]=IDEAS[r][i]; k++; } })); renderCal(); recompute(); queueSave(); toast(k?`Added ${k} suggestions — edit any of them`:'Every cell already has something in it'); break; }
+  case 'b-print-sum': case 'b-print-sum2': renderSummary(); document.body.classList.add('print-summary'); window.print(); break;
+  case 'b-print-full': renderSummary(); document.body.classList.remove('print-summary'); window.print(); break;
+  case 'b-export': exportPlan(); break;
+  case 'b-import': document.getElementById('import-file').click(); break;
+ }
+});
+window.addEventListener('afterprint',()=>document.body.classList.remove('print-summary'));
+window.addEventListener('beforeprint',()=>{ renderSummary(); document.querySelectorAll('textarea').forEach(t=>{t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px';}); });
+window.addEventListener('afterprint',()=>document.querySelectorAll('textarea').forEach(t=>t.style.height=''));
+
+function toggleVis(){
+ const inc=S.goals.method==='income';
+ const mi=document.getElementById('m-income'), mu=document.getElementById('m-units');
+ if(mi) mi.style.display=inc?'':'none'; if(mu) mu.style.display=inc?'none':'';
+ const tier=S.goals.commModel!=='flat';
+ const ct=document.getElementById('c-tier'), cf=document.getElementById('c-flat');
+ if(ct) ct.style.display=tier?'':'none'; if(cf) cf.style.display=tier?'none':'';
+}
+
+/* ---------------------------------------------------------------
+   The math
+---------------------------------------------------------------- */
+function sumObj(o){return Object.values(o).reduce((a,v)=>a+n(v),0);}
+function distribute(total,weights){
+ const w=weights.map(x=>Math.max(n(x),0)); const tw=w.reduce((a,b)=>a+b,0)||1;
+ const raw=w.map(x=>total*x/tw); const fl=raw.map(Math.floor); let rem=Math.round(total)-fl.reduce((a,b)=>a+b,0);
+ raw.map((r,i)=>[r-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(rem>0){fl[i]++;rem--;}});
+ return fl;
+}
+function calc(){
+ const g=S.goals, k=S.kpi;
+ const price=n(g.avgPrice);
+ const gciSide=g.commModel==='flat'?price*n(g.flat)/100:Math.min(price,100000)*n(g.t1)/100+Math.max(price-100000,0)*n(g.t2)/100;
+ const split=Math.min(Math.max(n(g.split),0),99)/100, t=Math.min(Math.max(n(g.tax),0),95)/100;
+ const netSide=gciSide*(1-split);
+ const mktgTotal=sumObj(S.mktg);
+ const bizAnnual=sumObj(S.biz)*12+mktgTotal;
+ const persAnnual=sumObj(S.pers)*12;
+ const rrsp=n(S.save.rrsp), post=n(S.save.postTax), debtRed=n(S.save.debt);
+ const needs=persAnnual+post+debtRed;
+ let L,B,sides;
+ if(g.method==='units'){ L=Math.max(0,Math.round(n(g.listings))); B=Math.max(0,Math.round(n(g.buyers))); sides=L+B; }
+ else{
+  const profitNeeded=n(g.netGoal)/(1-t)+rrsp;
+  const netCommNeeded=profitNeeded+bizAnnual;
+  sides=netSide>0?Math.max(Math.ceil(netCommNeeded/netSide-1e-9),0):0;
+  L=Math.round(sides*Math.min(Math.max(n(g.listShare),0),100)/100); B=sides-L;
+ }
+ const gci=sides*gciSide, volume=sides*price, netComm=gci*(1-split);
+ const profit=netComm-bizAnnual;
+ const taxAmt=Math.max(profit-rrsp,0)*t;
+ const takeHome=profit-rrsp-taxAmt;
+ const surplus=takeHome-needs;
+ const profitNeed=g.method==='units'?profit:n(g.netGoal)/(1-t)+rrsp;
+ // activity
+ const lRate=(n(k.lApptSign)/100)*(n(k.lSignClose)/100), bRate=(n(k.bConsSign)/100)*(n(k.bSignClose)/100);
+ const lAp=lRate>0?L/lRate:0, bCo=bRate>0?B/bRate:0, lTk=n(k.lSignClose)>0?L/(n(k.lSignClose)/100):0;
+ const conv=(lAp+bCo)*n(k.convPerAppt);
+ const weeks=Math.max(52-n(k.weeksOff),1), days=Math.max(weeks*Math.min(Math.max(n(k.daysPerWeek),1),7),1);
+ const hrs=n(k.convPerHour)>0?conv/n(k.convPerHour):0;
+ const refY=sides*n(k.refPerClose), conY=refY*n(k.contactsPerRef);
+ const months=distribute(sides,S.season.w);
+ const qs=[0,1,2,3].map(q=>months[q*3]+months[q*3+1]+months[q*3+2]);
+ const reserveMonthly=(persAnnual+bizAnnual)/12;
+ return {price,gciSide,netSide,split,t,mktgTotal,bizAnnual,persAnnual,rrsp,needs,L,B,sides,gci,volume,netComm,profit,profitNeed,taxAmt,takeHome,surplus,
+  lAp,bCo,lTk,conv,weeks,days,hrs,refY,conY,months,qs,reserveMonthly,reserves:n(S.save.reserves)};
+}
+
+function out(key,val,cls){
+ document.querySelectorAll(`[data-o="${key}"]`).forEach(el=>{
+  el.textContent=val;
+  if(el.dataset.sign){el.classList.toggle('neg',cls==='neg');el.classList.toggle('pos',cls==='pos');}
+ });
+}
+
+let C;
+function recompute(){
+ C=calc(); const c=C;
+ const perW=v=>v/c.weeks, perD=v=>v/c.days;
+ out('gciSide',money(c.gciSide)); out('netSide',money(c.netSide)); out('bizAnnual',money(c.bizAnnual)); out('profitNeed',money(c.profitNeed));
+ out('gci',moneyK(c.gci)); out('sides',int(c.sides)); out('lb',`${int(c.L)} / ${int(c.B)}`); out('volume',moneyK(c.volume));
+ out('surplus',moneyK(c.surplus),c.surplus<0?'neg':'pos');
+ // season
+ const mx=Math.max(...c.months,1);
+ c.months.forEach((u,i)=>{const b=document.getElementById('bar'+i); if(b){b.style.height=(u/mx*100)+'%'; b.classList.toggle('pk',u===mx&&u>0&&c.months.filter(x=>x===mx).length<=3); document.getElementById('bu'+i).textContent=u;}});
+ c.qs.forEach((q,i)=>out('q'+(i+1),int(q)+(q===1?' side':' sides')));
+ // activity
+ out('convY',int(c.conv)); out('convW',dec(perW(c.conv))); out('convDay',dec(perD(c.conv)));
+ out('hrsY',int(c.hrs)); out('hrsW',small(perW(c.hrs))); out('hrsD',small(perD(c.hrs)));
+ out('lApY',dec(c.lAp)); out('lApW',small(perW(c.lAp))); out('lApD',small(perD(c.lAp)));
+ out('bCoY',dec(c.bCo)); out('bCoW',small(perW(c.bCo))); out('bCoD',small(perD(c.bCo)));
+ out('lTkY',dec(c.lTk)); out('lTkW',small(perW(c.lTk))); out('lTkD',small(perD(c.lTk)));
+ out('convPerClose',c.sides?int(c.conv/c.sides):'0'); out('workDays',int(c.days));
+ out('refY',int(c.refY)); out('refM',dec(c.refY/12)); out('conM',int(c.conY/12)); out('contactsDay',dec(perD(c.conY)));
+ // sources
+ const sl=S.sources.reduce((a,s)=>a+n(s.last),0), sg=S.sources.reduce((a,s)=>a+n(s.goal),0);
+ S.sources.forEach((s,i)=>{out('srcL'+i,sl&&s.last!==''?pct(n(s.last)/sl):'–');out('srcG'+i,sg&&s.goal!==''?pct(n(s.goal)/sg):'–');});
+ out('srcLast',int(sl)); out('srcGoal',int(sg));
+ const sf=document.getElementById('src-flag');
+ if(sf) sf.innerHTML=!sg?'<span class="flag warn">Add your goal by source</span>':Math.round(sg)===c.sides?`<span class="flag ok">Matches your goal of ${c.sides} sides</span>`:`<span class="flag ${sg<c.sides?'bad':'warn'}">${sg<c.sides?'Short by '+int(c.sides-sg):'Over by '+int(sg-c.sides)} vs. your goal of ${c.sides}</span>`;
+ // marketing
+ MKTG.forEach(([k])=>out('mk_'+k,c.mktgTotal&&S.mktg[k]!==''?pct(n(S.mktg[k])/c.mktgTotal):'–'));
+ out('mktgTotal',money(c.mktgTotal)); out('mktgPctGci',c.gci?pct(c.mktgTotal/c.gci)+' of GCI':'–'); out('mktgMonthly',money(c.mktgTotal/12));
+ const pw=n(S.content.personal)+n(S.content.professional)+n(S.content.and); out('postsW',dec(pw)); out('postsY',int(pw*c.weeks));
+ const bs=BRAND.filter(([k])=>S.brand[k]).length; out('brandScore',`${bs} of ${BRAND.length}`);
+ // money
+ out('persAnnual',money(c.persAnnual)); out('netComm',money(c.netComm)); out('taxAmt',money(c.taxAmt)); out('takeHome',money(c.takeHome));
+ out('needs',money(c.needs)); out('bizPct',c.gci?pct(c.bizAnnual/c.gci):'–');
+ out('reserveMonths',c.reserveMonthly>0?dec(c.reserves/c.reserveMonthly)+' mo':'–');
+ const sb=c.netComm>0?c.bizAnnual/c.netComm:0, st=c.netComm>0?c.taxAmt/c.netComm:0, sp=Math.max(1-sb-st,0);
+ out('sugAlloc',c.netComm>0?`${pct(sb)} business · ${pct(st)} tax · ${pct(sp)} personal & savings`:'set a goal first');
+ const ab=S.alloc.biz!==''?n(S.alloc.biz)/100:sb, at=S.alloc.tax!==''?n(S.alloc.tax)/100:st, ap=S.alloc.pers!==''?n(S.alloc.pers)/100:sp;
+ const tot=Math.round((ab+at+ap)*100);
+ const ex=document.getElementById('alloc-ex');
+ if(ex) ex.innerHTML=c.netSide>0?`<div class="tip">On a typical cheque of <b>${money(c.netSide)}</b> after split: <b>${money(c.netSide*ab)}</b> to business, <b>${money(c.netSide*at)}</b> to tax, <b>${money(c.netSide*ap)}</b> to personal & savings.${tot!==100?` <span class="flag warn">Your split adds up to ${tot}%</span>`:''}</div>`:'';
+ // vs last year
+ const vl=document.getElementById('vs-last'), ls=n(S.last.listings)+n(S.last.buyers);
+ if(vl) vl.innerHTML=ls?`<div class="tip">Last year you closed <b>${int(ls)}</b> sides${n(S.last.gci)?` for <b>${money(n(S.last.gci))}</b> GCI`:''}. This plan calls for <b>${int(c.sides)}</b> — ${c.sides>=ls?`<b>${pct((c.sides-ls)/ls)}</b> more`:`<b>${pct((ls-c.sides)/ls)}</b> fewer`}.</div>`:'';
+ // scorecard
+ c.qs.forEach((q,i)=>{
+  const tg=q*c.gciSide; out('tq'+i,int(q)); out('tg'+i,money(tg));
+  const au=S.score.q[i].units, ag=S.score.q[i].gci;
+  out('pace'+i,(au===''&&ag==='')?'–':(ag!==''&&tg>0)?pct(n(ag)/tg):(q>0?pct(n(au)/q):'–'));
+ });
+ // nav progress
+ SECTIONS.forEach(s=>{
+  const els=[...document.querySelectorAll('#s-'+s.id+' [data-k]')];
+  const filled=els.filter(e=>e.type==='checkbox'?e.checked:e.value!=='').length;
+  const b=document.getElementById('nav-'+s.id); if(b) b.classList.toggle('done',(S.meta.visited||[]).includes(s.id)&&filled>0);
+ });
+ if(current==='summary') renderSummary();
+}
+
+/* ---------------------------------------------------------------
+   Summary
+---------------------------------------------------------------- */
+function agentName(){
+ try{ const p=window.sphereProfile||window.userProfile; if(p&&(p.displayName||p.name)) return p.displayName||p.name;
+  if(window.firebase&&firebase.apps&&firebase.apps.length){ const u=firebase.auth().currentUser; if(u&&u.displayName) return u.displayName; } }catch(e){}
+ return '';
+}
+function renderSummary(){
+ const c=C||calc(), v=S.vision, el=document.getElementById('summary'); if(!el) return;
+ const t=x=>x?esc(x):'<span class="muted">Not filled in yet</span>';
+ const goals=[v.goal1,v.goal2,v.goal3].filter(Boolean);
+ const order=['High','Medium','Low'];
+ const inits=S.inits.filter(i=>i.what).sort((a,b)=>order.indexOf(a.priority)-order.indexOf(b.priority)).slice(0,5);
+ const topSrc=S.sources.filter(s=>n(s.goal)).sort((a,b)=>n(b.goal)-n(a.goal)).slice(0,4);
+ const who=agentName();
+ el.innerHTML=`
+  <div class="print-only" style="border-bottom:3px solid var(--rls-red);padding-bottom:8px;margin-bottom:14px"><div style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#666;font-weight:700">Royal LePage Solutions</div><div style="font-size:22px;font-weight:800">${esc(who)}${who?' — ':''}${S.meta.year} Business Plan</div></div>
+  <div class="sum-grid">
+   <div class="sum-card"><h4>North star</h4><p style="font-size:16px;font-weight:700">${t(v.northStar)}</p><h4 style="margin-top:12px">This year</h4><p>${t(v.one)}</p></div>
+   <div class="sum-card"><h4>Three core goals</h4>${goals.length?`<ol>${goals.map(g=>`<li>${esc(g)}</li>`).join('')}</ol>`:t('')}<h4 style="margin-top:12px">My why</h4><p>${t(v.why)}</p></div>
+   <div class="sum-card"><h4>The numbers</h4><dl>
+    <dt>GCI goal</dt><dd>${money(c.gci)}</dd><dt>Closed sides</dt><dd>${int(c.sides)} (${int(c.L)} listings / ${int(c.B)} buyers)</dd>
+    <dt>Sales volume</dt><dd>${money(c.volume)}</dd><dt>Average price</dt><dd>${money(c.price)}</dd>
+    <dt>Take-home after tax</dt><dd>${money(c.takeHome)}</dd><dt>Budget surplus</dt><dd style="color:${c.surplus<0?'var(--rls-red)':'var(--green)'}">${money(c.surplus)}</dd></dl></div>
+   <div class="sum-card"><h4>Daily & weekly activity</h4><dl>
+    <dt>Conversations per day</dt><dd>${dec(c.conv/c.days)}</dd><dt>Prospecting hours per week</dt><dd>${dec(c.hrs/c.weeks)}</dd>
+    <dt>Referral contacts per day</dt><dd>${dec(c.conY/c.days)}</dd><dt>Listing appointments per month</dt><dd>${dec(c.lAp/12)}</dd>
+    <dt>Buyer consultations per month</dt><dd>${dec(c.bCo/12)}</dd><dt>Posts per week</dt><dd>${dec(n(S.content.personal)+n(S.content.professional)+n(S.content.and))}</dd></dl></div>
+  </div>
+  <div class="sum-card" style="margin-top:18px"><h4>Closings by month</h4><div class="sum-months">${c.months.map((u,i)=>`<div>${MONTHS[i]}<b>${u}</b></div>`).join('')}</div></div>
+  <div class="sum-grid" style="margin-top:18px">
+   <div class="sum-card"><h4>Where the business comes from</h4>${topSrc.length?`<dl>${topSrc.map(s=>`<dt>${esc(s.name)}</dt><dd>${int(n(s.goal))} sides</dd>`).join('')}</dl>`:t('')}
+    <h4 style="margin-top:12px">Marketing budget</h4><dl><dt>Annual total</dt><dd>${money(c.mktgTotal)}</dd><dt>Share of GCI</dt><dd>${c.gci?pct(c.mktgTotal/c.gci):'–'}</dd></dl></div>
+   <div class="sum-card"><h4>Priority initiatives</h4>${inits.length?`<ol>${inits.map(i=>`<li>${esc(i.what)}${i.date?` <small style="color:#888">— ${esc(i.date)}</small>`:''}</li>`).join('')}</ol>`:t('')}
+    <h4 style="margin-top:12px">Mission</h4><p>${t(v.mission)}</p></div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------
+   Save / load — private to each agent
+   Firestore: users/{uid}/businessPlans/{year}
+---------------------------------------------------------------- */
+let uid=null, db=null, saveTimer=null, year=nextYearDefault(), ready=false;
+const statusEl=document.getElementById('status');
+function lsKey(){return `sphere-bizplan:${uid||'guest'}:${year}`;}
+function setStatus(html){statusEl.innerHTML=html;}
+function clean(){return JSON.parse(JSON.stringify(S));}
+function docRef(){return db.collection('users').doc(uid).collection('businessPlans').doc(String(year));}
+
+function queueSave(){
+ if(!ready) return;
+ clearTimeout(saveTimer); setStatus('Saving…');
+ saveTimer=setTimeout(saveNow,900);
+}
+async function saveNow(){
+ S.meta.year=year; S.meta.updated=new Date().toISOString();
+ try{localStorage.setItem(lsKey(),JSON.stringify(S));}catch(e){}
+ const time=new Date().toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit'});
+ if(uid&&db){
+  try{ await docRef().set({plan:clean(),year:year,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   setStatus(`<b>Saved to your account</b> · ${time} · only you can see this plan`); }
+  catch(e){ console.warn('Business plan save failed',e); setStatus(`<b>Saved on this device</b> · ${time} · couldn’t reach your account, will retry on your next change`); }
+ } else setStatus(`<b>Saved on this device</b> · ${time} · sign in to keep it in your account`);
+}
+
+async function loadPlan(){
+ ready=false; let data=null;
+ if(uid&&db){ try{ const s=await docRef().get(); if(s.exists) data=s.data().plan; }catch(e){ console.warn('Business plan load failed',e); } }
+ if(!data){ try{ const l=localStorage.getItem(lsKey())||(uid?localStorage.getItem(`sphere-bizplan:guest:${year}`):null); if(l) data=JSON.parse(l); }catch(e){} }
+ S=merge(DEFAULT(),data||{}); S.meta.year=year;
+ document.getElementById('h-year').textContent=year;
+ renderShell(); fillAll(); toggleVis(); recompute();
+ setStatus(data?(uid?'<b>Plan loaded</b> · private to your account':'<b>Plan loaded from this device</b>'):(uid?'<b>New plan</b> · saves privately to your account as you type':'<b>New plan</b> · saves on this device as you type'));
+ ready=true;
+}
+
+function exportPlan(){
+ const blob=new Blob([JSON.stringify(clean(),null,2)],{type:'application/json'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`business-plan-${year}.json`; document.body.appendChild(a); a.click(); a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+document.getElementById('import-file').addEventListener('change',e=>{
+ const f=e.target.files[0]; if(!f) return;
+ const r=new FileReader();
+ r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d||typeof d!=='object'||!d.goals) throw new Error('bad');
+   if(!confirm(`Replace your ${year} plan with the imported file?`)) return;
+   S=merge(DEFAULT(),d); S.meta.year=year; renderShell(); fillAll(); toggleVis(); recompute(); ready=true; saveNow(); toast('Plan imported'); }
+  catch(err){ toast('That file isn’t a business plan export'); } finally{ e.target.value=''; } };
+ r.readAsText(f);
+});
+
+const ysel=document.getElementById('year-sel');
+function fillYears(){ const y0=new Date().getFullYear(); const ys=[y0-1,y0,y0+1,y0+2]; if(!ys.includes(year)) ys.push(year); ysel.innerHTML=ys.map(y=>`<option value="${y}" ${y===year?'selected':''}>${y} plan</option>`).join(''); }
+ysel.addEventListener('change',async()=>{ clearTimeout(saveTimer); if(ready) await saveNow(); year=+ysel.value; loadPlan(); });
+
+let toastT; function toast(m){const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+function init(){
+ const qy=parseInt(new URLSearchParams(location.search).get('year'),10); if(qy>2000&&qy<2100) year=qy;
+ fillYears();
+ let fb=false;
+ try{ fb=!!(window.firebase&&firebase.apps&&firebase.apps.length); }catch(e){}
+ if(fb){
+  try{ db=firebase.firestore(); }catch(e){ db=null; }
+  let first=true;
+  firebase.auth().onAuthStateChanged(u=>{ const nu=u?u.uid:null; if(first||nu!==uid){ first=false; uid=nu; loadPlan(); } });
+ } else loadPlan();
+}
+init();
+})();
+</script>
+</body>
+</html>
