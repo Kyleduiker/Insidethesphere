@@ -48,6 +48,7 @@ var navItems = [
   { key: 'market-data', label: 'Market Data', href: 'market-data/' },
   { key: 'newsletter',  label: 'Newsletter',  href: 'newsletter/' },
   { key: 'boldtrail',   label: 'Bold Trail',  href: 'Bold-trail-newsletter/' },
+  { key: 'expenses',    label: 'Tax Expenses', href: 'tax-expenses/' },   
   { key: 'settings',    label: 'Settings',    href: 'settings/' }
 ];
 
