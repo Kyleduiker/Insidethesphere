@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Expenses — Inside The Sphere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script>window.sphereActivePage = 'expenses';</script>
+<script src="../js/header.js"></script>
+<style>
+/* Layout: entry form on the left, this year's entries on the right; one column on a phone. */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --obs:#0F0F0F;--esp:#2C2420;--stone:#8C8479;
+  --parch:#EDE8E0;--ivory:#F7F4EF;--border:#D9D3CB;
+  --champ:#C9A96E;--copper:#A0714F;--sage:#4A5C4E;--ox:#6B2737;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+[hidden]{display:none !important}
+body{font-family:var(--sans);background:var(--ivory);color:var(--obs);min-height:100vh;display:flex}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.topbar{
+  background:#fff;border-bottom:0.5px solid var(--border);
+  padding:0 36px;height:56px;gap:12px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:13px;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.pill{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stone);padding:4px 10px;border:0.5px solid var(--border);border-radius:2px;white-space:nowrap;
+}
+.pill.ok{border-color:var(--sage);color:var(--sage)}
+.pill.busy{border-color:var(--champ);color:#8a7340}
+.pill.err{border-color:var(--ox);color:var(--ox)}
+.sheet-link{font-size:11px;font-weight:500;color:var(--copper);text-decoration:none;letter-spacing:.04em;white-space:nowrap}
+.sheet-link:hover{text-decoration:underline}
+
+.page{padding:36px;flex:1;max-width:1180px;width:100%}
+.eyebrow{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--copper);display:block;margin-bottom:7px}
+.accent{width:40px;height:1px;background:var(--copper);margin-bottom:14px}
+h1{font-family:var(--serif);font-size:2rem;font-weight:300;letter-spacing:.01em;line-height:1.15}
+h2{font-family:var(--serif);font-size:1.3rem;font-weight:400;line-height:1.2}
+.lede{font-size:13px;color:var(--stone);line-height:1.7;margin-top:10px;max-width:74ch}
+.head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.year-pick{display:flex;align-items:center;gap:10px}
+.year-pick label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:2px;margin-top:26px}
+.stat{background:#fff;padding:16px 20px}
+.stat .v{font-family:var(--serif);font-size:1.7rem;font-weight:400;font-variant-numeric:tabular-nums;color:var(--esp)}
+.stat .l{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);margin-top:2px}
+
+.cols{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;margin-top:20px;align-items:start}
+.card{background:#fff;border:0.5px solid var(--border);border-radius:2px;padding:24px 26px}
+.card + .card{margin-top:20px}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.card-sub{font-size:12px;color:var(--stone);line-height:1.65}
+
+.fg{display:flex;flex-direction:column;gap:6px}
+.fg label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+.fg input,.fg select,select.plain{
+  width:100%;padding:10px 11px;border:0.5px solid var(--border);border-radius:2px;
+  font-family:var(--sans);font-size:14px;color:var(--obs);background:#fff;
+}
+select.plain{width:auto;font-size:13px;padding:7px 10px}
+.fg input:focus,.fg select:focus,select.plain:focus{outline:none;border-color:var(--copper)}
+.fhint{font-size:11px;color:var(--stone);line-height:1.5}
+.fhint.suggest{color:var(--sage);font-weight:500}
+.fhint.warn{color:#8a6420;font-weight:500}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+.money{position:relative}
+.money:before{content:'$';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--stone);pointer-events:none}
+.money input{padding-left:24px !important;font-variant-numeric:tabular-nums}
+.gst-row{display:flex;gap:6px}
+.gst-row .money{flex:1}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border:0.5px solid transparent;border-radius:2px;
+  font-family:var(--sans);font-size:11px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;cursor:pointer;
+  background:var(--obs);color:#fff;transition:background .12s,border-color .12s;text-decoration:none;
+}
+.btn:hover{background:var(--esp)}
+.btn:disabled{background:var(--parch);color:var(--stone);cursor:not-allowed}
+.btn.line{background:#fff;color:var(--obs);border-color:var(--border)}
+.btn.line:hover{border-color:var(--obs)}
+.btn.sm{padding:8px 11px;font-size:10px}
+.btn.danger{background:#fff;color:var(--ox);border-color:var(--border)}
+.btn.danger:hover{border-color:var(--ox)}
+.btn svg{width:15px;height:15px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1}
+.actions .btn:first-child{flex:1}
+
+.snap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.snap input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.snap-note{font-size:11.5px;color:var(--stone);line-height:1.6;margin-bottom:18px}
+.reading{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#FDFBF6;border-left:2px solid var(--champ);font-size:12.5px;margin-bottom:16px}
+.receipt{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.receipt img{width:70px;height:94px;object-fit:cover;border:0.5px solid var(--border);border-radius:2px;flex:none}
+.receipt p{font-size:12px;color:var(--stone);line-height:1.6}
+
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--copper);border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+
+.msg{font-size:12px;line-height:1.6;grid-column:1/-1}
+.msg.good{color:var(--sage);font-weight:500}
+.msg.err{border:0.5px solid var(--ox);background:#FBF6F7;border-radius:2px;padding:10px 14px;color:var(--esp);white-space:pre-wrap}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border:0.5px solid var(--border);border-radius:2px;background:#fff;color:var(--stone);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--obs);border-color:var(--obs);color:#fff}
+.month-h{display:flex;justify-content:space-between;font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--copper);padding:16px 0 6px;border-bottom:0.5px solid var(--border)}
+.month-h span:last-child{color:var(--stone);font-variant-numeric:tabular-nums}
+.entry{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:11px 4px;border:0;border-bottom:0.5px solid var(--border);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.entry:hover{background:var(--ivory)}
+.entry.locked{cursor:default}
+.entry.locked:hover{background:none}
+.entry .d{font-size:11px;font-weight:600;color:var(--stone);font-variant-numeric:tabular-nums}
+.entry .v{font-size:13.5px;font-weight:500;overflow-wrap:anywhere}
+.entry .c{display:block;font-size:11px;color:var(--stone);margin-top:2px}
+.entry .c b{font-weight:600;color:var(--copper)}
+.entry .a{text-align:right;font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.entry .a small{display:block;font-size:10.5px;font-weight:400;color:var(--stone)}
+.empty{font-size:12.5px;color:var(--stone);padding:14px 0;line-height:1.6}
+
+table.tot{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tot th{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);text-align:left;padding:8px 6px;border-bottom:0.5px solid var(--obs)}
+table.tot td{padding:8px 6px;border-bottom:0.5px solid var(--border)}
+table.tot .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.tot tr.grp td{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--copper);padding-top:18px;border-bottom:0}
+table.tot tr.sum td{font-weight:600}
+
+.radio{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;cursor:pointer}
+.radio input{margin-top:3px;accent-color:var(--copper)}
+.radio small{display:block;font-size:11.5px;color:var(--stone)}
+.radios{display:grid;gap:12px;margin-top:12px}
+.note{border-left:2px solid var(--champ);background:#FDFBF6;padding:12px 16px;font-size:12px;color:var(--stone);line-height:1.7;border-radius:2px}
+.note strong{color:var(--obs);font-weight:500}
+
+.loading{margin-left:220px;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:14px;flex:1}
+.loading .spinner{width:28px;height:28px}
+
+@media(max-width:900px){
+  .main,.loading{margin-left:0}
+  .topbar{padding:0 16px}
+  .page{padding:20px 16px 60px}
+  .cols{grid-template-columns:1fr}
+  .stats .stat{padding:12px 14px}
+  .stat .v{font-size:1.35rem}
+}
+@media(max-width:420px){
+  .form{grid-template-columns:1fr}
+  .sheet-link{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="sphere-header"></div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p style="font-size:13px;color:var(--stone)">Loading…</p>
+</div>
+
+<div class="main" id="app" hidden>
+  <div class="topbar">
+    <div class="topbar-title">Tax expenses</div>
+    <div class="topbar-right">
+      <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener" hidden>Open Google Sheet ↗</a>
+      <span class="pill" id="pill">Not connected</span>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="head-row">
+      <div>
+        <span class="eyebrow">Bookkeeping</span>
+        <div class="accent"></div>
+        <h1>Tax expenses</h1>
+        <p class="lede">Each receipt you save goes straight into your Google Sheet: the right tab and column, under its month, in date order, with the GST and total formulas.</p>
+      </div>
+      <div class="year-pick" id="yearPick" hidden>
+        <label for="year">Tax year</label>
+        <select class="plain" id="year"></select>
+      </div>
+    </div>
+
+    <!-- Connection: shown until a working script is saved, and from the settings link after. -->
+    <section class="card" id="connectCard" style="margin-top:26px" hidden>
+      <div class="card-head"><h2>Connect your Google Sheet</h2></div>
+      <p class="card-sub">Paste the web app address from your Apps Script deployment and the passcode you set in its Script properties. Both are kept in your account, not on this page.</p>
+      <form class="form" id="connectForm" style="margin-top:18px" autocomplete="off">
+        <div class="fg full">
+          <label for="cUrl">Web app URL</label>
+          <input id="cUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" required>
+        </div>
+        <div class="fg full">
+          <label for="cPass">Passcode</label>
+          <input id="cPass" type="password" required>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit" id="cSave">Test and save</button>
+          <button class="btn line" type="button" id="cCancel" hidden>Cancel</button>
+        </div>
+        <div class="msg" id="cMsg" role="status"></div>
+      </form>
+    </section>
+
+    <div id="work" hidden>
+      <section class="stats" aria-label="This tax year">
+        <div class="stat"><div class="v" id="stTotal">$0.00</div><div class="l">Expenses</div></div>
+        <div class="stat"><div class="v" id="stGst">$0.00</div><div class="l">GST paid</div></div>
+        <div class="stat"><div class="v" id="stCount">0</div><div class="l">Receipts</div></div>
+      </section>
+
+      <div class="cols">
+        <div>
+          <section class="card" id="addCard">
+            <div class="card-head">
+              <h2 id="formTitle">Add an expense</h2>
+              <button class="btn line sm" type="button" id="cancelEdit" hidden>Cancel edit</button>
+            </div>
+
+            <div id="snapBlock" hidden>
+              <div class="snap">
+                <label class="btn" for="camera">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                  Take photo
+                </label>
+                <input type="file" id="camera" accept="image/*" capture="environment">
+                <label class="btn line" for="upload">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 20h16"/></svg>
+                  Upload image
+                </label>
+                <input type="file" id="upload" accept="image/*">
+              </div>
+              <p class="snap-note">Photograph a paper receipt, or upload a screenshot of an emailed one. The details fill in below for you to check.</p>
+            </div>
+            <p class="snap-note" id="snapOff" hidden>Photo reading is off. Type the receipt in; it still sorts into the right column. To read photos, add an Anthropic API key to the script.</p>
+
+            <div class="reading" id="reading" role="status" hidden><span class="spinner"></span><span>Reading receipt…</span></div>
+            <div class="receipt" id="receipt" hidden><img id="thumb" alt="Receipt photo"><p id="aiNote"></p></div>
+
+            <form class="form" id="form" autocomplete="off">
+              <div class="fg">
+                <label for="fDate">Date</label>
+                <input type="date" id="fDate" required>
+              </div>
+              <div class="fg">
+                <label for="fVendor">Vendor</label>
+                <input id="fVendor" list="vendorList" placeholder="e.g. Staples" required>
+                <datalist id="vendorList"></datalist>
+              </div>
+              <div class="fg full">
+                <label for="fCat">Goes in</label>
+                <select id="fCat" required></select>
+                <span class="fhint" id="catHint"></span>
+              </div>
+              <div class="fg">
+                <label for="fTotal">Total paid, incl. GST</label>
+                <div class="money"><input id="fTotal" inputmode="decimal" placeholder="0.00" required></div>
+              </div>
+              <div class="fg">
+                <label for="fGst">GST on receipt</label>
+                <div class="gst-row">
+                  <div class="money"><input id="fGst" inputmode="decimal" placeholder="0.00"></div>
+                  <button class="btn line sm" type="button" id="gst5" title="Work out 5% GST from the total">5%</button>
+                  <button class="btn line sm" type="button" id="gst0" title="No GST on this receipt">None</button>
+                </div>
+              </div>
+              <div class="fg full">
+                <label for="fDetail">What it was for <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+                <input id="fDetail" placeholder="e.g. Closing gift, Mahogany listing">
+              </div>
+              <div class="actions">
+                <button class="btn" type="submit" id="saveBtn">Save to sheet</button>
+                <button class="btn danger" type="button" id="deleteBtn" hidden>Delete</button>
+              </div>
+              <div class="msg" id="formMsg" role="status"></div>
+            </form>
+          </section>
+
+        </div>
+
+        <div>
+          <section class="card">
+            <div class="card-head">
+              <h2>Entries</h2>
+              <div class="filters" id="filters" role="group" aria-label="Filter by tab"></div>
+            </div>
+            <div class="msg" id="listMsg" role="status"></div>
+            <div id="list"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><h2>Totals by category</h2></div>
+            <div style="overflow-x:auto"><table class="tot" id="totals"></table></div>
+          </section>
+          <section class="card">
+            <div class="card-head"><h2>How amounts are entered</h2></div>
+            <p class="card-sub">Most tabs add 5% GST on top of each amount with a formula.</p>
+            <div class="radios">
+              <label class="radio"><input type="radio" name="mode" value="pretax" checked>
+                <span>Before GST <small>The amount column gets the receipt total minus GST, so the formula's GST is not counted twice. If a receipt's GST is not 5%, the real figure goes in the GST column.</small></span></label>
+              <label class="radio"><input type="radio" name="mode" value="asis">
+                <span>Receipt total <small>How the 2025 sheet was filled in. Confirm with your accountant before choosing this.</small></span></label>
+            </div>
+            <p class="card-sub" style="margin-top:14px">Gas is always entered as the receipt total; that tab takes the GST out rather than adding it.</p>
+            <p style="margin-top:16px"><button class="btn line sm" type="button" id="showConnect">Connection settings</button></p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Categories: the TAXES_BLANK template's tabs and columns ───────────── */
+var CATS = [
+  { sheet: 'Basic Books', short: 'Basic Books', cols: [
+    ['C','Advertising & Client Gifts'],['D','Business Tax, Fees, Dues'],['E','Delivery, Freight'],['F','Insurance'],
+    ['G','Interest & Bank Charges'],['H','Management or Admin Fees'],['I','Meals & Entertainment'],['J','Office Expenses'],
+    ['K','Supplies'],['L','Legal, Accounting & Professional Fees'],['M','Rent'],['N','Salaries, Wages, Benefits'],
+    ['O','Travel'],['P','Cell Phone'],['Q','Group Medical Premiums'],['R','Other']] },
+  { sheet: 'Vehicle Gas', short: 'Gas', cols: [['C','Fuel & Oil']] },
+  { sheet: 'Other Vehicle Expenses', short: 'Vehicle', cols: [
+    ['C','Insurance'],['D','License & Registration'],['E','Maintenance & Repairs'],['F','Lease Cost'],
+    ['G','Interest on Loan'],['H','Parking'],['I','Other']] },
+  { sheet: 'Home Office Expenses', short: 'Home Office', cols: [
+    ['C','Heat'],['D','Electric'],['E','Insurance'],['F','Maintenance'],['G','Mortgage Interest'],['H','Property Taxes'],['I','Other']] },
+  { sheet: 'Capital Purchases', short: 'Capital', cols: [['C','Capital purchase (over $1,000)']] }
+];
+var TAXABLE = { 'Basic Books': 'CDEFHIJKLMNOP', 'Home Office Expenses': 'CDF', 'Vehicle Gas': 'C', 'Other Vehicle Expenses': 'DEFHI', 'Capital Purchases': 'C' };
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function catLabel(sheet, col) {
+  var g = CATS.find(function (c) { return c.sheet === sheet; });
+  var c = g && g.cols.find(function (x) { return x[0] === col; });
+  return c ? c[1] : sheet + ' column ' + col;
+}
+function shortName(sheet) { var g = CATS.find(function (c) { return c.sheet === sheet; }); return g ? g.short : sheet; }
+
+/* ── State ─────────────────────────────────────────────────────────────── */
+var S = { uid: null, cfg: null, cfgWhere: '', info: null, year: new Date().getFullYear(), entries: [], filter: 'all', editing: null, mode: 'pretax' };
+var $ = function (id) { return document.getElementById(id); };
+function money(n) { return '$' + (Number(n) || 0).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function num(v) { var n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; }
+function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function msg(id, text, cls) { var m = $(id); m.textContent = text || ''; m.className = 'msg ' + (cls || ''); }
+function pill(text, cls) { $('pill').textContent = text; $('pill').className = 'pill ' + (cls || ''); }
+
+/* ── Talking to the Apps Script ────────────────────────────────────────── */
+function api(action, data, cfg) {
+  cfg = cfg || S.cfg;
+  var body = JSON.stringify(Object.assign({ action: action, passcode: cfg.passcode }, data || {}));
+  // text/plain keeps this a simple request, which Apps Script accepts without a CORS preflight.
+  return fetch(cfg.url, { method: 'POST', body: body, redirect: 'follow' })
+    .catch(function () {
+      throw new Error('Could not reach the script. Check the web app URL, and that the deployment\'s access is set to "Anyone".');
+    })
+    .then(function (res) {
+      if (!res.ok) throw new Error('The script answered with an error (' + res.status + '). Check the deployment in Apps Script.');
+      return res.json().catch(function () { throw new Error('The script did not send back data. Make sure the URL ends in /exec, not /dev.'); });
+    })
+    .then(function (j) {
+      if (!j.ok) { var e = new Error(j.error || 'The script reported a problem.'); e.code = j.code; throw e; }
+      return j;
+    });
+}
+
+/* ── Connection settings: users/{uid}/settings/taxTracker, else this browser ─ */
+var LS_KEY = 'sphere-tax-tracker';
+function cfgRef() { return firebase.firestore().collection('users').doc(S.uid).collection('settings').doc('taxTracker'); }
+function loadCfg() {
+  return cfgRef().get().then(function (d) {
+    S.cfgWhere = 'account';
+    return d.exists ? d.data() : null;
+  }).catch(function (err) {
+    console.error('Tax tracker settings could not be read from your account:', err);
+    S.cfgWhere = 'device';
+    S.cfgNote = 'Your account would not store these settings (' + (err.code || err.message) + '), so they are kept in this browser only. You will need to enter them once on each device.';
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; }
+  });
+}
+function saveCfg(cfg) {
+  var data = { url: cfg.url, passcode: cfg.passcode, mode: cfg.mode || 'pretax' };
+  if (S.cfgWhere === 'account') {
+    return cfgRef().set(data).catch(function (err) {
+      console.error('Saving tax tracker settings to your account failed:', err);
+      S.cfgWhere = 'device';
+      S.cfgNote = 'Your account would not store these settings (' + (err.code || err.message) + '), so they are kept in this browser only.';
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    });
+  }
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+  return Promise.resolve();
+}
+
+function showConnect(prefill) {
+  $('connectCard').hidden = false;
+  $('cUrl').value = (prefill && prefill.url) || '';
+  $('cPass').value = (prefill && prefill.passcode) || '';
+  $('cCancel').hidden = !S.info;
+  if (S.cfgNote) msg('cMsg', S.cfgNote);
+}
+$('showConnect').addEventListener('click', function () { showConnect(S.cfg); $('connectCard').scrollIntoView({ behavior: 'smooth' }); });
+$('cCancel').addEventListener('click', function () { $('connectCard').hidden = true; msg('cMsg', ''); });
+$('connectForm').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var cfg = { url: $('cUrl').value.trim(), passcode: $('cPass').value, mode: S.mode };
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec\b/.test(cfg.url)) {
+    msg('cMsg', 'That does not look like an Apps Script web app address. It starts with https://script.google.com/macros/s/ and ends with /exec.', 'err');
+    return;
+  }
+  $('cSave').disabled = true; msg('cMsg', 'Testing the connection…');
+  api('ping', null, cfg).then(function (info) {
+    if (!info.years.length) throw new Error('Connected, but no sheet is set up yet. In Apps Script add a Script property named SHEET_' + S.year + ' holding your Google Sheet\'s ID.');
+    var bad = info.years.filter(function (y) { return !y.ok; });
+    if (bad.length) throw new Error('Connected, but the script could not open the sheet for ' + bad.map(function (y) { return y.year; }).join(', ') + '. Check the SHEET_ IDs in Script properties.');
+    return saveCfg(cfg).then(function () {
+      S.cfg = cfg; $('connectCard').hidden = true; msg('cMsg', '');
+      applyInfo(info);
+    });
+  }).catch(function (err) {
+    msg('cMsg', err.code === 'bad_passcode' ? 'The script is reachable, but the passcode does not match the PASSCODE in its Script properties.' : err.message, 'err');
+  }).then(function () { $('cSave').disabled = false; });
+});
+
+/* ── After connecting ──────────────────────────────────────────────────── */
+function applyInfo(info) {
+  S.info = info;
+  var years = info.years.map(function (y) { return y.year; });
+  if (years.indexOf(S.year) < 0) S.year = years[0];
+  var sel = $('year'); sel.innerHTML = '';
+  years.forEach(function (y) { var o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o); });
+  sel.value = S.year;
+  $('yearPick').hidden = false; $('work').hidden = false;
+  $('snapBlock').hidden = !info.ai; $('snapOff').hidden = !!info.ai;
+  var names = {}; Object.keys(info.rules || {}).forEach(function (k) { names[info.rules[k].name] = 1; });
+  $('vendorList').innerHTML = '';
+  Object.keys(names).sort().forEach(function (n) { var o = document.createElement('option'); o.value = n; $('vendorList').appendChild(o); });
+  setSheetLink();
+  loadList();
+}
+function setSheetLink() {
+  var y = (S.info.years || []).find(function (x) { return x.year === S.year; });
+  $('sheetLink').hidden = !(y && y.url);
+  if (y && y.url) $('sheetLink').href = y.url;
+}
+$('year').addEventListener('change', function () { S.year = Number(this.value); setSheetLink(); loadList(); });
+
+function loadList() {
+  pill('Loading', 'busy'); msg('listMsg', '');
+  return api('list', { year: S.year }).then(function (r) {
+    S.entries = r.entries; render(); pill(S.year + ' sheet', 'ok');
+  }).catch(function (err) {
+    pill('Error', 'err');
+    msg('listMsg', 'Could not load the ' + S.year + ' sheet.\n' + err.message, 'err');
+    S.entries = []; render();
+  });
+}
+
+/* ── Vendor → category suggestions ─────────────────────────────────────── */
+function lev(a, b) {
+  var d = [], i, j;
+  for (i = 0; i <= a.length; i++) d[i] = [i];
+  for (j = 1; j <= b.length; j++) d[0][j] = j;
+  for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function findRule(vendor) {
+  var rules = (S.info && S.info.rules) || {}, k = norm(vendor);
+  if (!k) return null;
+  if (rules[k]) return rules[k];
+  var best = null, score = 99;
+  Object.keys(rules).forEach(function (key) {
+    var s = 99;
+    if (k.length >= 4 && key.length >= 4 && (key.indexOf(k) === 0 || k.indexOf(key) === 0)) s = 1;
+    else if (k.length >= 6 && key.length >= 6) { var dl = lev(k, key); if (dl <= 2) s = 1 + dl; }
+    if (s < score) { score = s; best = key; }
+  });
+  return best ? rules[best] : null;
+}
+
+/* ── Form ──────────────────────────────────────────────────────────────── */
+(function buildCats() {
+  var sel = $('fCat'); sel.innerHTML = '<option value="">Choose a category…</option>';
+  CATS.forEach(function (g) {
+    var og = document.createElement('optgroup'); og.label = g.sheet;
+    g.cols.forEach(function (c) { var o = document.createElement('option'); o.value = g.sheet + '|' + c[0]; o.textContent = c[1]; og.appendChild(o); });
+    sel.appendChild(og);
+  });
+})();
+var gstTouched = false, catTouched = false;
+function hint(text, cls) { $('catHint').textContent = text || ''; $('catHint').className = 'fhint ' + (cls || ''); }
+function catHint() {
+  var v = $('fCat').value; if (!v) { hint(''); return; }
+  var p = v.split('|'), t = num($('fTotal').value);
+  if (t > 1000 && p[0] === 'Basic Books') hint('Over $1,000. Equipment you will keep, like a computer or furniture, may belong under Capital Purchases.', 'warn');
+  else hint(p[0] + ' › ' + catLabel(p[0], p[1]));
+}
+function autoGst() {
+  if (gstTouched) return;
+  var t = num($('fTotal').value), p = $('fCat').value.split('|');
+  if (!isFinite(t)) { $('fGst').value = ''; return; }
+  var taxable = p[0] && (TAXABLE[p[0]] || '').indexOf(p[1]) >= 0;
+  $('fGst').value = taxable ? (Math.round(t * 5 / 105 * 100) / 100).toFixed(2) : '0.00';
+}
+function suggest() {
+  if (catTouched) return;
+  var r = findRule($('fVendor').value);
+  if (r) { $('fCat').value = r.sheet + '|' + r.col; catHint(); hint('Same as before: ' + r.sheet + ' › ' + catLabel(r.sheet, r.col), 'suggest'); autoGst(); }
+  else catHint();
+}
+function resetForm(keepMsg) {
+  S.editing = null; gstTouched = false; catTouched = false;
+  $('form').reset(); $('fDate').value = today(); hint('');
+  $('formTitle').textContent = 'Add an expense'; $('saveBtn').textContent = 'Save to sheet';
+  $('deleteBtn').hidden = true; $('cancelEdit').hidden = true; $('receipt').hidden = true;
+  if (!keepMsg) msg('formMsg', '');
+}
+$('fVendor').addEventListener('input', suggest);
+$('fCat').addEventListener('change', function () { catTouched = true; catHint(); autoGst(); });
+$('fTotal').addEventListener('input', function () { autoGst(); catHint(); });
+$('fGst').addEventListener('input', function () { gstTouched = true; });
+$('gst5').addEventListener('click', function () { var t = num($('fTotal').value); if (isFinite(t)) { $('fGst').value = (Math.round(t * 5 / 105 * 100) / 100).toFixed(2); gstTouched = true; } });
+$('gst0').addEventListener('click', function () { $('fGst').value = '0.00'; gstTouched = true; });
+$('cancelEdit').addEventListener('click', function () { resetForm(); });
+
+function readForm() {
+  var date = $('fDate').value, vendor = $('fVendor').value.trim(), cat = $('fCat').value;
+  var total = num($('fTotal').value), gst = $('fGst').value === '' ? 0 : num($('fGst').value);
+  if (!date) throw new Error('Add the date from the receipt.');
+  if (!vendor) throw new Error('Add who you paid.');
+  if (!cat) throw new Error('Choose where this goes on your tax sheet.');
+  if (!isFinite(total) || total <= 0) throw new Error('Enter the total paid as a number, like 54.00.');
+  if (!isFinite(gst) || gst < 0 || gst >= total) throw new Error('GST should be a number smaller than the total.');
+  if (!S.info.years.some(function (y) { return y.year === Number(date.slice(0, 4)); }))
+    throw new Error('There is no sheet set up for ' + date.slice(0, 4) + '. Add SHEET_' + date.slice(0, 4) + ' in the script\'s Script properties first.');
+  var p = cat.split('|');
+  return { date: date, vendor: vendor, detail: $('fDetail').value.trim(), total: total, gst: gst, sheet: p[0], col: p[1] };
+}
+
+$('form').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var e;
+  try { e = readForm(); } catch (err) { msg('formMsg', err.message, 'err'); return; }
+  $('saveBtn').disabled = true; msg('formMsg', 'Saving to your sheet…');
+  var call = S.editing ? api('update', { id: S.editing, entry: e, mode: S.mode }) : api('add', { entry: e, mode: S.mode });
+  call.then(function (r) {
+    var rules = S.info.rules || (S.info.rules = {});
+    rules[norm(e.vendor)] = { name: e.vendor, sheet: e.sheet, col: e.col };
+    resetForm(true);
+    msg('formMsg', 'Saved: ' + e.vendor + ', ' + money(e.total) + ' → ' + e.sheet + ' › ' + catLabel(e.sheet, e.col) + ', row ' + r.row + '.', 'good');
+    var y = Number(e.date.slice(0, 4));
+    if (y !== S.year) { S.year = y; $('year').value = y; setSheetLink(); }
+    return loadList();
+  }).catch(function (err) {
+    msg('formMsg', 'Not saved. ' + err.message, 'err');
+  }).then(function () { $('saveBtn').disabled = false; });
+});
+
+$('deleteBtn').addEventListener('click', function () {
+  var b = $('deleteBtn');
+  if (b.dataset.confirm !== '1') {
+    b.dataset.confirm = '1'; b.textContent = 'Tap again to delete';
+    setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Delete'; }, 3000);
+    return;
+  }
+  b.dataset.confirm = ''; b.textContent = 'Delete'; b.disabled = true;
+  msg('formMsg', 'Deleting from your sheet…');
+  api('delete', { id: S.editing, year: S.year }).then(function () {
+    resetForm(true); msg('formMsg', 'Deleted from the sheet.', 'good'); return loadList();
+  }).catch(function (err) { msg('formMsg', 'Not deleted. ' + err.message, 'err'); })
+    .then(function () { b.disabled = false; });
+});
+
+function startEdit(e) {
+  resetForm(); S.editing = e.id; gstTouched = true; catTouched = true;
+  var parts = e.vendor.split(' - ');
+  $('fDate').value = e.date; $('fVendor').value = parts.shift(); $('fDetail').value = parts.join(' - ');
+  $('fTotal').value = e.total.toFixed(2); $('fGst').value = e.gst.toFixed(2);
+  $('fCat').value = e.sheet + '|' + e.col; catHint();
+  $('formTitle').textContent = 'Edit expense'; $('saveBtn').textContent = 'Save changes';
+  $('deleteBtn').hidden = false; $('cancelEdit').hidden = false;
+  $('addCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Receipt photos (only when the script has an API key) ──────────────── */
+function toJpeg(file) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var s = Math.min(1, 1600 / Math.max(img.width, img.height));
+      var c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function (b) { b ? resolve(b) : reject(new Error('Could not prepare the image.')); }, 'image/jpeg', 0.85);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That image could not be opened. Try a JPEG or PNG, or a screenshot.')); };
+    img.src = url;
+  });
+}
+function blobToBase64(b) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function () { resolve(String(r.result).split(',')[1]); };
+    r.onerror = function () { reject(new Error('Could not read the image.')); };
+    r.readAsDataURL(b);
+  });
+}
+function readReceipt(file) {
+  if (!file) return;
+  resetForm();
+  $('reading').hidden = false;
+  toJpeg(file).then(function (jpg) {
+    $('thumb').src = URL.createObjectURL(jpg); $('receipt').hidden = false; $('aiNote').textContent = '';
+    return blobToBase64(jpg);
+  }).then(function (b64) {
+    return api('read', { image: b64, mediaType: 'image/jpeg', year: S.year });
+  }).then(function (r) {
+    applyReading(r.reading || {});
+  }).catch(function (err) {
+    msg('formMsg', err.message, 'err');
+  }).then(function () { $('reading').hidden = true; });
+}
+function applyReading(r) {
+  if (r.readable === false) { msg('formMsg', 'This does not look like a readable receipt. Try a closer, flatter photo.', 'err'); return; }
+  if (r.date && /^\d{4}-\d{2}-\d{2}$/.test(r.date)) $('fDate').value = r.date;
+  if (r.vendor) $('fVendor').value = String(r.vendor).slice(0, 80);
+  if (r.detail) $('fDetail').value = String(r.detail).slice(0, 80);
+  var t = num(r.total); if (isFinite(t) && t > 0) $('fTotal').value = t.toFixed(2);
+  var g = num(r.gst); if (isFinite(g) && g >= 0 && (!isFinite(t) || g < t)) { $('fGst').value = g.toFixed(2); gstTouched = true; }
+  var rule = findRule($('fVendor').value);
+  var code = String(r.category || '');
+  var valid = CATS.some(function (c) { return c.cols.some(function (x) { return c.sheet + '|' + x[0] === code; }); });
+  if (rule) { $('fCat').value = rule.sheet + '|' + rule.col; catHint(); hint('Same as before: ' + rule.sheet + ' › ' + catLabel(rule.sheet, rule.col), 'suggest'); }
+  else if (valid) { $('fCat').value = code; catHint(); }
+  autoGst();
+  $('aiNote').textContent = (r.note ? r.note + ' ' : '') + 'Check the details, then save.';
+}
+['camera', 'upload'].forEach(function (id) {
+  $(id).addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; readReceipt(f); });
+});
+
+/* ── Rendering ─────────────────────────────────────────────────────────── */
+function render() {
+  var list = S.entries.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.row - a.row; });
+  var tot = 0, gst = 0;
+  list.forEach(function (e) { tot += e.total; gst += e.gst; });
+  $('stTotal').textContent = money(tot); $('stGst').textContent = money(gst); $('stCount').textContent = list.length;
+
+  if (S.filter !== 'all' && !list.some(function (e) { return e.sheet === S.filter; })) S.filter = 'all';
+  var f = $('filters'); f.innerHTML = '';
+  [['all', 'All', list.length]].concat(CATS.map(function (c) {
+    return [c.sheet, c.short, list.filter(function (e) { return e.sheet === c.sheet; }).length];
+  })).forEach(function (p) {
+    if (p[0] !== 'all' && !p[2]) return;
+    var b = document.createElement('button'); b.type = 'button';
+    b.textContent = p[1] + ' ' + p[2]; b.setAttribute('aria-pressed', String(S.filter === p[0]));
+    b.addEventListener('click', function () { S.filter = p[0]; render(); });
+    f.appendChild(b);
+  });
+
+  var shown = list.filter(function (e) { return S.filter === 'all' || e.sheet === S.filter; });
+  var L = $('list'); L.innerHTML = '';
+  if (!shown.length) {
+    var p = document.createElement('p'); p.className = 'empty';
+    p.textContent = 'No expenses in the ' + S.year + ' sheet yet. Add your first receipt.';
+    L.appendChild(p);
+  }
+  var lastMonth = -1, block = null;
+  shown.forEach(function (e) {
+    var m = Number(e.date.slice(5, 7)) - 1;
+    if (m !== lastMonth) {
+      lastMonth = m;
+      var sum = shown.filter(function (x) { return Number(x.date.slice(5, 7)) - 1 === m; }).reduce(function (s, x) { return s + x.total; }, 0);
+      var h = document.createElement('div'); h.className = 'month-h';
+      var a = document.createElement('span'); a.textContent = MONTHS[m];
+      var b = document.createElement('span'); b.textContent = money(sum);
+      h.appendChild(a); h.appendChild(b); L.appendChild(h);
+    }
+    var row = document.createElement('button'); row.type = 'button';
+    row.className = 'entry' + (e.id ? '' : ' locked');
+    row.innerHTML = '<span class="d"></span><span><span class="v"></span><span class="c"><b></b> <i></i></span></span><span class="a"><span class="t"></span><small></small></span>';
+    row.querySelector('.d').textContent = MONTHS[m].slice(0, 3) + ' ' + Number(e.date.slice(8, 10));
+    row.querySelector('.v').textContent = e.vendor;
+    row.querySelector('.c b').textContent = shortName(e.sheet);
+    row.querySelector('.c i').textContent = catLabel(e.sheet, e.col) + (e.id ? '' : ' · typed in the sheet');
+    row.querySelector('.c i').style.fontStyle = 'normal';
+    row.querySelector('.t').textContent = money(e.total);
+    row.querySelector('small').textContent = e.gst ? 'GST ' + money(e.gst) : 'No GST';
+    if (e.id) row.addEventListener('click', function () { startEdit(e); });
+    else { row.disabled = true; row.title = 'Added directly in the sheet. Edit it there.'; }
+    L.appendChild(row);
+  });
+
+  var T = $('totals'), html = '';
+  CATS.forEach(function (g) {
+    var es = list.filter(function (e) { return e.sheet === g.sheet; });
+    if (!es.length) return;
+    html += '<tr class="grp"><td colspan="3">' + g.sheet + '</td></tr>';
+    var st = 0, sg = 0;
+    g.cols.forEach(function (c) {
+      var v = 0, gg = 0;
+      es.forEach(function (e) { if (e.col === c[0]) { v += e.total; gg += e.gst; } });
+      if (!v) return;
+      st += v; sg += gg;
+      html += '<tr><td>' + c[1] + '</td><td class="n">' + money(gg) + '</td><td class="n">' + money(v) + '</td></tr>';
+    });
+    html += '<tr class="sum"><td>Total</td><td class="n">' + money(sg) + '</td><td class="n">' + money(st) + '</td></tr>';
+  });
+  T.innerHTML = html
+    ? '<tr><th>Category</th><th class="n">GST</th><th class="n">Paid</th></tr>' + html
+    : '<tr><td class="empty">Totals appear here as you add expenses.</td></tr>';
+}
+
+document.querySelectorAll('input[name=mode]').forEach(function (r) {
+  r.addEventListener('change', function () {
+    if (!this.checked || S.mode === this.value) return;
+    S.mode = this.value;
+    if (S.cfg) { S.cfg.mode = S.mode; saveCfg(S.cfg); }
+  });
+});
+
+/* ── Start ─────────────────────────────────────────────────────────────── */
+firebase.auth().onAuthStateChanged(function (user) {
+  if (!user) { window.location.href = '../login.html'; return; }
+  S.uid = user.uid;
+  resetForm();
+  loadCfg().then(function (cfg) {
+    $('loading').hidden = true; $('app').hidden = false;
+    if (cfg && cfg.mode) S.mode = cfg.mode;
+    document.querySelectorAll('input[name=mode]').forEach(function (r) { r.checked = r.value === S.mode; });
+    if (!cfg || !cfg.url) { showConnect(null); return; }
+    S.cfg = cfg;
+    pill('Connecting', 'busy');
+    return api('ping').then(applyInfo).catch(function (err) {
+      pill('Not connected', 'err');
+      showConnect(cfg);
+      msg('cMsg', 'Could not connect with the saved settings.\n' + err.message, 'err');
+    });
+  });
+});
+</script>
+<script src="../js/mobile-nav.js"></script>
+</body>
+</html>
