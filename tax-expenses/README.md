@@ -1,6 +1,6 @@
 # Tax Expenses
 
-`tax-expenses/index.html` sends each expense to a Google Apps Script
+`tax-expenses/index.html` sends each expense, and each paid-out deal, to a Google Apps Script
 (`apps-script/Code.gs`). The script writes it into that year's tax workbook (the
 TAXES_BLANK real-estate template, as a Google Sheet): right tab, right column,
 under its month, in date order, with the template's GST and Total formulas.
@@ -77,9 +77,27 @@ into a browser tab. You should see `"Tax expense tracker is running"`.
   on your Anthropic API billing.
 - **A new tax year:** make a fresh Google Sheets copy of the blank template,
   add `SHEET_2027` with its ID, and reload the page.
-- **Changing `Code.gs`:** after saving, use **Deploy → Manage deployments →
+- **Changing `Code.gs`:** paste the new version over the old one, then after saving, use **Deploy → Manage deployments →
   edit (pencil) → Version: New version → Deploy**. That keeps the same URL.
   "New deployment" would give you a new URL to re-enter on the page.
+
+## Deals paid
+
+The **Deal paid** tab of the form writes one row to **Sales & Split** per payout,
+in date order. Three types:
+
+- **Regular deal** — brokerage fee, royalty (% of gross) and donation are filled
+  from the deal defaults (set under "Deal defaults" on the page: $500, 1%, $50).
+- **Paperwork fee** — the fee charged to another agent (default $350): royalty
+  only, no brokerage fee or donation.
+- **Leads profit share** — GST included, no fee, royalty or donation. Written
+  as "Leads Profit Share - <month>".
+
+The script writes Gross (C), Brokerage Fees (E), Royalty (G), Donation (I) and
+Net Pay (M); the GST columns, Net Commission (J), Personal Taxes Held (K) and
+Net GST (L) are formulas. Saving a deal number that is already in the sheet
+asks for a second click, since a double-ended deal is legitimate but a
+duplicate entry is not.
 
 ## How the script places rows
 

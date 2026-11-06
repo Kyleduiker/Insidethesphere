@@ -53,7 +53,7 @@ h2{font-family:var(--serif);font-size:1.3rem;font-weight:400;line-height:1.2}
 .year-pick{display:flex;align-items:center;gap:10px}
 .year-pick label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
 
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:2px;margin-top:26px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:2px;margin-top:26px}
 .stat{background:#fff;padding:16px 20px}
 .stat .v{font-family:var(--serif);font-size:1.7rem;font-weight:400;font-variant-numeric:tabular-nums;color:var(--esp)}
 .stat .l{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);margin-top:2px}
@@ -148,6 +148,18 @@ table.tot tr.sum td{font-weight:600}
 .note{border-left:2px solid var(--champ);background:#FDFBF6;padding:12px 16px;font-size:12px;color:var(--stone);line-height:1.7;border-radius:2px}
 .note strong{color:var(--obs);font-weight:500}
 
+.switch{display:grid;grid-template-columns:1fr 1fr;border:0.5px solid var(--border);border-radius:2px;margin-bottom:20px}
+.switch button{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:11px;border:0;background:#fff;color:var(--stone);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--obs);color:#fff}
+.kinds{display:flex;gap:6px;flex-wrap:wrap}
+.fg .kinds label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--obs);padding:8px 11px;border:0.5px solid var(--border);border-radius:2px;cursor:pointer}
+.kinds input{accent-color:var(--copper)}
+.fg .kinds label:has(input:checked){border-color:var(--copper);background:#FDFBF6}
+.preview{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:2px;grid-column:1/-1}
+.preview div{background:var(--ivory);padding:9px 12px;font-size:11px;color:var(--stone)}
+.preview b{display:block;font-size:14px;font-weight:500;color:var(--obs);font-variant-numeric:tabular-nums;margin-top:2px}
+.preview .warn b{color:var(--ox)}
+.defaults{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
 .loading{margin-left:220px;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:14px;flex:1}
 .loading .spinner{width:28px;height:28px}
 
@@ -156,6 +168,7 @@ table.tot tr.sum td{font-weight:600}
   .topbar{padding:0 16px}
   .page{padding:20px 16px 60px}
   .cols{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
   .stats .stat{padding:12px 14px}
   .stat .v{font-size:1.35rem}
 }
@@ -223,11 +236,17 @@ table.tot tr.sum td{font-weight:600}
         <div class="stat"><div class="v" id="stTotal">$0.00</div><div class="l">Expenses</div></div>
         <div class="stat"><div class="v" id="stGst">$0.00</div><div class="l">GST paid</div></div>
         <div class="stat"><div class="v" id="stCount">0</div><div class="l">Receipts</div></div>
+        <div class="stat"><div class="v" id="stGross">$0.00</div><div class="l">Gross commission</div></div>
       </section>
 
       <div class="cols">
         <div>
           <section class="card" id="addCard">
+            <div class="switch" role="group" aria-label="What are you adding">
+              <button type="button" id="tabExpense" aria-pressed="true">Expense</button>
+              <button type="button" id="tabDeal" aria-pressed="false">Deal paid</button>
+            </div>
+            <div id="expensePane">
             <div class="card-head">
               <h2 id="formTitle">Add an expense</h2>
               <button class="btn line sm" type="button" id="cancelEdit" hidden>Cancel edit</button>
@@ -290,6 +309,64 @@ table.tot tr.sum td{font-weight:600}
               </div>
               <div class="msg" id="formMsg" role="status"></div>
             </form>
+            </div>
+
+            <div id="dealPane" hidden>
+              <div class="card-head">
+                <h2 id="dTitle">Add a paid deal</h2>
+                <button class="btn line sm" type="button" id="dCancel" hidden>Cancel edit</button>
+              </div>
+              <form class="form" id="dealForm" autocomplete="off">
+                <div class="fg full">
+                  <label>Type</label>
+                  <div class="kinds">
+                    <label><input type="radio" name="dKind" value="deal" checked> Regular deal</label>
+                    <label><input type="radio" name="dKind" value="paperwork"> Paperwork fee</label>
+                    <label><input type="radio" name="dKind" value="share"> Leads profit share</label>
+                  </div>
+                </div>
+                <div class="fg">
+                  <label for="dDate">Date paid</label>
+                  <input type="date" id="dDate" required>
+                </div>
+                <div class="fg" id="dLabelWrap">
+                  <label for="dLabel" id="dLabelL">Deal #</label>
+                  <input id="dLabel" placeholder="e.g. D260412">
+                </div>
+                <div class="fg">
+                  <label for="dGross" id="dGrossL">Gross commission</label>
+                  <div class="money"><input id="dGross" inputmode="decimal" placeholder="0.00" required></div>
+                </div>
+                <div class="fg">
+                  <label for="dPay">Net pay deposited</label>
+                  <div class="money"><input id="dPay" inputmode="decimal" placeholder="0.00" required></div>
+                </div>
+                <div class="fg">
+                  <label for="dFee">Brokerage fee</label>
+                  <div class="money"><input id="dFee" inputmode="decimal" placeholder="0.00"></div>
+                </div>
+                <div class="fg">
+                  <label for="dRoyalty">Royalty</label>
+                  <div class="money"><input id="dRoyalty" inputmode="decimal" placeholder="0.00"></div>
+                </div>
+                <div class="fg">
+                  <label for="dDonation">Donation</label>
+                  <div class="money"><input id="dDonation" inputmode="decimal" placeholder="0.00"></div>
+                </div>
+                <div class="fg"><span class="fhint" id="dHint" style="margin-top:22px"></span></div>
+                <div class="preview" id="dPreview" aria-live="polite">
+                  <div>GST on gross<b id="pGst">—</b></div>
+                  <div>Net commission<b id="pNet">—</b></div>
+                  <div>Net GST<b id="pNetGst">—</b></div>
+                  <div id="pHeldBox">Personal taxes held<b id="pHeld">—</b></div>
+                </div>
+                <div class="actions">
+                  <button class="btn" type="submit" id="dSave">Save to sheet</button>
+                  <button class="btn danger" type="button" id="dDelete" hidden>Delete</button>
+                </div>
+                <div class="msg" id="dMsg" role="status"></div>
+              </form>
+            </div>
           </section>
 
         </div>
@@ -302,6 +379,11 @@ table.tot tr.sum td{font-weight:600}
             </div>
             <div class="msg" id="listMsg" role="status"></div>
             <div id="list"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><h2>Deals paid</h2></div>
+            <div id="dealList"></div>
           </section>
 
           <section class="card">
@@ -318,6 +400,15 @@ table.tot tr.sum td{font-weight:600}
                 <span>Receipt total <small>How the 2025 sheet was filled in. Confirm with your accountant before choosing this.</small></span></label>
             </div>
             <p class="card-sub" style="margin-top:14px">Gas is always entered as the receipt total; that tab takes the GST out rather than adding it.</p>
+            <div class="card-head" style="margin:22px 0 0"><h2>Deal defaults</h2></div>
+            <p class="card-sub">Filled in on each new deal. You can still change them on any one deal.</p>
+            <div class="defaults">
+              <div class="fg"><label for="defFee">Brokerage fee</label><div class="money"><input id="defFee" inputmode="decimal"></div></div>
+              <div class="fg"><label for="defRoyalty">Royalty, % of gross</label><input id="defRoyalty" inputmode="decimal"></div>
+              <div class="fg"><label for="defDonation">Donation</label><div class="money"><input id="defDonation" inputmode="decimal"></div></div>
+              <div class="fg"><label for="defPaper">Paperwork fee</label><div class="money"><input id="defPaper" inputmode="decimal"></div></div>
+            </div>
+            <p class="msg" id="defMsg" role="status" style="margin-top:10px"></p>
             <p style="margin-top:16px"><button class="btn line sm" type="button" id="showConnect">Connection settings</button></p>
           </section>
         </div>
@@ -353,7 +444,8 @@ function catLabel(sheet, col) {
 function shortName(sheet) { var g = CATS.find(function (c) { return c.sheet === sheet; }); return g ? g.short : sheet; }
 
 /* ── State ─────────────────────────────────────────────────────────────── */
-var S = { uid: null, cfg: null, cfgWhere: '', info: null, year: new Date().getFullYear(), entries: [], filter: 'all', editing: null, mode: 'pretax' };
+var DEAL_DEFAULTS = { fee: 500, royaltyPct: 1, donation: 50, paperwork: 350 };
+var S = { uid: null, cfg: null, cfgWhere: '', info: null, year: new Date().getFullYear(), entries: [], deals: [], filter: 'all', editing: null, dealEditing: null, mode: 'pretax', dd: Object.assign({}, DEAL_DEFAULTS) };
 var $ = function (id) { return document.getElementById(id); };
 function money(n) { return '$' + (Number(n) || 0).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function num(v) { var n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; }
@@ -396,7 +488,7 @@ function loadCfg() {
   });
 }
 function saveCfg(cfg) {
-  var data = { url: cfg.url, passcode: cfg.passcode, mode: cfg.mode || 'pretax' };
+  var data = { url: cfg.url, passcode: cfg.passcode, mode: cfg.mode || 'pretax', dealDefaults: S.dd };
   if (S.cfgWhere === 'account') {
     return cfgRef().set(data).catch(function (err) {
       console.error('Saving tax tracker settings to your account failed:', err);
@@ -465,11 +557,11 @@ $('year').addEventListener('change', function () { S.year = Number(this.value); 
 function loadList() {
   pill('Loading', 'busy'); msg('listMsg', '');
   return api('list', { year: S.year }).then(function (r) {
-    S.entries = r.entries; render(); pill(S.year + ' sheet', 'ok');
+    S.entries = r.entries; S.deals = r.deals || []; render(); pill(S.year + ' sheet', 'ok');
   }).catch(function (err) {
     pill('Error', 'err');
     msg('listMsg', 'Could not load the ' + S.year + ' sheet.\n' + err.message, 'err');
-    S.entries = []; render();
+    S.entries = []; S.deals = []; render();
   });
 }
 
@@ -663,6 +755,8 @@ function render() {
   var tot = 0, gst = 0;
   list.forEach(function (e) { tot += e.total; gst += e.gst; });
   $('stTotal').textContent = money(tot); $('stGst').textContent = money(gst); $('stCount').textContent = list.length;
+  $('stGross').textContent = money(S.deals.reduce(function (s, d) { return s + d.gross; }, 0));
+  renderDeals();
 
   if (S.filter !== 'all' && !list.some(function (e) { return e.sheet === S.filter; })) S.filter = 'all';
   var f = $('filters'); f.innerHTML = '';
@@ -737,6 +831,183 @@ document.querySelectorAll('input[name=mode]').forEach(function (r) {
   });
 });
 
+/* ── Deals paid out → Sales & Split ────────────────────────────────────── */
+var KIND_NAMES = { deal: 'Regular deal', paperwork: 'Paperwork fee', share: 'Leads profit share' };
+var dTouched = {};
+function dKind() { return document.querySelector('input[name=dKind]:checked').value; }
+function setTab(which) {
+  $('tabExpense').setAttribute('aria-pressed', String(which === 'expense'));
+  $('tabDeal').setAttribute('aria-pressed', String(which === 'deal'));
+  $('expensePane').hidden = which !== 'expense';
+  $('dealPane').hidden = which !== 'deal';
+}
+$('tabExpense').addEventListener('click', function () { setTab('expense'); });
+$('tabDeal').addEventListener('click', function () { setTab('deal'); });
+
+function money2(n) { return isFinite(n) ? n.toFixed(2) : ''; }
+function applyKindDefaults() {
+  var k = dKind(), dd = S.dd, g = num($('dGross').value);
+  $('dLabelL').textContent = k === 'share' ? 'Month it covers' : 'Deal #';
+  $('dLabel').placeholder = k === 'share' ? 'e.g. October' : 'e.g. D260412';
+  $('dGrossL').textContent = k === 'deal' ? 'Gross commission' : (k === 'paperwork' ? 'Paperwork fee charged' : 'Profit share amount');
+  if (k === 'paperwork' && !dTouched.gross && !$('dGross').value) { $('dGross').value = money2(dd.paperwork); g = dd.paperwork; }
+  if (!dTouched.fee) $('dFee').value = k === 'deal' ? money2(dd.fee) : '';
+  if (!dTouched.donation) $('dDonation').value = k === 'deal' ? money2(dd.donation) : '';
+  if (!dTouched.royalty) $('dRoyalty').value = (k === 'share' || !isFinite(g)) ? '' : money2(Math.round(g * dd.royaltyPct) / 100);
+  if (k === 'share' && !dTouched.label && !$('dLabel').value) {
+    var d = $('dDate').value; if (d) $('dLabel').value = MONTHS[Number(d.slice(5, 7)) - 1];
+  }
+  $('dHint').textContent = k === 'deal' ? 'Fee, royalty and donation come from your deal defaults.'
+    : k === 'paperwork' ? 'No brokerage fee or donation on paperwork fees.' : 'No fee, royalty or donation. GST is included.';
+  preview();
+}
+function preview() {
+  var g = num($('dGross').value), fee = num($('dFee').value || 0), roy = num($('dRoyalty').value || 0), pay = num($('dPay').value);
+  if (!isFinite(g)) { ['pGst', 'pNet', 'pNetGst', 'pHeld'].forEach(function (id) { $(id).textContent = '—'; }); $('pHeldBox').className = ''; return; }
+  fee = isFinite(fee) ? fee : 0; roy = isFinite(roy) ? roy : 0;
+  var net = g - fee - roy, gst = g * 0.05, netGst = gst - fee * 0.05 - roy * 0.05;
+  $('pGst').textContent = money(gst); $('pNet').textContent = money(net); $('pNetGst').textContent = money(netGst);
+  if (isFinite(pay)) {
+    var held = net - pay;
+    $('pHeld').textContent = money(held);
+    $('pHeldBox').className = held < 0 ? 'warn' : '';
+    $('pHeld').title = held < 0 ? 'Net pay is more than the net commission. Check the amounts.' : '';
+  } else { $('pHeld').textContent = '—'; $('pHeldBox').className = ''; }
+}
+document.querySelectorAll('input[name=dKind]').forEach(function (r) {
+  r.addEventListener('change', function () { dTouched = {}; if (this.value !== 'paperwork' && num($('dGross').value) === S.dd.paperwork) $('dGross').value = ''; if (this.value !== 'share') $('dLabel').value = $('dLabel').value && MONTHS.indexOf($('dLabel').value) >= 0 ? '' : $('dLabel').value; applyKindDefaults(); });
+});
+[['dGross', 'gross'], ['dFee', 'fee'], ['dRoyalty', 'royalty'], ['dDonation', 'donation'], ['dLabel', 'label'], ['dPay', 'pay']].forEach(function (p) {
+  $(p[0]).addEventListener('input', function () { if (p[1] !== 'gross' && p[1] !== 'pay') dTouched[p[1]] = true; if (p[1] === 'gross') dTouched.gross = true; applyKindDefaults(); });
+});
+$('dDate').addEventListener('change', applyKindDefaults);
+
+function resetDeal(keepMsg) {
+  S.dealEditing = null; dTouched = {};
+  $('dealForm').reset(); $('dDate').value = today();
+  $('dTitle').textContent = 'Add a paid deal'; $('dSave').textContent = 'Save to sheet';
+  $('dDelete').hidden = true; $('dCancel').hidden = true;
+  if (!keepMsg) msg('dMsg', '');
+  applyKindDefaults();
+}
+$('dCancel').addEventListener('click', function () { resetDeal(); });
+
+function readDeal() {
+  var k = dKind(), date = $('dDate').value, label = $('dLabel').value.trim();
+  var gross = num($('dGross').value), pay = num($('dPay').value);
+  var fee = $('dFee').value === '' ? 0 : num($('dFee').value);
+  var royalty = $('dRoyalty').value === '' ? 0 : num($('dRoyalty').value);
+  var donation = $('dDonation').value === '' ? 0 : num($('dDonation').value);
+  if (!date) throw new Error('Add the date it was paid.');
+  if (!label) throw new Error(k === 'share' ? 'Add the month the profit share covers.' : 'Add the deal number.');
+  if (!isFinite(gross) || gross <= 0) throw new Error('Enter the gross amount as a number, like 8825.00.');
+  if (!isFinite(pay) || pay <= 0) throw new Error('Enter the net pay from your statement.');
+  if (![fee, royalty, donation].every(function (x) { return isFinite(x) && x >= 0; })) throw new Error('Fee, royalty and donation must be numbers, or blank.');
+  if (!S.info.years.some(function (y) { return y.year === Number(date.slice(0, 4)); }))
+    throw new Error('There is no sheet set up for ' + date.slice(0, 4) + '. Add SHEET_' + date.slice(0, 4) + ' in the script\'s Script properties first.');
+  if (k === 'share' && !/^leads profit share/i.test(label)) label = 'Leads Profit Share - ' + label;
+  return { kind: k, date: date, label: label, gross: gross, fee: fee, royalty: royalty, donation: donation, pay: pay };
+}
+
+$('dealForm').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var d;
+  try { d = readDeal(); } catch (err) { msg('dMsg', err.message, 'err'); return; }
+  // Same deal number already in the sheet: allowed (both sides of a deal), but confirm.
+  var dup = d.kind !== 'share' && S.deals.some(function (x) { return x.id !== S.dealEditing && x.label.trim().toLowerCase() === d.label.toLowerCase(); });
+  if (dup && $('dSave').dataset.confirm !== '1') {
+    $('dSave').dataset.confirm = '1'; $('dSave').textContent = 'Save anyway';
+    msg('dMsg', d.label + ' is already in the sheet. If this is the other side of the same deal, click Save anyway. If not, check the deal number.', 'err');
+    return;
+  }
+  $('dSave').dataset.confirm = '';
+  $('dSave').disabled = true; msg('dMsg', 'Saving to your sheet…');
+  var call = S.dealEditing ? api('updateDeal', { id: S.dealEditing, deal: d }) : api('addDeal', { deal: d });
+  call.then(function (r) {
+    resetDeal(true);
+    msg('dMsg', 'Saved: ' + d.label + ', ' + money(d.gross) + ' gross → Sales & Split, row ' + r.row + '.', 'good');
+    var y = Number(d.date.slice(0, 4));
+    if (y !== S.year) { S.year = y; $('year').value = y; setSheetLink(); }
+    return loadList();
+  }).catch(function (err) { msg('dMsg', 'Not saved. ' + err.message, 'err'); })
+    .then(function () { $('dSave').disabled = false; $('dSave').textContent = S.dealEditing ? 'Save changes' : 'Save to sheet'; });
+});
+
+$('dDelete').addEventListener('click', function () {
+  var b = $('dDelete');
+  if (b.dataset.confirm !== '1') {
+    b.dataset.confirm = '1'; b.textContent = 'Tap again to delete';
+    setTimeout(function () { b.dataset.confirm = ''; b.textContent = 'Delete'; }, 3000);
+    return;
+  }
+  b.dataset.confirm = ''; b.textContent = 'Delete'; b.disabled = true;
+  msg('dMsg', 'Deleting from your sheet…');
+  api('delete', { id: S.dealEditing, year: S.year }).then(function () {
+    resetDeal(true); msg('dMsg', 'Deleted from the sheet.', 'good'); return loadList();
+  }).catch(function (err) { msg('dMsg', 'Not deleted. ' + err.message, 'err'); })
+    .then(function () { b.disabled = false; });
+});
+
+function editDeal(d) {
+  setTab('deal'); resetDeal(); S.dealEditing = d.id;
+  dTouched = { fee: true, royalty: true, donation: true, label: true, gross: true };
+  document.querySelector('input[name=dKind][value=' + d.kind + ']').checked = true;
+  $('dDate').value = d.date;
+  $('dLabel').value = d.kind === 'share' ? d.label.replace(/^leads profit share\s*-?\s*/i, '') : d.label;
+  $('dGross').value = money2(d.gross); $('dPay').value = money2(d.pay);
+  $('dFee').value = d.fee ? money2(d.fee) : ''; $('dRoyalty').value = d.royalty ? money2(d.royalty) : '';
+  $('dDonation').value = d.donation ? money2(d.donation) : '';
+  applyKindDefaults();
+  $('dTitle').textContent = 'Edit deal'; $('dSave').textContent = 'Save changes';
+  $('dDelete').hidden = false; $('dCancel').hidden = false;
+  $('addCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderDeals() {
+  var L = $('dealList'); L.innerHTML = '';
+  var deals = S.deals.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.row - a.row; });
+  if (!deals.length) {
+    var p = document.createElement('p'); p.className = 'empty';
+    p.textContent = 'No deals in the ' + S.year + ' sheet yet. Use Deal paid to add one when it pays out.';
+    L.appendChild(p); return;
+  }
+  deals.forEach(function (d) {
+    var m = Number(d.date.slice(5, 7)) - 1;
+    var row = document.createElement('button'); row.type = 'button';
+    row.className = 'entry' + (d.id ? '' : ' locked');
+    row.innerHTML = '<span class="d"></span><span><span class="v"></span><span class="c"><b></b> <i></i></span></span><span class="a"><span class="t"></span><small></small></span>';
+    row.querySelector('.d').textContent = MONTHS[m].slice(0, 3) + ' ' + Number(d.date.slice(8, 10));
+    row.querySelector('.v').textContent = d.label;
+    row.querySelector('.c b').textContent = KIND_NAMES[d.kind];
+    row.querySelector('.c i').textContent = 'Net pay ' + money(d.pay) + (d.id ? '' : ' · typed in the sheet');
+    row.querySelector('.c i').style.fontStyle = 'normal';
+    row.querySelector('.t').textContent = money(d.gross);
+    row.querySelector('small').textContent = 'Taxes held ' + money(d.held);
+    if (d.id) row.addEventListener('click', function () { editDeal(d); });
+    else { row.disabled = true; row.title = 'Added directly in the sheet. Edit it there.'; }
+    L.appendChild(row);
+  });
+  var tot = deals.reduce(function (a, d) { a.g += d.gross; a.p += d.pay; a.h += d.held; return a; }, { g: 0, p: 0, h: 0 });
+  var t = document.createElement('table'); t.className = 'tot'; t.style.marginTop = '14px';
+  t.innerHTML = '<tr><th>' + deals.length + ' payouts</th><th class="n">Gross</th><th class="n">Net pay</th><th class="n">Taxes held</th></tr>' +
+    '<tr class="sum"><td>Total</td><td class="n">' + money(tot.g) + '</td><td class="n">' + money(tot.p) + '</td><td class="n">' + money(tot.h) + '</td></tr>';
+  L.appendChild(t);
+}
+
+function fillDefaults() {
+  $('defFee').value = money2(S.dd.fee); $('defRoyalty').value = String(S.dd.royaltyPct);
+  $('defDonation').value = money2(S.dd.donation); $('defPaper').value = money2(S.dd.paperwork);
+}
+['defFee', 'defRoyalty', 'defDonation', 'defPaper'].forEach(function (id) {
+  $(id).addEventListener('change', function () {
+    var v = { fee: num($('defFee').value), royaltyPct: num($('defRoyalty').value), donation: num($('defDonation').value), paperwork: num($('defPaper').value) };
+    if (!Object.keys(v).every(function (k) { return isFinite(v[k]) && v[k] >= 0; })) { msg('defMsg', 'Each default must be a number, zero or more.', 'err'); return; }
+    S.dd = v;
+    if (!S.cfg) return;
+    saveCfg(S.cfg).then(function () { msg('defMsg', 'Deal defaults saved.', 'good'); if (!S.dealEditing) resetDeal(); });
+  });
+});
+
 /* ── Start ─────────────────────────────────────────────────────────────── */
 firebase.auth().onAuthStateChanged(function (user) {
   if (!user) { window.location.href = '../login.html'; return; }
@@ -745,6 +1016,8 @@ firebase.auth().onAuthStateChanged(function (user) {
   loadCfg().then(function (cfg) {
     $('loading').hidden = true; $('app').hidden = false;
     if (cfg && cfg.mode) S.mode = cfg.mode;
+    if (cfg && cfg.dealDefaults) S.dd = Object.assign({}, DEAL_DEFAULTS, cfg.dealDefaults);
+    fillDefaults(); resetDeal();
     document.querySelectorAll('input[name=mode]').forEach(function (r) { r.checked = r.value === S.mode; });
     if (!cfg || !cfg.url) { showConnect(null); return; }
     S.cfg = cfg;

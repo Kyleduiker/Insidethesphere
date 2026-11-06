@@ -1,10 +1,11 @@
 /**
  * Inside The Sphere — Tax Expense Tracker: Google Sheets bridge
  *
- * Receives expenses from tax-expenses/index.html and writes each one into the
- * yearly tax workbook (the TAXES_BLANK real-estate template, converted to a
- * Google Sheet): right tab, right column, under the right month heading, in
- * date order, with the template's GST and Total formulas.
+ * Receives expenses and paid-out deals from tax-expenses/index.html and writes
+ * each one into the yearly tax workbook (the real-estate tax template,
+ * converted to a Google Sheet): expenses to the right tab and column under the
+ * right month heading, deals to Sales & Split, all in date order, with the
+ * template's GST and total formulas.
  *
  * Nothing personal lives in this file. Everything account-specific is kept in
  * Project Settings → Script properties:
@@ -54,6 +55,14 @@ var SPECS = {
   }
 };
 
+/* Sales & Split: one row per paid-out deal, paperwork fee or profit share. */
+var DEAL_SHEET = 'Sales & Split';
+var DEAL_SPEC = {
+  months: false, first: 'C', last: 'M', totalCol: 'M',
+  formulas: { D: '=C{r}*0.05', F: '=E{r}*0.05', H: '=G{r}*0.05', J: '=C{r}-E{r}-G{r}', K: '=J{r}-M{r}', L: '=D{r}-F{r}-H{r}' }
+};
+function specFor(name) { return name === DEAL_SHEET ? DEAL_SPEC : SPECS[name]; }
+
 /* ── Web app entry points ─────────────────────────────────────────────── */
 
 function doGet() {
@@ -79,6 +88,8 @@ function doPost(e) {
       case 'add':    return out(withLock(function () { return addEntry(req.entry, req.mode); }));
       case 'update': return out(withLock(function () { return updateEntry(req.id, req.entry, req.mode); }));
       case 'delete': return out(withLock(function () { return deleteEntry(req.id, Number(req.year)); }));
+      case 'addDeal':    return out(withLock(function () { return addDeal(req.deal); }));
+      case 'updateDeal': return out(withLock(function () { return updateDeal(req.id, req.deal); }));
       case 'read':   return out(readReceipt(req));
       default:       return out({ ok: false, error: 'Unknown action: ' + req.action });
     }
@@ -147,7 +158,78 @@ function listYear(year) {
       });
     });
   });
-  return { ok: true, year: year, url: ss.getUrl(), entries: entries };
+  return { ok: true, year: year, url: ss.getUrl(), entries: entries, deals: listDeals(ss, ids, tz) };
+}
+
+function listDeals(ss, ids, tz) {
+  var sh = ss.getSheetByName(DEAL_SHEET);
+  if (!sh) return [];
+  var T = totalsRow(sh), n = T - 2, deals = [];
+  if (n < 1) return deals;
+  var vals = sh.getRange(2, 1, n, colNum('M')).getValues();
+  vals.forEach(function (row, i) {
+    if (!(row[0] instanceof Date)) return;
+    var num = function (L) { return round2(Number(row[colNum(L) - 1]) || 0); };
+    if (!num('C') && !num('M')) return;
+    var r = i + 2, label = String(row[1] || '');
+    deals.push({
+      id: ids[DEAL_SHEET + '#' + r] || null, row: r,
+      date: Utilities.formatDate(row[0], tz, 'yyyy-MM-dd'),
+      label: label,
+      kind: /^leads profit share/i.test(label) ? 'share' : (!num('E') && !num('I') ? 'paperwork' : 'deal'),
+      gross: num('C'), gst: num('D'), fee: num('E'), royalty: num('G'), donation: num('I'),
+      net: num('J'), held: num('K'), netGst: num('L'), pay: num('M')
+    });
+  });
+  return deals;
+}
+
+function addDeal(deal) {
+  var d = cleanDeal(deal);
+  var ss = book(Number(d.date.slice(0, 4)));
+  var sh = sheetOf(ss, DEAL_SHEET);
+  var tz = ss.getSpreadsheetTimeZone();
+  var rows = classify(sh, DEAL_SPEC), pos = null;
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].kind === 'entry' && rows[i].date > d.date) { pos = rows[i].r; break; }
+    if (rows[i].kind === 'blank' && rows.slice(i).every(function (x) { return x.kind === 'blank'; })) { pos = rows[i].r; break; }
+  }
+  if (pos === null) pos = totalsRow(sh);
+  var r = useOrInsert(sh, DEAL_SPEC, pos);
+  var a = sh.getRange(r, 1);
+  a.setValue(Utilities.parseDate(d.date + ' 00:00', tz, 'yyyy-MM-dd HH:mm'));
+  a.setNumberFormat('mm/dd/yy');
+  sh.getRange(r, 2).setValue(d.label);
+  sh.getRange(r, colNum('C')).setValue(d.gross);
+  sh.getRange(r, colNum('E')).setValue(d.fee || '');
+  sh.getRange(r, colNum('G')).setValue(d.royalty || '');
+  sh.getRange(r, colNum('I')).setValue(d.donation || '');
+  sh.getRange(r, colNum('M')).setValue(d.pay);
+  writeFormulas(sh, DEAL_SPEC, r);
+  fixTotals(sh, DEAL_SPEC);
+  var id = 'deal-' + Utilities.getUuid().slice(0, 12);
+  sh.getRange(r + ':' + r).addDeveloperMetadata(META_KEY, id);
+  return { ok: true, id: id, sheet: DEAL_SHEET, row: r, url: ss.getUrl() };
+}
+
+function updateDeal(id, deal) {
+  cleanDeal(deal);
+  var found = findById(id);
+  if (!found) throw new Error('That deal is no longer in the sheet. It may have been deleted there. Reload the list.');
+  removeRow(found.sheet, found.row);
+  return addDeal(deal);
+}
+
+function cleanDeal(d) {
+  if (!d) throw new Error('No deal was sent.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) throw new Error('The date must look like 2026-03-14.');
+  var label = String(d.label || '').trim().slice(0, 80);
+  if (!label) throw new Error('Add the deal number.');
+  var n = function (v) { var x = Number(v || 0); if (!(x >= 0)) throw new Error('Amounts must be zero or more.'); return round2(x); };
+  var gross = n(d.gross), pay = n(d.pay);
+  if (!(gross > 0)) throw new Error('Gross commission must be more than zero.');
+  if (!(pay > 0)) throw new Error('Add the net pay from your statement.');
+  return { date: d.date, label: label, gross: gross, fee: n(d.fee), royalty: n(d.royalty), donation: n(d.donation), pay: pay };
 }
 
 function addEntry(entry, mode) {
@@ -264,7 +346,7 @@ function fixTotals(sh, sp) {
 
 function removeRow(sh, r) {
   sh.deleteRow(r);
-  var sp = SPECS[sh.getName()];
+  var sp = specFor(sh.getName());
   if (sp) fixTotals(sh, sp);
 }
 
